@@ -1,0 +1,29 @@
+package me.kall.narutotv.mixin.base;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import me.kall.narutotv.base.data.Graphics;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import org.jetbrains.annotations.NotNull;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(GameRenderer.class)
+public abstract class MixinGameRenderer {
+    @WrapOperation(method = "render", at = @At(value = "NEW", target = "(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)Lnet/minecraft/client/gui/GuiGraphics;"))
+    private GuiGraphics captureGuiGraphics(Minecraft minecraft, MultiBufferSource.BufferSource bufferSource, @NotNull Operation<GuiGraphics> original) {
+        GuiGraphics guiGraphics = original.call(minecraft, bufferSource);
+        Graphics.capture(guiGraphics);
+        return guiGraphics;
+    }
+
+    @Inject(method = "render", at = @At("RETURN"))
+    private void releaseGuiGraphics(CallbackInfo ci) {
+        Graphics.deprecate();
+    }
+}

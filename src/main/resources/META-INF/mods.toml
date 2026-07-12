@@ -1,0 +1,13 @@
+modLoader = "javafml"
+loaderVersion = "[36,)"
+#issueTrackerURL = ""
+license = "MIT"
+
+[[mods]]
+modId = "narutotv"
+version = "${version}"
+displayName = "NarutoTV"
+authors = "Kall"
+description = '''
+'''
+#logoFile = ""

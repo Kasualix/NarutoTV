@@ -1,0 +1,20 @@
+package me.kall.narutotv.mixin.fade;
+
+import me.kall.narutotv.fade.FadeCenter;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(targets = "net.minecraft.client.gui.Font$StringRenderOutput")
+public abstract class MixinStringRenderOutput {
+    @Mutable @Shadow @Final private float a;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void fadeInit(CallbackInfo ci) {
+        this.a = this.a * FadeCenter.fadeAlpha();
+    }
+}

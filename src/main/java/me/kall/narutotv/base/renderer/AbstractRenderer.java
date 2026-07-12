@@ -1,0 +1,139 @@
+package me.kall.narutotv.base.renderer;
+
+import me.kall.narutotv.app.data.MediaArgs;
+import me.kall.narutotv.app.file.AppPaths;
+import me.kall.narutotv.app.produce.audio.AudioProducer;
+import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
+import me.kall.narutotv.app.util.LifetimeController;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+public abstract class AbstractRenderer<T> {
+    private final AtomicReference<MediaArgs> mediaArgs = new AtomicReference<>();
+    private final AtomicReference<AbstractFrameProducer<T>> video = new AtomicReference<>();
+    private final AtomicBoolean running = new AtomicBoolean();
+
+    public abstract boolean isRunnable();
+
+    public abstract @NotNull AbstractFrameProducer<T> initVideo();
+    public abstract @NotNull MediaArgs initMediaArgs();
+
+    public abstract void update(@Nullable T frame);
+
+    public abstract void onSetup(double seekTo);
+
+    public @Nullable MediaArgs mediaArgs() {
+        return this.mediaArgs.get();
+    }
+
+    public @Nullable AbstractFrameProducer<T> video() {
+        return this.video.get();
+    }
+
+    public @Nullable AudioProducer audio() {
+        var video = this.video();
+        return video == null ? null : video.audio();
+    }
+
+    public float volume() {
+        var audio = this.audio();
+        return audio == null ? 1.0F : audio.getVolume();
+    }
+
+    public void setVolume(float volume) {
+        var audio = this.audio();
+        if (audio != null) audio.setVolume(volume);
+    }
+
+    public @Nullable LifetimeController life() {
+        var video = this.video();
+        return video == null ? null : video.life();
+    }
+
+    public boolean isRunning() {
+        return this.running.get();
+    }
+
+    //----我----是----华----丽----的----分----割----线----
+
+    public synchronized void setup(double seekTo) {
+        if (this.isRunnable()) {
+            this.mediaArgs.set(this.initMediaArgs());
+
+            var video = this.initVideo();
+            this.video.set(video);
+            video.setup(seekTo);
+
+            this.onSetup(seekTo);
+
+            this.running.set(true);
+        }
+    }
+
+    public synchronized void render() {
+        if (!this.isRunnable()) return;
+        if (!this.isRunning()) this.setup(0D);
+
+        var life = this.life();
+        if (life != null) life.tick();
+
+        var video = this.video();
+        if (video != null && life != null && life.shouldUpdateFrame()) this.update(video.fetch());
+    }
+
+    public synchronized void shutdown() {
+        this.running.set(false);
+
+        var video = this.video.getAndSet(null);
+        if (video != null) video.shutdown();
+    }
+
+    //----我----是----华----丽----的----分----割----线----
+
+    public @Nullable AudioProducer initAudio(double seekTo) {
+        var mediaArgs = this.mediaArgs();
+        if (mediaArgs == null) return null;
+        var audio = AudioProducer.create(mediaArgs, this.volume(), AppPaths.absFFmpegPath());
+        audio.setup(seekTo);
+        return audio;
+    }
+
+    public @Nullable LifetimeController initLife(double seekTo) {
+        MediaArgs mediaArgs = this.mediaArgs();
+        if (mediaArgs == null) return null;
+        return LifetimeController.create(System.nanoTime(), mediaArgs.fps(), mediaArgs.duration())
+                .setEndRestartFunc(() -> () -> this.restart(0D))
+                .setSynchronizeFunc(() -> this::restart)
+                .setPauseFunc(this.pauseAudio())
+                .setResumeFunc(this.resumeAudio())
+                .seekTo(seekTo);
+    }
+
+    public Supplier<Runnable> pauseAudio() {
+        return () -> () -> {
+            var audio = this.audio();
+            if (audio != null) audio.shutdown();
+        };
+    }
+
+    public Supplier<Runnable> resumeAudio() {
+        return () -> () -> {
+            var audio = this.audio();
+            var life = this.life();
+            if (audio != null && life != null) {
+                audio.setup((double) life.nanoTimeFromSetup() / 1_000_000_000D);
+            }
+        };
+    }
+
+    public void restart(double seekTo) {
+        synchronized (this) {
+            this.shutdown();
+            this.setup(seekTo);
+        }
+    }
+}
