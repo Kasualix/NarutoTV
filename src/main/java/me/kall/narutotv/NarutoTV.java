@@ -1,7 +1,9 @@
 package me.kall.narutotv;
 
 import me.kall.narutotv.fade.FadeCenter;
+import me.kall.narutotv.impl.GuiRenderer;
 import me.kall.narutotv.override.CustomOverride;
+import me.kall.narutotv.override.OverrideApi;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -20,6 +22,8 @@ public final class NarutoTV {
         if (FMLLoader.getDist().isClient()) {
             FadeCenter.register(forgeBus);
             CustomOverride.register(forgeBus);
+
+            OverrideApi.getInstance().set(GuiRenderer.getInstance()::isRunnable, GuiRenderer.getInstance()::render);
         }
     }
 }

@@ -7,5 +7,5 @@ public interface OverrideApi {
         return CustomOverride.getInstance();
     }
 
-    void setOverride(BooleanSupplier overridable, Runnable overrideTask);
+    void set(BooleanSupplier overridable, Runnable overrideTask);
 }

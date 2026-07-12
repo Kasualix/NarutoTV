@@ -18,14 +18,16 @@ public final class CustomOverride implements OverrideApi {
     }
 
     private static void tick(TickEvent.@NotNull RenderTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.START)) CustomOverride.getInstance().setTickConsumed(false);
+        if (event.phase.equals(TickEvent.Phase.START)) {
+            CustomOverride.getInstance().setTickConsumed(false);
+        }
     }
 
     private final OverrideObject overrideObject = new OverrideObject();
     private boolean tickConsumed = false;
 
     @Override
-    public void setOverride(BooleanSupplier overridable, Runnable overrideTask) {
+    public void set(BooleanSupplier overridable, Runnable overrideTask) {
         this.overrideObject.overridable = overridable;
         this.overrideObject.overrideTask = overrideTask;
     }
@@ -40,23 +42,23 @@ public final class CustomOverride implements OverrideApi {
         this.setTickConsumed(true);
     }
 
-    public void setTickConsumed(boolean tickConsumed) {
+    void setTickConsumed(boolean tickConsumed) {
         this.tickConsumed = tickConsumed;
     }
 
-    public boolean isTickConsumed() {
+    boolean isTickConsumed() {
         return this.tickConsumed;
     }
 
     static final class OverrideObject {
-        public @Nullable BooleanSupplier overridable;
-        public @Nullable Runnable overrideTask;
+        @Nullable BooleanSupplier overridable;
+        @Nullable Runnable overrideTask;
 
-        public boolean overridable() {
+        boolean overridable() {
             return this.overridable != null && this.overridable.getAsBoolean();
         }
 
-        public void override() {
+        void override() {
             if (this.overrideTask != null) this.overrideTask.run();
         }
     }

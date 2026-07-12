@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> {
-    private final ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "dynamic");
+    protected final ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "dynamic");
 
     private DynamicTexture dynamicTexture;
 
@@ -44,8 +44,6 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
 
         this.dynamicTexture = new DynamicTexture(width, height, false);
         Minecraft.getInstance().getTextureManager().register(this.textureLocation, this.dynamicTexture);
-
-        //TODO: FadeApi.getInstance().setUnfadable(this.textureLocation, true);
     }
 
     @Override
