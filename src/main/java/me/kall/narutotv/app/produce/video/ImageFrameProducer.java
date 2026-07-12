@@ -78,19 +78,17 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
 
         long destPtr = ((NativeImageAccessor)(Object)image).getPixels();
 
+        long srcPtr = MemoryUtil.memAddress(buffer);
+
         int totalPixels = width * height;
-        int index = 0;
-
         for (int i = 0; i < totalPixels; i++) {
-            int r = buffer.get(index++) & 0xFF;
-            int g = buffer.get(index++) & 0xFF;
-            int b = buffer.get(index++) & 0xFF;
+            long base = srcPtr + (i * 3L);
+            int r = MemoryUtil.memGetByte(base) & 0xFF;
+            int g = MemoryUtil.memGetByte(base + 1) & 0xFF;
+            int b = MemoryUtil.memGetByte(base + 2) & 0xFF;
 
-            int color = 0xFF000000 | (r << 16) | (g << 8) | b;
-
-            MemoryUtil.memPutInt(destPtr, color);
-
-            destPtr += 4;
+            int color = (0xFF << 24) | (b << 16) | (g << 8) | r;
+            MemoryUtil.memPutInt(destPtr + (i * 4L), color);
         }
 
         return image;

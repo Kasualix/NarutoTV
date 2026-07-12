@@ -11,10 +11,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> {
+    public static final Logger LOGGER = LogManager.getLogger(NativeImageRenderer.class);
+
     protected final ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "dynamic");
 
     private DynamicTexture dynamicTexture;
@@ -27,10 +31,8 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
     @Override
     public void update(@Nullable NativeImage frame) {
         if (frame == null) return;
-        DynamicTexture dynamicTexture = this.dynamicTexture;
-        if (dynamicTexture == null) return;
-        dynamicTexture.setPixels(frame);
-        dynamicTexture.upload();
+        this.dynamicTexture.setPixels(frame);
+        this.dynamicTexture.upload();
         frame.close();
     }
 
@@ -44,6 +46,8 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
 
         this.dynamicTexture = new DynamicTexture(width, height, false);
         Minecraft.getInstance().getTextureManager().register(this.textureLocation, this.dynamicTexture);
+
+        LOGGER.info("[NarutoTV] Dynamic Video Texture Registered: {}", this.textureLocation.toString());
     }
 
     @Override
@@ -51,7 +55,6 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
         super.render();
 
         GuiGraphics guiGraphics = Graphics.get();
-        if (guiGraphics == null || this.dynamicTexture == null) return;
 
         int width = guiGraphics.guiWidth();
         int height = guiGraphics.guiHeight();
@@ -62,7 +65,10 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
     @Override
     public void shutdown() {
         super.shutdown();
-        this.dynamicTexture.close();
-        this.dynamicTexture = null;
+
+        if (this.dynamicTexture != null) {
+            this.dynamicTexture.close();
+            this.dynamicTexture = null;
+        }
     }
 }

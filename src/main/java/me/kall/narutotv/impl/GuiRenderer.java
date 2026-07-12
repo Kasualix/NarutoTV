@@ -25,7 +25,6 @@ public class GuiRenderer extends NativeImageRenderer {
         if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
         if (screen != null && screen.isPauseScreen()) return true;
         if (minecraft.getOverlay() instanceof LoadingOverlay) return true;
-        if (minecraft.isPaused()) return false;
         if (minecraft.level != null) {
             this.shutdown();
             return false;

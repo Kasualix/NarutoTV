@@ -10,8 +10,8 @@ public class Paths {
     static {
         GAME = Path.of(System.getProperty("user.dir"));
         CONFIG = GAME.resolve("config");
-        SOURCES = CONFIG.resolve("inarutotv-sources");
-        COOKIES = CONFIG.resolve("inarutotv-cookies");
+        SOURCES = CONFIG.resolve("narutotv-sources");
+        COOKIES = CONFIG.resolve("narutotv-cookies");
         MODS = GAME.resolve("mods");
         RESOURCEPACKS = GAME.resolve("resourcepacks");
     }

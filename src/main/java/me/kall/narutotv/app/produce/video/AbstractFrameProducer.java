@@ -104,8 +104,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
             long start = System.nanoTime();
             while (frame.hasRemaining()) {
-                int toRead = Math.min(temp.length, frame.remaining());
-                int read = input.read(temp, 0, toRead);
+                int read = input.read(temp, 0, Math.min(temp.length, frame.remaining()));
                 if (read == -1) return;
                 frame.put(temp, 0, read);
             }

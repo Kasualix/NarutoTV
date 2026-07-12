@@ -22,7 +22,7 @@ public abstract class AbstractRenderer<T> {
     public abstract @NotNull AbstractFrameProducer<T> initVideo();
     public abstract @NotNull MediaArgs initMediaArgs();
 
-    public abstract void update(@Nullable T frame);
+    public abstract void update(T frame);
 
     public abstract void onSetup(double seekTo);
 
@@ -64,7 +64,7 @@ public abstract class AbstractRenderer<T> {
         if (this.isRunnable()) {
             this.mediaArgs.set(this.initMediaArgs());
 
-            var video = this.initVideo();
+            var video = this.initVideo().setAudioCreation(this::initAudio).setLifeCreation(this::initLife);
             this.video.set(video);
             video.setup(seekTo);
 
