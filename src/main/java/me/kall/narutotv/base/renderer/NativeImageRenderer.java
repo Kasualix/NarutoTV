@@ -1,7 +1,6 @@
 package me.kall.narutotv.base.renderer;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppPaths;
 import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
@@ -19,9 +18,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> {
     public static final Logger LOGGER = LogManager.getLogger(NativeImageRenderer.class);
 
-    protected final ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "dynamic");
+    protected ResourceLocation textureLocation;
+    protected DynamicTexture dynamicTexture;
 
-    private DynamicTexture dynamicTexture;
+    protected abstract ResourceLocation setLocation();
 
     @Override
     public @NotNull AbstractFrameProducer<NativeImage> initVideo() {
@@ -45,6 +45,7 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
         int height = mediaArgs.height();
 
         this.dynamicTexture = new DynamicTexture(width, height, false);
+        this.textureLocation = this.setLocation();
         Minecraft.getInstance().getTextureManager().register(this.textureLocation, this.dynamicTexture);
 
         LOGGER.info("[NarutoTV] Dynamic Video Texture Registered: {}", this.textureLocation.toString());

@@ -1,5 +1,6 @@
 package me.kall.narutotv.impl;
 
+import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.NativeImageRenderer;
@@ -9,6 +10,7 @@ import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
 import net.minecraft.client.gui.screens.LoadingOverlay;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.WinScreen;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 public class GuiRenderer extends NativeImageRenderer {
@@ -36,6 +38,11 @@ public class GuiRenderer extends NativeImageRenderer {
     @Override
     public @NotNull MediaArgs initMediaArgs() {
         return Sources.roll();
+    }
+
+    @Override
+    protected ResourceLocation setLocation() {
+        return ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "general_client_gui");
     }
 
     @Override
