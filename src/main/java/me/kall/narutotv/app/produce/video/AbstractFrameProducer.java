@@ -30,7 +30,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
     protected final AtomicBoolean fetchable = new AtomicBoolean();
 
-    protected final TimeCostDebugger timeCostDebugger;
+    protected final TimeCostDebugger frameReading;
 
     protected final AtomicReference<LifetimeController> life = new AtomicReference<>();
     protected final AtomicReference<Double2ObjectFunction<LifetimeController>> lifeCreation = new AtomicReference<>();
@@ -44,7 +44,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         this.bufferCapacity = (int) (this.mediaArgs.fps() * bufferSeconds);
         this.absFFmpegPath = absFFmpegPath;
         this.frames = new LinkedBlockingQueue<>(this.bufferCapacity);
-        this.timeCostDebugger = new TimeCostDebugger(this.debugLength());
+        this.frameReading = new TimeCostDebugger(this.debugLength(), "Frame Reading");
     }
 
     public AbstractFrameProducer<T> setLifeCreation(Double2ObjectFunction<LifetimeController> lifeCreation) {
@@ -86,13 +86,16 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
         if (frame == null) {
             life.detectLagSpike();
-            this.timeCostDebugger.printDebug();
+            this.frameReading.printDebug();
+            this.onLagSpike();
             return null;
         }
 
         this.lastFrame.set(frame.data());
         return frame.data();
     }
+
+    protected void onLagSpike() {}
 
     @Override
     protected void forInput(@NotNull InputStream input) throws IOException, InterruptedException {
@@ -110,7 +113,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
             }
             frame.flip();
 
-            this.timeCostDebugger.record(System.nanoTime() - start);
+            this.frameReading.record(System.nanoTime() - start);
 
             long index = this.frameIndex.incrementAndGet();
             this.handleFrame(frame, index);
@@ -141,7 +144,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         this.fetchable.set(false);
         this.life.set(null);
 
-        this.timeCostDebugger.reset();
+        this.frameReading.reset();
 
         AudioProducer audio = this.audio.getAndSet(null);
         if (audio != null) audio.shutdown();

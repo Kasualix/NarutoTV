@@ -9,6 +9,7 @@
   },
   "client": [
     "NativeImageAccessor",
+    "agent.MixinMinecraft",
     "base.MixinGameRenderer",
     "fade.MixinFont",
     "fade.MixinGuiGraphics",
@@ -21,6 +22,7 @@
     "override.screen.MixinCreateWorldScreen",
     "override.screen.MixinScreen",
     "override.screen.MixinTitleScreen",
-    "override.screen.MixinWinScreen"
+    "override.screen.MixinWinScreen",
+    "sound.MixinOptions"
   ]
 }

@@ -2,42 +2,41 @@ package me.kall.narutotv.base.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppInstances;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Spliterator;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
-import static me.kall.narutotv.app.YtDlp.*;
+import static me.kall.narutotv.app.YtDlp.AUDIO_DOWNLOADING_FILE;
+import static me.kall.narutotv.app.YtDlp.VIDEO_DOWNLOADING_FILE;
 
 public class Sources {
     private static final String VIDEO_FILE_NAME = "video";
     private static final String AUDIO_FILE_NAME = "audio";
 
-    private static final ObjectList<MediaArgs> SOURCES = ObjectLists.synchronize(new ObjectArrayList<>());
-    private static final ObjectList<MediaArgs> PLAYED = ObjectLists.synchronize(new ObjectArrayList<>());
+    private static final ObjectList<Source> SOURCES = new ObjectArrayList<>();
+    private static final ObjectList<Source> PLAYED = new ObjectArrayList<>();
 
-    private static final Random RANDOM = ThreadLocalRandom.current();
+    private static final Random RANDOM = new Random();
 
-    public static MediaArgs roll() {
+    public static synchronized @NotNull MediaArgs roll() {
         Sources.scan();
         if (SOURCES.isEmpty()) throw new IllegalArgumentException("No sources found");
-        MediaArgs one = SOURCES.get(RANDOM.nextInt(SOURCES.size()));
+        Source target = SOURCES.get(RANDOM.nextInt(SOURCES.size()));
         if (SOURCES.size() > 1) {
-            while (PLAYED.contains(one)) {
-                one = SOURCES.get(RANDOM.nextInt(SOURCES.size()));
+            while (PLAYED.contains(target)) {
+                target = SOURCES.get(RANDOM.nextInt(SOURCES.size()));
             }
         }
-        PLAYED.add(one);
-        return one;
+        PLAYED.add(target);
+        return target.toMediaArgs();
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -63,7 +62,7 @@ public class Sources {
 
                 if (source.video != null) {
                     if (source.audio == null) source.audio = source.video;
-                    SOURCES.add(source.toMediaArgs());
+                    SOURCES.add(source);
                 }
 
             }));
@@ -75,13 +74,23 @@ public class Sources {
     }
 
     static final class Source {
-        @Nullable String video, audio;
+        String video, audio;
 
         @NotNull
         MediaArgs toMediaArgs() {
-            assert this.video != null;
-            assert this.audio != null;
             return AppInstances.ffmpeg().read(this.video, this.audio);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Source other)) return false;
+            return Objects.equals(this.video, other.video) && Objects.equals(this.audio, other.audio);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.video, this.audio);
         }
     }
 }

@@ -1,5 +1,6 @@
 package me.kall.narutotv.base.renderer.gl;
 
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -12,7 +13,7 @@ public class YuvGLEngine {
     private long frameCount;
     private int program, vao, vbo;
 
-    private int[] textures;
+    private int @Nullable [] textures;
     private int width, height;
 
     private final String fragmentSource, vertexSource;
@@ -123,16 +124,14 @@ public class YuvGLEngine {
     }
 
     private void applyTexParams() {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.35F);
     }
 
     public synchronized void update(ByteBuffer frame) {
+        if (this.textures == null) return;
         if (!glIsTexture(this.textures[0]) || !glIsTexture(this.textures[1]) || !glIsTexture(this.textures[2])) return;
 
         if (this.pboArray == null) return;
@@ -160,19 +159,14 @@ public class YuvGLEngine {
         this.upload(textures[1], this.width / 2, this.height / 2, this.pboArray[2 + uploadSlot]);
         this.upload(textures[2], this.width / 2, this.height / 2, this.pboArray[4 + uploadSlot]);
 
-        for (int texture : textures) {
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glGenerateMipmap(GL_TEXTURE_2D);
-        }
-
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     private void stage(int pbo, ByteBuffer src, int srcOffset, int length) {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-        glBufferData(GL_PIXEL_UNPACK_BUFFER, length, GL_STREAM_DRAW);
-        ByteBuffer dst = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+
+        ByteBuffer dst = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, length, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
         if (dst != null) {
             MemoryUtil.memCopy(MemoryUtil.memSlice(src, srcOffset, length), dst);
             glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
@@ -186,16 +180,31 @@ public class YuvGLEngine {
     }
 
     public synchronized void render() {
+        if (this.textures == null) return;
         int prevProg = glGetInteger(GL_CURRENT_PROGRAM);
         int prevVao = glGetInteger(GL_VERTEX_ARRAY_BINDING);
         int prevActive = glGetInteger(GL_ACTIVE_TEXTURE);
-        boolean wasBlend = glIsEnabled(GL_BLEND);
 
         glActiveTexture(GL_TEXTURE0); int prevTex0 = glGetInteger(GL_TEXTURE_BINDING_2D);
         glActiveTexture(GL_TEXTURE1); int prevTex1 = glGetInteger(GL_TEXTURE_BINDING_2D);
         glActiveTexture(GL_TEXTURE2); int prevTex2 = glGetInteger(GL_TEXTURE_BINDING_2D);
 
+        int prevFbo = glGetInteger(GL_FRAMEBUFFER_BINDING);
+        int[] prevViewport = new int[4];
+        glGetIntegerv(GL_VIEWPORT, prevViewport);
+
+        boolean wasBlend = glIsEnabled(GL_BLEND);
+        boolean wasDepthTest = glIsEnabled(GL_DEPTH_TEST);
+        boolean wasScissorTest = glIsEnabled(GL_SCISSOR_TEST);
+        boolean wasCullFace = glIsEnabled(GL_CULL_FACE);
+        boolean prevDepthMask = glGetBoolean(GL_DEPTH_WRITEMASK);
+
         glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_SCISSOR_TEST);
+        glDisable(GL_CULL_FACE);
+        glDepthMask(false);
+
         glUseProgram(this.program);
 
         glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, this.textures[0]);
@@ -209,8 +218,17 @@ public class YuvGLEngine {
         glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, prevTex1);
         glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, prevTex2);
         glActiveTexture(prevActive);
+
         glBindVertexArray(prevVao);
         glUseProgram(prevProg);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, prevFbo);
+        glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
+
+        glDepthMask(prevDepthMask);
+        if (wasCullFace) glEnable(GL_CULL_FACE);
+        if (wasScissorTest) glEnable(GL_SCISSOR_TEST);
+        if (wasDepthTest) glEnable(GL_DEPTH_TEST);
         if (wasBlend) glEnable(GL_BLEND);
     }
 

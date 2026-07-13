@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     private final LoadingFrame loading = new LoadingFrame();
 
-    private YuvGLEngine engine;
+    private @Nullable YuvGLEngine engine;
 
     @Override
     public @NotNull AbstractFrameProducer<ByteBuffer> initVideo() {
@@ -24,7 +24,7 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     @Override
     public synchronized void update(@Nullable ByteBuffer frame) {
         MediaArgs mediaArgs = this.mediaArgs();
-        assert mediaArgs != null;
+        if (mediaArgs == null || this.engine == null) return;
 
         int width = mediaArgs.width();
         int height = mediaArgs.height();
@@ -37,7 +37,8 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     @Override
     public synchronized void onSetup(double seekTo) {
         MediaArgs mediaArgs = this.mediaArgs();
-        assert mediaArgs != null;
+
+        if (mediaArgs == null) return;
 
         this.engine = new YuvGLEngine(this.fragmentSource(), this.vertexSource());
         this.engine.initTexture(mediaArgs.width(), mediaArgs.height());
@@ -47,13 +48,13 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     @Override
     public synchronized void render() {
         super.render();
-        this.engine.render();
+        if (this.engine != null) this.engine.render();
     }
 
     @Override
     public synchronized void shutdown() {
         super.shutdown();
-        this.engine.shutdown();
+        if (this.engine != null) this.engine.shutdown();
     }
 
     protected abstract String fragmentSource();

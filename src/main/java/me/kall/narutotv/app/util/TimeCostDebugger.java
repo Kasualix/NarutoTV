@@ -11,10 +11,12 @@ public final class TimeCostDebugger {
     private int timeIndex = 0;
     private int count = 0;
     private long lastPrint = -1;
+    private final String reason;
 
-    public TimeCostDebugger(int size) {
+    public TimeCostDebugger(int size, String reason) {
         this.size = size;
         this.costs = new long[size];
+        this.reason = reason;
     }
 
     public synchronized void reset() {
@@ -34,7 +36,7 @@ public final class TimeCostDebugger {
     public synchronized void printDebug() {
         if (System.nanoTime() - this.lastPrint < 2_000_000_000L) return;
         this.lastPrint = System.nanoTime();
-        System.out.println("Costs of the last " + this.count + " records in ms: " + Arrays.toString(this.costsMillis()));
+        System.out.println("[" + this.reason + "] Costs of the last " + this.count + " records in ms: " + Arrays.toString(this.costsMillis()));
     }
 
     @Contract(pure = true)
