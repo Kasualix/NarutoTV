@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class NarutoEarlyRenderer extends ByteBufferRenderer {
     private static final NarutoEarlyRenderer INSTANCE = new NarutoEarlyRenderer();
 
+    @SuppressWarnings("unused")
     public static void bridge() {
         INSTANCE.render();
     }
@@ -63,8 +64,7 @@ public class NarutoEarlyRenderer extends ByteBufferRenderer {
     public boolean isRunnable() {
         String shutdown = System.getProperty(NarutoProperties.SHUTDOWN);
         if (shutdown == null) {
-            String absoluteSetupTime = System.getProperty(NarutoProperties.EARLY_START);
-            if (absoluteSetupTime == null) System.setProperty(NarutoProperties.EARLY_START, String.valueOf(System.nanoTime()));
+            if (System.getProperty(NarutoProperties.EARLY_START) == null) System.setProperty(NarutoProperties.EARLY_START, String.valueOf(System.nanoTime()));
             return true;
         }
         this.shutdown();

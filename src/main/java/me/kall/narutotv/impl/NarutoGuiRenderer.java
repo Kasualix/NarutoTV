@@ -16,7 +16,59 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public final class NarutoGuiRenderer {
+    private static final AtomicReference<Engine> ACTIVE = new AtomicReference<>(Engine.YUV_GL);
+
+    static {
+        String endStr = System.getProperty(NarutoProperties.EARLY_END);
+        String startStr = System.getProperty(NarutoProperties.EARLY_START);
+        if (endStr != null && startStr != null) {
+            double earlyEnd = (double) Long.parseLong(endStr);
+            double earlyStart = (double) Long.parseLong(startStr);
+            ACTIVE.get().renderer.restart((earlyEnd - earlyStart) / 1_000_000_000.0D);
+
+            System.clearProperty(NarutoProperties.EARLY_END);
+            System.clearProperty(NarutoProperties.EARLY_START);
+        }
+    }
+
+    public static synchronized void switchType() {
+        shutdown();
+        if (ACTIVE.get().equals(Engine.NATIVE_IMAGE)) {
+            ACTIVE.set(Engine.YUV_GL);
+        } else {
+            ACTIVE.set(Engine.NATIVE_IMAGE);
+        }
+    }
+
+    public static boolean isRunning() {
+        return ACTIVE.get().renderer.isRunning();
+    }
+
+    public static boolean isRunnable() {
+        Minecraft minecraft = Minecraft.getInstance();
+        Screen screen = minecraft.screen;
+        if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
+        if (screen != null && screen.isPauseScreen()) return true;
+        if (minecraft.getOverlay() instanceof LoadingOverlay) return true;
+        if (minecraft.level != null) {
+            shutdown();
+            return false;
+        }
+
+        return minecraft.isRunning();
+    }
+
+    public static void render() {
+        ACTIVE.get().renderer.render();
+    }
+
+    public static void shutdown() {
+        ACTIVE.get().renderer.shutdown();
+    }
+
     enum Engine {
         NATIVE_IMAGE(new NativeImageRenderer() {
             @Override
@@ -26,15 +78,7 @@ public final class NarutoGuiRenderer {
 
             @Override
             public @NotNull MediaArgs initMediaArgs() {
-                String initial = System.getProperty(NarutoProperties.INITIAL_MEDIA);
-                MediaArgs mediaArgs;
-                if (initial == null) {
-                    mediaArgs = Sources.roll();
-                } else {
-                    mediaArgs = MediaArgs.fromString(initial);
-                    System.clearProperty(NarutoProperties.INITIAL_MEDIA);
-                }
-                return mediaArgs;
+                return Engine.initMediaArgs();
             }
 
             @Override
@@ -104,69 +148,26 @@ public final class NarutoGuiRenderer {
 
             @Override
             public @NotNull MediaArgs initMediaArgs() {
-                String initial = System.getProperty(NarutoProperties.INITIAL_MEDIA);
-                MediaArgs mediaArgs;
-                if (initial == null) {
-                    mediaArgs = Sources.roll();
-                } else {
-                    mediaArgs = MediaArgs.fromString(initial);
-                    System.clearProperty(NarutoProperties.INITIAL_MEDIA);
-                }
-                return mediaArgs;
+                return Engine.initMediaArgs();
             }
         });
 
-        private final AbstractRenderer<?> renderer;
+        final AbstractRenderer<?> renderer;
 
         Engine(AbstractRenderer<?> renderer) {
             this.renderer = renderer;
         }
 
-        public AbstractRenderer<?> renderer() {
-            return this.renderer;
+        static MediaArgs initMediaArgs() {
+            String initial = System.getProperty(NarutoProperties.INITIAL_MEDIA);
+            MediaArgs mediaArgs;
+            if (initial == null) {
+                mediaArgs = Sources.roll();
+            } else {
+                mediaArgs = MediaArgs.fromString(initial);
+                System.clearProperty(NarutoProperties.INITIAL_MEDIA);
+            }
+            return mediaArgs;
         }
-    }
-
-    private static volatile Engine active = Engine.YUV_GL;
-
-    static {
-        double earlyEnd = (double) Long.parseLong(System.getProperty(NarutoProperties.EARLY_END));
-        double earlyStart = (double) Long.parseLong(System.getProperty(NarutoProperties.EARLY_START));
-        active.renderer.restart((earlyEnd - earlyStart) / 1_000_000_000.0D);
-    }
-
-    public static synchronized void switchType() {
-        shutdown();
-        if (active.equals(Engine.NATIVE_IMAGE)) {
-            active = Engine.YUV_GL;
-        } else {
-            active = Engine.NATIVE_IMAGE;
-        }
-    }
-
-    public static boolean isRunning() {
-        return active.renderer().isRunning();
-    }
-
-    public static boolean isRunnable() {
-        Minecraft minecraft = Minecraft.getInstance();
-        Screen screen = minecraft.screen;
-        if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
-        if (screen != null && screen.isPauseScreen()) return true;
-        if (minecraft.getOverlay() instanceof LoadingOverlay) return true;
-        if (minecraft.level != null) {
-            shutdown();
-            return false;
-        }
-
-        return minecraft.isRunning();
-    }
-
-    public static void render() {
-        active.renderer().render();
-    }
-
-    public static void shutdown() {
-        active.renderer().shutdown();
     }
 }
