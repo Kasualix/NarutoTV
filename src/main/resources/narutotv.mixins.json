@@ -8,8 +8,8 @@
     "defaultRequire": 1
   },
   "client": [
-    "NativeImageAccessor",
-    "agent.MixinMinecraft",
+    "context.NativeImageAccessor",
+    "context.MixinMinecraft",
     "base.MixinGameRenderer",
     "fade.MixinFont",
     "fade.MixinGuiGraphics",

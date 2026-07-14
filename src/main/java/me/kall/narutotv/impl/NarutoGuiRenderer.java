@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class NarutoGuiRenderer {
     private static final AtomicReference<Engine> ACTIVE = new AtomicReference<>(Engine.YUV_GL);
 
-    static {
+    public static void init() {
         String endStr = System.getProperty(NarutoProperties.EARLY_END);
         String startStr = System.getProperty(NarutoProperties.EARLY_START);
         if (endStr != null && startStr != null) {
@@ -69,7 +69,7 @@ public final class NarutoGuiRenderer {
         ACTIVE.get().renderer.shutdown();
     }
 
-    enum Engine {
+    public enum Engine {
         NATIVE_IMAGE(new NativeImageRenderer() {
             @Override
             public boolean isRunnable() {
@@ -152,13 +152,13 @@ public final class NarutoGuiRenderer {
             }
         });
 
-        final AbstractRenderer<?> renderer;
+        public final AbstractRenderer<?> renderer;
 
         Engine(AbstractRenderer<?> renderer) {
             this.renderer = renderer;
         }
 
-        static MediaArgs initMediaArgs() {
+        public static MediaArgs initMediaArgs() {
             String initial = System.getProperty(NarutoProperties.INITIAL_MEDIA);
             MediaArgs mediaArgs;
             if (initial == null) {

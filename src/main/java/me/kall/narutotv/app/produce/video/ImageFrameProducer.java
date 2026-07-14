@@ -6,7 +6,7 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.app.util.LifetimeController;
 import me.kall.narutotv.app.util.TimeCostDebugger;
-import me.kall.narutotv.mixin.NativeImageAccessor;
+import me.kall.narutotv.mixin.context.NativeImageAccessor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.MemoryUtil;

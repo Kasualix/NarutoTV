@@ -1,4 +1,4 @@
-package me.kall.narutotv.mixin;
+package me.kall.narutotv.mixin.context;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import org.spongepowered.asm.mixin.Mixin;

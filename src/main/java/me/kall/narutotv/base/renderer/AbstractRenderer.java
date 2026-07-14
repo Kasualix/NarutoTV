@@ -16,7 +16,7 @@ public abstract class AbstractRenderer<T> {
     private final AtomicReference<MediaArgs> mediaArgs = new AtomicReference<>();
     private final AtomicBoolean running = new AtomicBoolean();
 
-    protected final AtomicReference<AbstractFrameProducer<T>> video = new AtomicReference<>();
+    public final AtomicReference<AbstractFrameProducer<T>> video = new AtomicReference<>();
 
     public abstract boolean isRunnable();
 
