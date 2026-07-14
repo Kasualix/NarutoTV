@@ -25,18 +25,19 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     protected final String absFFmpegPath;
 
     protected final LinkedBlockingQueue<Frame<T>> frames;
-    protected final AtomicLong frameIndex = new AtomicLong(), setupTime = new AtomicLong();
-    protected final AtomicReference<T> lastFrame = new AtomicReference<>();
 
-    protected final AtomicBoolean fetchable = new AtomicBoolean();
+    private final AtomicLong frameIndex = new AtomicLong(), setupTime = new AtomicLong();
+    private final AtomicReference<T> lastFrame = new AtomicReference<>();
 
-    protected final TimeCostDebugger frameReading;
+    private final AtomicBoolean fetchable = new AtomicBoolean();
 
-    protected final AtomicReference<LifetimeController> life = new AtomicReference<>();
-    protected final AtomicReference<Double2ObjectFunction<LifetimeController>> lifeCreation = new AtomicReference<>();
+    private final TimeCostDebugger frameReading;
 
-    protected final AtomicReference<AudioProducer> audio = new AtomicReference<>();
-    protected final AtomicReference<Double2ObjectFunction<AudioProducer>> audioCreation = new AtomicReference<>();
+    private final AtomicReference<LifetimeController> life = new AtomicReference<>();
+    private final AtomicReference<Double2ObjectFunction<LifetimeController>> lifeCreation = new AtomicReference<>();
+
+    private final AtomicReference<AudioProducer> audio = new AtomicReference<>();
+    private final AtomicReference<Double2ObjectFunction<AudioProducer>> audioCreation = new AtomicReference<>();
 
     protected AbstractFrameProducer(MediaArgs mediaArgs, int frameSize, int bufferSeconds, String absFFmpegPath) {
         this.mediaArgs = mediaArgs;
@@ -115,8 +116,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
             this.frameReading.record(System.nanoTime() - start);
 
-            long index = this.frameIndex.incrementAndGet();
-            this.handleFrame(frame, index);
+            this.onFrameCreated(frame, this.frameIndex.incrementAndGet());
 
             if (this.frames.remainingCapacity() == 0 && !this.fetchable.get()) {
                 Double2ObjectFunction<LifetimeController> lifeCreation = this.lifeCreation.getAndSet(null);
@@ -162,7 +162,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     protected abstract int debugLength();
 
     protected abstract ByteBuffer frameCreation();
-    protected abstract void handleFrame(ByteBuffer frame, long frameIndex) throws InterruptedException;
+    protected abstract void onFrameCreated(ByteBuffer frame, long frameIndex) throws InterruptedException;
 
     public record Frame<T>(long index, T data) {}
 }

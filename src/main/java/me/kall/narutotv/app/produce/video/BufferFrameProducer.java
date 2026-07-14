@@ -29,13 +29,13 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
 
     @Override
     public BufferFrameProducer setAudioCreation(@NotNull Double2ObjectFunction<AudioProducer> func) {
-        this.audioCreation.set(func);
+        super.setAudioCreation(func);
         return this;
     }
 
     @Override
     public BufferFrameProducer setLifeCreation(@NotNull Double2ObjectFunction<LifetimeController> func) {
-        this.lifeCreation.set(func);
+        super.setLifeCreation(func);
         return this;
     }
 
@@ -60,7 +60,7 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
     }
 
     @Override
-    protected void handleFrame(ByteBuffer frame, long frameIndex) throws InterruptedException {
+    protected void onFrameCreated(ByteBuffer frame, long frameIndex) throws InterruptedException {
         this.frames.put(new Frame<>(frameIndex, frame));
     }
 

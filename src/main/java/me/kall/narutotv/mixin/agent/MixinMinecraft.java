@@ -14,8 +14,7 @@ public abstract class MixinMinecraft {
     @WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;setOverlay(Lnet/minecraft/client/gui/screens/Overlay;)V"))
     private void shutdownEarlyRenderer(Minecraft instance, Overlay loadingGui, @NotNull Operation<Void> original) {
         System.setProperty(NarutoProperties.SHUTDOWN, "true");
-        String elapsed = System.getProperty(NarutoProperties.EARLY_END);
-        if (elapsed == null) System.setProperty(NarutoProperties.EARLY_END, String.valueOf(System.nanoTime()));
+        if (System.getProperty(NarutoProperties.EARLY_END) == null) System.setProperty(NarutoProperties.EARLY_END, String.valueOf(System.nanoTime()));
         original.call(instance, loadingGui);
     }
 }
