@@ -1,4 +1,4 @@
-package me.kall.narutotv.impl.level;
+package me.kall.narutotv.impl.world;
 
 import me.kall.narutotv.NarutoTV;
 import net.minecraft.core.BlockPos;

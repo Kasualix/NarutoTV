@@ -2,7 +2,7 @@ package me.kall.narutotv.base.renderer.gl;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import me.kall.narutotv.impl.level.BlockScreen;
+import me.kall.narutotv.impl.world.BlockScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;

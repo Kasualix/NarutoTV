@@ -1,4 +1,4 @@
-package me.kall.narutotv.impl.level;
+package me.kall.narutotv.impl.world;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.base.data.Sources;
