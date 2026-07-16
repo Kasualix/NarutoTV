@@ -8,17 +8,17 @@ import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL30C.*;
 
-public class YuvGLEngine {
-    private int[] pboArray;
-    private long frameCount;
-    private int program, vao, vbo;
+public class GuiGLEngine {
+    int[] pboArray;
+    long frameCount;
+    int program, vertexArray, buffer;
 
-    private int @Nullable [] textures;
-    private int width, height;
+    int @Nullable [] textures;
+    int width, height;
 
-    private final String fragmentSource, vertexSource;
+    final String fragmentSource, vertexSource;
 
-    public YuvGLEngine(String fragmentSource, String vertexSource) {
+    public GuiGLEngine(String fragmentSource, String vertexSource) {
         this.fragmentSource = fragmentSource;
         this.vertexSource = vertexSource;
     }
@@ -51,11 +51,11 @@ public class YuvGLEngine {
 
         float[] vertexList = {-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f};
 
-        this.vao = glGenVertexArrays();
-        this.vbo = glGenBuffers();
+        this.vertexArray = glGenVertexArrays();
+        this.buffer = glGenBuffers();
 
-        glBindVertexArray(this.vao);
-        glBindBuffer(GL_ARRAY_BUFFER, this.vbo);
+        glBindVertexArray(this.vertexArray);
+        glBindBuffer(GL_ARRAY_BUFFER, this.buffer);
 
         FloatBuffer floatBuffer = MemoryUtil.memAllocFloat(vertexList.length);
         try {
@@ -111,7 +111,7 @@ public class YuvGLEngine {
         this.frameCount = 0L;
     }
 
-    private int compileShader(int type, String src) {
+    int compileShader(int type, String src) {
         int id = glCreateShader(type);
         glShaderSource(id, src);
         glCompileShader(id);
@@ -123,7 +123,7 @@ public class YuvGLEngine {
         return id;
     }
 
-    private void applyTexParams() {
+    void applyTexParams() {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -163,7 +163,7 @@ public class YuvGLEngine {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    private void stage(int pbo, ByteBuffer src, int srcOffset, int length) {
+    void stage(int pbo, ByteBuffer src, int srcOffset, int length) {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 
         ByteBuffer dst = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, length, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
@@ -173,7 +173,7 @@ public class YuvGLEngine {
         }
     }
 
-    private void upload(int texName, int w, int h, int pbo) {
+    void upload(int texName, int w, int h, int pbo) {
         glBindTexture(GL_TEXTURE_2D, texName);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RED, GL_UNSIGNED_BYTE, 0L);
@@ -211,7 +211,7 @@ public class YuvGLEngine {
         glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, this.textures[1]);
         glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, this.textures[2]);
 
-        glBindVertexArray(this.vao);
+        glBindVertexArray(this.vertexArray);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, prevTex0);
@@ -235,11 +235,11 @@ public class YuvGLEngine {
     public synchronized void shutdown() {
         if (this.textures != null) glDeleteTextures(this.textures);
         if (this.pboArray != null) glDeleteBuffers(this.pboArray);
-        if (this.vbo != 0) glDeleteBuffers(this.vbo);
-        if (this.vao != 0) glDeleteVertexArrays(this.vao);
+        if (this.buffer != 0) glDeleteBuffers(this.buffer);
+        if (this.vertexArray != 0) glDeleteVertexArrays(this.vertexArray);
         if (this.program != 0) glDeleteProgram(this.program);
-        this.vbo = 0;
-        this.vao = 0;
+        this.buffer = 0;
+        this.vertexArray = 0;
         this.program = 0;
         this.pboArray = null;
         this.textures = null;

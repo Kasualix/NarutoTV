@@ -5,9 +5,7 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppPaths;
 import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.app.produce.video.ImageFrameProducer;
-import me.kall.narutotv.base.data.Graphics;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -43,20 +41,6 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
         this.dynamicTexture = new DynamicTexture(width, height, false);
         this.textureLocation = this.setLocation();
         Minecraft.getInstance().getTextureManager().register(this.textureLocation, this.dynamicTexture);
-    }
-
-    @Override
-    public void render() {
-        super.render();
-
-        GuiGraphics guiGraphics = Graphics.get();
-
-        if (guiGraphics == null || this.textureLocation == null || this.dynamicTexture == null) return;
-
-        int width = guiGraphics.guiWidth();
-        int height = guiGraphics.guiHeight();
-
-        guiGraphics.blit(this.textureLocation, 0, 0, 0, 0, width, height, width, height);
     }
 
     @Override

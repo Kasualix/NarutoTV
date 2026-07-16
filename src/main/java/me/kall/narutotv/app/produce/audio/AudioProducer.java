@@ -21,7 +21,7 @@ public final class AudioProducer extends AbstractProducer {
     private final AtomicInteger source = new AtomicInteger();
 
     private final AtomicDouble volume;
-    private final AtomicBoolean volumeChanged = new AtomicBoolean(true);
+    private final AtomicBoolean volumeInit = new AtomicBoolean(true);
 
     private final MediaArgs mediaArgs;
     private final String absFFmpegPath;
@@ -35,13 +35,6 @@ public final class AudioProducer extends AbstractProducer {
     @Contract("_, _, _ -> new")
     public static @NotNull AudioProducer create(MediaArgs mediaArgs, float volume, String absFFmpegPath) {
         return new AudioProducer(mediaArgs, volume, absFFmpegPath);
-    }
-
-    public void setVolume(float volume) {
-        if (volume != this.getVolume()) {
-            this.volumeChanged.set(true);
-            this.volume.set(volume);
-        }
     }
 
     public float getVolume() {
@@ -65,7 +58,7 @@ public final class AudioProducer extends AbstractProducer {
 
             this.source.set(AL10.alGenSources());
 
-            byte[] bufferArray = new byte[16384];
+            byte[] bufferArray = new byte[8192];
             int read;
 
             while (!this.isCanceled() && (read = input.read(bufferArray)) != -1) {
@@ -76,15 +69,17 @@ public final class AudioProducer extends AbstractProducer {
                 AL10.alBufferData(buffer, this.mediaArgs.openALFormat(), data, this.mediaArgs.sampleRate());
                 MemoryUtil.memFree(data);
 
-                int sourceNow = this.source.get();
-                AL10.alSourceQueueBuffers(sourceNow, buffer);
+                int source = this.source.get();
+                AL10.alSourceQueueBuffers(source, buffer);
 
-                if (this.volumeChanged.compareAndSet(true, false)) AL10.alSourcef(sourceNow, AL10.AL_GAIN, this.getVolume());
+                if (this.volumeInit.compareAndSet(true, false)) {
+                    AL10.alSourcef(source, AL10.AL_GAIN, this.getVolume());
+                }
 
-                if (AL10.alGetSourcei(sourceNow, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) AL10.alSourcePlay(sourceNow);
+                if (AL10.alGetSourcei(source, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) AL10.alSourcePlay(source);
 
-                int processed = AL10.alGetSourcei(sourceNow, AL10.AL_BUFFERS_PROCESSED);
-                while (processed-- > 0) AL10.alDeleteBuffers(AL10.alSourceUnqueueBuffers(sourceNow));
+                int processed = AL10.alGetSourcei(source, AL10.AL_BUFFERS_PROCESSED);
+                while (processed-- > 0) AL10.alDeleteBuffers(AL10.alSourceUnqueueBuffers(source));
             }
         } finally {
             EXTThreadLocalContext.alcSetThreadContext(0);

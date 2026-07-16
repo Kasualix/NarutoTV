@@ -8,9 +8,9 @@
     "defaultRequire": 1
   },
   "client": [
-    "context.NativeImageAccessor",
-    "context.MixinMinecraft",
     "base.MixinGameRenderer",
+    "context.MixinMinecraft",
+    "context.NativeImageAccessor",
     "fade.MixinFont",
     "fade.MixinGuiGraphics",
     "fade.MixinStringRenderOutput",
@@ -23,6 +23,7 @@
     "override.screen.MixinScreen",
     "override.screen.MixinTitleScreen",
     "override.screen.MixinWinScreen",
-    "sound.MixinOptions"
+    "sound.MixinOptions",
+    "sound.MixinSoundEngine"
   ]
 }

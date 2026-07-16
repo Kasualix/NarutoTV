@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 public abstract class AbstractRenderer<T> {
     private final AtomicReference<MediaArgs> mediaArgs = new AtomicReference<>();
@@ -38,16 +37,6 @@ public abstract class AbstractRenderer<T> {
     public @Nullable AudioProducer audio() {
         var video = this.video();
         return video == null ? null : video.audio();
-    }
-
-    public float volume() {
-        var audio = this.audio();
-        return audio == null ? 1.0F : audio.getVolume();
-    }
-
-    public void setVolume(float volume) {
-        var audio = this.audio();
-        if (audio != null) audio.setVolume(volume);
     }
 
     public @Nullable LifetimeController life() {
@@ -103,26 +92,30 @@ public abstract class AbstractRenderer<T> {
         return audio;
     }
 
+    public float volume() {
+        return 1.0F;
+    }
+
     public @Nullable LifetimeController initLife(double seekTo) {
         MediaArgs mediaArgs = this.mediaArgs();
         if (mediaArgs == null) return null;
         return LifetimeController.create(System.nanoTime(), mediaArgs.fps(), mediaArgs.duration())
-                .setEndRestartFunc(() -> () -> this.restart(0D))
-                .setSynchronizeFunc(() -> this::restart)
+                .setEndRestartFunc(() -> this.restart(0D))
+                .setSynchronizeFunc(this::restart)
                 .setPauseFunc(this.pauseAudio())
                 .setResumeFunc(this.resumeAudio())
                 .seekTo(seekTo);
     }
 
-    public Supplier<Runnable> pauseAudio() {
-        return () -> () -> {
+    public Runnable pauseAudio() {
+        return () -> {
             var audio = this.audio();
             if (audio != null) audio.shutdown();
         };
     }
 
-    public Supplier<Runnable> resumeAudio() {
-        return () -> () -> {
+    public Runnable resumeAudio() {
+        return () -> {
             var audio = this.audio();
             var life = this.life();
             if (audio != null && life != null) {

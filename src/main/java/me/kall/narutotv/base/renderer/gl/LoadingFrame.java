@@ -9,19 +9,20 @@ import java.nio.ByteBuffer;
 public final class LoadingFrame {
     private static final String TEXT = "Video Loading...";
 
-    private CacheEntry cache = null;
+    private int width;
+    private int height;
+    private ByteBuffer buffer;
 
     public synchronized @NotNull ByteBuffer get(int width, int height) {
-        if (this.cache != null && this.cache.width == width && this.cache.height == height) return this.cache.buffer.duplicate();
+        if (this.buffer != null && this.width == width && this.height == height) return this.buffer;
 
         ByteBuffer generated = this.toYuv420(this.genImage(width, height));
 
-        this.cache = new CacheEntry();
-        this.cache.buffer = generated;
-        this.cache.width = width;
-        this.cache.height = height;
+        this.buffer = generated;
+        this.width = width;
+        this.height = height;
 
-        return generated.duplicate();
+        return generated;
     }
 
     private @NotNull BufferedImage genImage(int width, int height) {
@@ -99,15 +100,11 @@ public final class LoadingFrame {
             }
         }
 
-        return ByteBuffer.allocateDirect(needed).put(y).put(u).put(v).rewind().asReadOnlyBuffer();
+        return ByteBuffer.allocateDirect(needed).put(y).put(u).put(v).rewind();
     }
 
     private static int clamp(int value) {
         if (value < 0) return 0;
         return Math.min(value, 255);
-    }
-
-    private static final class CacheEntry {
-        int width; int height; ByteBuffer buffer;
     }
 }

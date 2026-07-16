@@ -1,5 +1,6 @@
 package me.kall.narutotv.fade;
 
+import me.kall.narutotv.impl.config.NarutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraftforge.client.event.InputEvent;
@@ -37,14 +38,14 @@ public class FadeCenter {
     }
 
     public static int modifyAlpha(int color) {
-        if (!FadeConfig.getInstance().fadable() || isFull()) return color;
+        if (!NarutoConfig.fadable() || isFull()) return color;
         if (isHidden()) return (color & 0x00FFFFFF);
         int alpha = (int)(fadeAlpha() * 255.0F) & 0xFF;
         return (color & 0x00FFFFFF) | (alpha << 24);
     }
 
     public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && FadeConfig.getInstance().fadable()) {
+        if (event.phase == TickEvent.Phase.START && NarutoConfig.fadable()) {
             Minecraft minecraft = Minecraft.getInstance();
             MouseHandler mouseHandler = minecraft.mouseHandler;
             double x = mouseHandler.xpos();
@@ -57,7 +58,7 @@ public class FadeCenter {
                 stopTicks = 0;
             }
 
-            fadeAlpha = stopTicks >= FadeConfig.getInstance().ticksBeforeFade() ? fadeAlpha - 1 : fadeAlpha + 5;
+            fadeAlpha = stopTicks >= NarutoConfig.ticksBeforeFade() ? fadeAlpha - 1 : fadeAlpha + 5;
             if (fadeAlpha < 0) fadeAlpha = 0;
             if (fadeAlpha > 100) fadeAlpha = 100;
         }

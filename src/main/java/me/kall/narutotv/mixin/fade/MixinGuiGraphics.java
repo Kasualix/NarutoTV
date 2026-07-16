@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.kall.narutotv.fade.FadeCenter;
-import me.kall.narutotv.fade.FadeConfig;
+import me.kall.narutotv.fade.CustomFade;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -31,13 +31,13 @@ public abstract class MixinGuiGraphics {
 
     @WrapMethod(method = "innerBlit(Lnet/minecraft/resources/ResourceLocation;IIIIIFFFFFFFF)V")
     private void fade$innerBlit(ResourceLocation atlasLocation, int x1, int x2, int y1, int y2, int blitOffset, float minU, float maxU, float minV, float maxV, float red, float green, float blue, float alpha, @NotNull Operation<Void> original) {
-        if (FadeCenter.isHidden() && !FadeConfig.getInstance().isUnfadable(atlasLocation)) return;
-        original.call(atlasLocation, x1, x2, y1, y2, blitOffset, minU, maxU, minV, maxV, red, green, blue, FadeConfig.getInstance().isUnfadable(atlasLocation) ? alpha : alpha * FadeCenter.fadeAlpha());
+        if (FadeCenter.isHidden() && !CustomFade.getInstance().isUnfadable(atlasLocation)) return;
+        original.call(atlasLocation, x1, x2, y1, y2, blitOffset, minU, maxU, minV, maxV, red, green, blue, CustomFade.getInstance().isUnfadable(atlasLocation) ? alpha : alpha * FadeCenter.fadeAlpha());
     }
 
     @WrapMethod(method = "innerBlit(Lnet/minecraft/resources/ResourceLocation;IIIIIFFFF)V")
     private void fade$innerBlit(ResourceLocation atlasLocation, int x1, int x2, int y1, int y2, int blitOffset, float minU, float maxU, float minV, float maxV, Operation<Void> original) {
-        if (FadeCenter.isHidden() && !FadeConfig.getInstance().isUnfadable(atlasLocation)) return;
+        if (FadeCenter.isHidden() && !CustomFade.getInstance().isUnfadable(atlasLocation)) return;
         original.call(atlasLocation, x1, x2, y1, y2, blitOffset, minU, maxU, minV, maxV);
     }
 }

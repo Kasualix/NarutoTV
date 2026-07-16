@@ -5,7 +5,7 @@ import me.kall.narutotv.app.file.AppPaths;
 import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.app.produce.video.BufferFrameProducer;
 import me.kall.narutotv.base.renderer.gl.LoadingFrame;
-import me.kall.narutotv.base.renderer.gl.YuvGLEngine;
+import me.kall.narutotv.base.renderer.gl.GuiGLEngine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     private final LoadingFrame loading = new LoadingFrame();
 
-    private @Nullable YuvGLEngine engine;
+    private @Nullable GuiGLEngine engine;
 
     @Override
     public @NotNull AbstractFrameProducer<ByteBuffer> initVideo() {
@@ -40,7 +40,7 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
 
         if (mediaArgs == null) return;
 
-        this.engine = new YuvGLEngine(this.fragmentSource(), this.vertexSource());
+        this.engine = this.initEngine();
         this.engine.initTexture(mediaArgs.width(), mediaArgs.height());
         this.update(null);
     }
@@ -57,6 +57,5 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
         if (this.engine != null) this.engine.shutdown();
     }
 
-    protected abstract String fragmentSource();
-    protected abstract String vertexSource();
+    protected abstract GuiGLEngine initEngine();
 }

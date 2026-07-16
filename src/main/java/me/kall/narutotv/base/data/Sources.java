@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppInstances;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Spliterator;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static me.kall.narutotv.app.YtDlp.AUDIO_DOWNLOADING_FILE;
@@ -25,6 +27,25 @@ public class Sources {
     private static final ObjectList<Source> PLAYED = new ObjectArrayList<>();
 
     private static final Random RANDOM = new Random();
+
+    private static final AtomicReference<Source> LINE_CUTTER = new AtomicReference<>();
+
+    public static void cutInLine(@NotNull Path video, @Nullable Path audio) {
+        Source source = new Source();
+        source.video = video.toString();
+        source.audio = audio != null ? audio.toString() : source.video;
+        LINE_CUTTER.set(source);
+    }
+
+    public static synchronized @NotNull MediaArgs get() {
+        Source lastDragged = LINE_CUTTER.getAndSet(null);
+        if (lastDragged != null) {
+            PLAYED.add(lastDragged);
+            return lastDragged.toMediaArgs();
+        }
+
+        return roll();
+    }
 
     public static synchronized @NotNull MediaArgs roll() {
         Sources.scan();
