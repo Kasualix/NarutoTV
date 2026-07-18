@@ -27,24 +27,137 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
 
     private @Nullable LocalSoundEngine localSoundEngine;
 
-    private double leftBottomX, leftBottomY, leftBottomZ;
-    private double leftTopX, leftTopY, leftTopZ;
-    private double rightBottomX, rightBottomY, rightBottomZ;
-    private double rightTopX, rightTopY, rightTopZ;
+    private final double leftBottomX;
+    private final double leftBottomY;
+    private final double leftBottomZ;
 
-    private double normalX, normalY, normalZ;
-    private double centerX, centerY, centerZ;
+    private final double leftTopX;
+    private final double leftTopY;
+    private final double leftTopZ;
 
-    private boolean horizontal;
-    private double side1, side2;
+    private final double rightBottomX;
+    private final double rightBottomY;
+    private final double rightBottomZ;
+
+    private final double rightTopX;
+    private final double rightTopY;
+    private final double rightTopZ;
+
+    private final double normalX;
+    private final double normalY;
+    private final double normalZ;
+
+    private final double centerX;
+    private final double centerY;
+    private final double centerZ;
+
+    private final boolean horizontal;
+
+    private final double side1;
+    private final double side2;
+
     private double sideBottomX, sideBottomZ;
     private double sideLeftX, sideLeftZ;
     private double sideTopX, sideTopZ;
     private double sideRightX, sideRightZ;
 
-    public WorldImageRenderer(BlockScreen screen) {
+    public WorldImageRenderer(@NotNull BlockScreen screen) {
         this.screen = screen;
-        this.cacheScreenGeometry(screen);
+
+        BlockPos leftBottomCorner = screen.leftBottom;
+        BlockPos leftTopCorner = screen.leftTop;
+        BlockPos rightBottomCorner = screen.rightBottom;
+        BlockPos rightTopCorner = screen.rightTop;
+
+        double leftBottomX = leftBottomCorner.getX();
+        double leftBottomY = leftBottomCorner.getY();
+        double leftBottomZ = leftBottomCorner.getZ();
+        double leftTopX = leftTopCorner.getX();
+        double leftTopY = leftTopCorner.getY();
+        double leftTopZ = leftTopCorner.getZ();
+        double rightBottomX = rightBottomCorner.getX();
+        double rightBottomY = rightBottomCorner.getY();
+        double rightBottomZ = rightBottomCorner.getZ();
+        double rightTopX = rightTopCorner.getX();
+        double rightTopY = rightTopCorner.getY();
+        double rightTopZ = rightTopCorner.getZ();
+
+        boolean widthX = leftBottomX != rightBottomX;
+        boolean widthY = leftBottomY != rightBottomY;
+        boolean widthZ = leftBottomZ != rightBottomZ;
+        boolean heightX = leftBottomX != leftTopX;
+        boolean heightY = leftBottomY != leftTopY;
+        boolean heightZ = leftBottomZ != leftTopZ;
+
+        if (widthX && heightY) {
+            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
+            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
+        } else if (widthZ && heightY) {
+            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
+            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
+        } else if (widthX && heightZ) {
+            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
+            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
+        } else if (widthY && heightX) {
+            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
+            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
+        } else if (widthY && heightZ) {
+            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
+            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
+        } else if (widthZ && heightX) {
+            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
+            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
+        }
+
+        this.leftBottomX = leftBottomX; this.leftBottomY = leftBottomY; this.leftBottomZ = leftBottomZ;
+        this.leftTopX = leftTopX; this.leftTopY = leftTopY; this.leftTopZ = leftTopZ;
+        this.rightBottomX = rightBottomX; this.rightBottomY = rightBottomY; this.rightBottomZ = rightBottomZ;
+        this.rightTopX = rightTopX; this.rightTopY = rightTopY; this.rightTopZ = rightTopZ;
+
+        double leftDeltaX = leftTopX - leftBottomX;
+        double leftDeltaY = leftTopY - leftBottomY;
+        double leftDeltaZ = leftTopZ - leftBottomZ;
+        double rightDeltaX = rightBottomX - leftBottomX;
+        double rightDeltaY = rightBottomY - leftBottomY;
+        double rightDeltaZ = rightBottomZ - leftBottomZ;
+
+        this.side1 = Math.sqrt(leftDeltaX * leftDeltaX + leftDeltaY * leftDeltaY + leftDeltaZ * leftDeltaZ);
+        this.side2 = Math.sqrt(rightDeltaX * rightDeltaX + rightDeltaY * rightDeltaY + rightDeltaZ * rightDeltaZ);
+
+        double normalX = leftDeltaY * rightDeltaZ - leftDeltaZ * rightDeltaY;
+        double normalY = leftDeltaZ * rightDeltaX - leftDeltaX * rightDeltaZ;
+        double normalZ = leftDeltaX * rightDeltaY - leftDeltaY * rightDeltaX;
+        double length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+        this.normalX = normalX / length;
+        this.normalY = normalY / length;
+        this.normalZ = normalZ / length;
+
+        this.centerX = (leftBottomX + rightTopX) / 2.0;
+        this.centerY = (leftBottomY + rightTopY) / 2.0;
+        this.centerZ = (leftBottomZ + rightTopZ) / 2.0;
+        this.horizontal = Math.abs(this.normalY) > 0.99;
+
+        if (this.horizontal) {
+            this.sideBottomX = normalizedX((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
+            this.sideBottomZ = normalizedZ((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
+            this.sideLeftX = normalizedX((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
+            this.sideLeftZ = normalizedZ((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
+            this.sideTopX = normalizedX((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
+            this.sideTopZ = normalizedZ((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
+            this.sideRightX = normalizedX((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
+            this.sideRightZ = normalizedZ((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
+
+        }
+    }
+
+    private static double normalizedX(double x, double z) {
+        double length = Math.sqrt(x * x + z * z);
+        return length > 0.001 ? x / length : 0;
+    }
+
+    private static double normalizedZ(double x, double z) {
+        double length = Math.sqrt(x * x + z * z);
+        return length > 0.001 ? z / length : 0;
     }
 
     @Override
@@ -149,103 +262,8 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
         vertexConsumer.vertex(pose, (float) rightBottomX, (float) rightBottomY, (float) rightBottomZ).color(255, 255, 255, 255).uv((float) uv[3][0], (float) uv[3][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
     }
 
-    private void cacheScreenGeometry(BlockScreen blockScreen) {
-        BlockPos leftBottomCorner = blockScreen.leftBottom;
-        BlockPos leftTopCorner = blockScreen.leftTop;
-        BlockPos rightBottomCorner = blockScreen.rightBottom;
-        BlockPos rightTopCorner = blockScreen.rightTop;
-
-        double leftBottomX = leftBottomCorner.getX();
-        double leftBottomY = leftBottomCorner.getY();
-        double leftBottomZ = leftBottomCorner.getZ();
-        double leftTopX = leftTopCorner.getX();
-        double leftTopY = leftTopCorner.getY();
-        double leftTopZ = leftTopCorner.getZ();
-        double rightBottomX = rightBottomCorner.getX();
-        double rightBottomY = rightBottomCorner.getY();
-        double rightBottomZ = rightBottomCorner.getZ();
-        double rightTopX = rightTopCorner.getX();
-        double rightTopY = rightTopCorner.getY();
-        double rightTopZ = rightTopCorner.getZ();
-
-        boolean widthX = leftBottomX != rightBottomX;
-        boolean widthY = leftBottomY != rightBottomY;
-        boolean widthZ = leftBottomZ != rightBottomZ;
-        boolean heightX = leftBottomX != leftTopX;
-        boolean heightY = leftBottomY != leftTopY;
-        boolean heightZ = leftBottomZ != leftTopZ;
-
-        if (widthX && heightY) {
-            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
-            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
-        } else if (widthZ && heightY) {
-            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
-            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
-        } else if (widthX && heightZ) {
-            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
-            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
-        } else if (widthY && heightX) {
-            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
-            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
-        } else if (widthY && heightZ) {
-            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
-            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
-        } else if (widthZ && heightX) {
-            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
-            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
-        }
-
-        this.leftBottomX = leftBottomX; this.leftBottomY = leftBottomY; this.leftBottomZ = leftBottomZ;
-        this.leftTopX = leftTopX; this.leftTopY = leftTopY; this.leftTopZ = leftTopZ;
-        this.rightBottomX = rightBottomX; this.rightBottomY = rightBottomY; this.rightBottomZ = rightBottomZ;
-        this.rightTopX = rightTopX; this.rightTopY = rightTopY; this.rightTopZ = rightTopZ;
-
-        double leftDeltaX = leftTopX - leftBottomX;
-        double leftDeltaY = leftTopY - leftBottomY;
-        double leftDeltaZ = leftTopZ - leftBottomZ;
-        double rightDeltaX = rightBottomX - leftBottomX;
-        double rightDeltaY = rightBottomY - leftBottomY;
-        double rightDeltaZ = rightBottomZ - leftBottomZ;
-
-        this.side1 = Math.sqrt(leftDeltaX * leftDeltaX + leftDeltaY * leftDeltaY + leftDeltaZ * leftDeltaZ);
-        this.side2 = Math.sqrt(rightDeltaX * rightDeltaX + rightDeltaY * rightDeltaY + rightDeltaZ * rightDeltaZ);
-
-        double normalX = leftDeltaY * rightDeltaZ - leftDeltaZ * rightDeltaY;
-        double normalY = leftDeltaZ * rightDeltaX - leftDeltaX * rightDeltaZ;
-        double normalZ = leftDeltaX * rightDeltaY - leftDeltaY * rightDeltaX;
-        double length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
-        this.normalX = normalX / length;
-        this.normalY = normalY / length;
-        this.normalZ = normalZ / length;
-
-        this.centerX = (leftBottomX + rightTopX) / 2.0;
-        this.centerY = (leftBottomY + rightTopY) / 2.0;
-        this.centerZ = (leftBottomZ + rightTopZ) / 2.0;
-        this.horizontal = Math.abs(this.normalY) > 0.99;
-        if (this.horizontal) this.cacheHorizontalSideVectors();
-    }
-
-    private void cacheHorizontalSideVectors() {
-        this.sideBottomX = normalizedX((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
-        this.sideBottomZ = normalizedZ((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
-        this.sideLeftX = normalizedX((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
-        this.sideLeftZ = normalizedZ((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
-        this.sideTopX = normalizedX((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
-        this.sideTopZ = normalizedZ((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
-        this.sideRightX = normalizedX((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
-        this.sideRightZ = normalizedZ((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
-    }
-
     private int getHorizontalRotation(int width, int height, double toCameraX, double toCameraZ) {
-        double dirLen = Math.sqrt(toCameraX * toCameraX + toCameraZ * toCameraZ);
-        double dirX = dirLen > 0.001 ? toCameraX / dirLen : 0;
-        double dirZ = dirLen > 0.001 ? toCameraZ / dirLen : 0;
-        double[] dotToSide = new double[]{
-                dotOrMinusOne(dirX, dirZ, this.sideBottomX, this.sideBottomZ),
-                dotOrMinusOne(dirX, dirZ, this.sideLeftX, this.sideLeftZ),
-                dotOrMinusOne(dirX, dirZ, this.sideTopX, this.sideTopZ),
-                dotOrMinusOne(dirX, dirZ, this.sideRightX, this.sideRightZ)
-        };
+        double[] dotToSide = this.getDotToSide(toCameraX, toCameraZ);
         int[] allowed = Math.abs(this.side1 - this.side2) < 0.1 ? new int[]{0, 1, 2, 3} : ((this.side1 < this.side2) == (width < height) ? new int[]{1, 3} : new int[]{0, 2});
         int bestEdge = allowed[0];
         double maxD = dotToSide[bestEdge];
@@ -258,14 +276,16 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
         return (4 - bestEdge) % 4;
     }
 
-    private static double normalizedX(double x, double z) {
-        double length = Math.sqrt(x * x + z * z);
-        return length > 0.001 ? x / length : 0;
-    }
-
-    private static double normalizedZ(double x, double z) {
-        double length = Math.sqrt(x * x + z * z);
-        return length > 0.001 ? z / length : 0;
+    private double @NotNull [] getDotToSide(double toCameraX, double toCameraZ) {
+        double dirLen = Math.sqrt(toCameraX * toCameraX + toCameraZ * toCameraZ);
+        double dirX = dirLen > 0.001 ? toCameraX / dirLen : 0;
+        double dirZ = dirLen > 0.001 ? toCameraZ / dirLen : 0;
+        return new double[]{
+                dotOrMinusOne(dirX, dirZ, this.sideBottomX, this.sideBottomZ),
+                dotOrMinusOne(dirX, dirZ, this.sideLeftX, this.sideLeftZ),
+                dotOrMinusOne(dirX, dirZ, this.sideTopX, this.sideTopZ),
+                dotOrMinusOne(dirX, dirZ, this.sideRightX, this.sideRightZ)
+        };
     }
 
     private static double dotOrMinusOne(double dirX, double dirZ, double sideX, double sideZ) {
