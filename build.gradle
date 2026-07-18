@@ -69,8 +69,11 @@ dependencies {
 
     if (isNeo) {
         neoForge "net.neoforged:neoforge:${versionInfo.neo}"
+        modImplementation("curse.maven:duplicationless-1380105:8122786")
     } else {
         forge "net.minecraftforge:forge:${project.minecraft_version}-${versionInfo.forge}"
+        modImplementation("curse.maven:oculus-581495:6020952")
+        modImplementation("curse.maven:duplicationless-1380105:8122781")
     }
 
     if (!isNeo) shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixinextras_version}"))

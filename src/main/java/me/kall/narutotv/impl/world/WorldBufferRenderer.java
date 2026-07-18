@@ -1,18 +1,30 @@
 package me.kall.narutotv.impl.world;
 
 import me.kall.narutotv.app.data.MediaArgs;
+import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.ByteBufferRenderer;
 import me.kall.narutotv.base.renderer.gl.GuiGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
+import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.ext.BindScreen;
+import me.kall.narutotv.impl.world.sound.LocalSoundEngine;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class WorldBufferRenderer extends ByteBufferRenderer {
+public class WorldBufferRenderer extends ByteBufferRenderer implements BindScreen {
     private final BlockScreen screen;
+
+    private @Nullable LocalSoundEngine localSoundEngine;
 
     public WorldBufferRenderer(BlockScreen screen) {
         this.screen = screen;
+    }
+
+    @Override
+    public @Nullable WorldGLEngine engine() {
+        return (WorldGLEngine) this.engine;
     }
 
     @Override
@@ -75,6 +87,54 @@ public class WorldBufferRenderer extends ByteBufferRenderer {
 
     @Override
     public @NotNull MediaArgs initMediaArgs() {
-        return Sources.roll();
+        return Sources.get();
+    }
+
+    @Override
+    public BlockScreen screen() {
+        return this.screen;
+    }
+
+    @Override
+    public synchronized void shutdown() {
+        super.shutdown();
+
+        if (this.localSoundEngine != null) {
+            this.localSoundEngine.off.run();
+            this.localSoundEngine = null;
+        }
+    }
+
+    @Override
+    public @Nullable AudioProducer initAudio(double seekTo) {
+        if (this.screen.hasLocalSound()) {
+            this.localSoundEngine = new LocalSoundEngine(this.screen);
+            this.localSoundEngine.on.accept(0D);
+            return null;
+        } else {
+            return super.initAudio(seekTo);
+        }
+    }
+
+    @Override
+    public Runnable pauseAudio() {
+        if (this.localSoundEngine != null) {
+            return this.localSoundEngine.off;
+        } else {
+            return super.pauseAudio();
+        }
+    }
+
+    @Override
+    public Runnable resumeAudio() {
+        LocalSoundEngine localSoundEngine = this.localSoundEngine;
+        if (localSoundEngine != null) {
+            return () -> {
+                var life = this.life();
+                if (life != null) localSoundEngine.on.accept((double) life.nanoTimeFromSetup() / 1_000_000_000D);
+            };
+        } else {
+            return super.resumeAudio();
+        }
     }
 }

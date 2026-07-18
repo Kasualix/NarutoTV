@@ -16,7 +16,7 @@ public abstract class MixinMinecraft {
     private void shutdownEarlyRenderer(Minecraft instance, Overlay loadingGui, @NotNull Operation<Void> original) {
         System.setProperty(NarutoProperties.SHUTDOWN, "T");
         if (System.getProperty(NarutoProperties.EARLY_END) == null) System.setProperty(NarutoProperties.EARLY_END, String.valueOf(System.nanoTime()));
-        NarutoGuiCenter.init();
+        NarutoGuiCenter.getInstance().init();
         original.call(instance, loadingGui);
     }
 }

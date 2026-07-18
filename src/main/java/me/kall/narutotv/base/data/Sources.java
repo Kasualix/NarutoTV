@@ -44,10 +44,6 @@ public class Sources {
             return lastDragged.toMediaArgs();
         }
 
-        return roll();
-    }
-
-    public static synchronized @NotNull MediaArgs roll() {
         Sources.scan();
         if (SOURCES.isEmpty()) throw new IllegalArgumentException("No sources found");
         Source target = SOURCES.get(RANDOM.nextInt(SOURCES.size()));

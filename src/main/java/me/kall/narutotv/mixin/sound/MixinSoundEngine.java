@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.Mixin;
 public abstract class MixinSoundEngine {
     @WrapMethod(method = "reload")
     private void reloadSound(@NotNull Operation<Void> original) {
-        AbstractRenderer<?> renderer = NarutoGuiCenter.ACTIVE.get();
+        AbstractRenderer<?> renderer = NarutoGuiCenter.getActive();
         LifetimeController life = renderer.life();
         AudioProducer audio = renderer.audio();
         long start = System.nanoTime();

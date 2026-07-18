@@ -14,7 +14,11 @@ import java.nio.ByteBuffer;
 public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     private final LoadingFrame loading = new LoadingFrame();
 
-    private @Nullable GuiGLEngine engine;
+    protected @Nullable GuiGLEngine engine;
+
+    public @Nullable GuiGLEngine engine() {
+        return this.engine;
+    }
 
     @Override
     public @NotNull AbstractFrameProducer<ByteBuffer> initVideo() {

@@ -33,7 +33,7 @@ public class DragVideoInvoker implements SourceDragCenter.Invoker {
                 FileUtils.copyFile(source, target.toFile());
                 System.out.println("Successfully copy " + source + " to " + target + ". Time cost: " + ((System.nanoTime() - start) / 1_000_000_000.0D) + " seconds.");
                 Sources.cutInLine(target, null);
-                Minecraft.getInstance().execute(NarutoGuiCenter.ACTIVE.get()::shutdown);
+                Minecraft.getInstance().execute(NarutoGuiCenter.getActive()::shutdown);
             } catch (IOException exception) {
                 System.err.println("Exception dragging video " + source.getName());
                 exception.printStackTrace(System.err);

@@ -87,13 +87,9 @@ public abstract class AbstractRenderer<T> {
     public @Nullable AudioProducer initAudio(double seekTo) {
         var mediaArgs = this.mediaArgs();
         if (mediaArgs == null) return null;
-        var audio = AudioProducer.create(mediaArgs, this.volume(), AppPaths.absFFmpegPath());
+        var audio = AudioProducer.create(mediaArgs, 1.0F, AppPaths.absFFmpegPath());
         audio.setup(seekTo);
         return audio;
-    }
-
-    public float volume() {
-        return 1.0F;
     }
 
     public @Nullable LifetimeController initLife(double seekTo) {

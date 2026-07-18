@@ -5,6 +5,7 @@ import me.kall.narutotv.base.data.Paths;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.impl.config.NarutoConfig;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
+import me.kall.narutotv.impl.world.data.client.ClientRenderers;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -20,19 +21,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class KeybindCenter {
-    private static final KeybindCenter INSTANCE = new KeybindCenter();
-
     public static void register(@NotNull IEventBus forgeBus) {
-        forgeBus.addListener(INSTANCE::tickClient);
+        KeybindCenter keybindCenter = new KeybindCenter();
+        forgeBus.addListener(keybindCenter::tickClient);
     }
 
     private int interval = 0;
 
     private static final Set<String> DOWNLOADING = ConcurrentHashMap.newKeySet();
 
-    public void tickClient(TickEvent.@NotNull ClientTickEvent event) {
+    private void tickClient(TickEvent.@NotNull ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
-        if (!NarutoGuiCenter.ACTIVE.get().isRunning()) return;
+        if (!NarutoGuiCenter.getActive().isRunning()) return;
 
         if (this.interval > 0) {
             this.interval--;
@@ -51,18 +51,23 @@ public class KeybindCenter {
         if (f12) {
             this.interval = 10;
             if (m) {
-                NarutoConfig.toggleMuteMusic();
+                NarutoConfig.Client.toggleMuteMusic();
             } else if (f) {
-                NarutoConfig.toggleFadable();
+                NarutoConfig.Client.toggleFadable();
             } else if (shift) {
-                NarutoGuiCenter.swap();
+                this.swap();
             } else {
-                NarutoGuiCenter.ACTIVE.get().shutdown();
+                NarutoGuiCenter.getActive().shutdown();
             }
         } else if (ctrl && v) {
             this.interval = 10;
             this.pasteUrl();
         }
+    }
+
+    private void swap() {
+        NarutoGuiCenter.getInstance().swap();
+        ClientRenderers.getInstance().swap();
     }
 
     private void pasteUrl() {
@@ -85,7 +90,7 @@ public class KeybindCenter {
                             if (downloaded == null) return;
                             DOWNLOADING.remove(url);
                             Sources.cutInLine(downloaded.absVideoPath(), downloaded.absAudioPath());
-                            Minecraft.getInstance().execute(NarutoGuiCenter.ACTIVE.get()::shutdown);
+                            Minecraft.getInstance().execute(NarutoGuiCenter.getActive()::shutdown);
                         });
             }
         } catch (IOException | UnsupportedFlavorException exception) {

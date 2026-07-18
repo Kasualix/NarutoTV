@@ -25,5 +25,8 @@
     "override.screen.MixinWinScreen",
     "sound.MixinOptions",
     "sound.MixinSoundEngine"
+  ],
+  "mixins": [
+    "world.MixinServerLevel"
   ]
 }

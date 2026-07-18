@@ -19,7 +19,7 @@ public class SourceDragCenter extends GLFWDropCallback {
 
     private final Invoker[] invokers = new Invoker[]{DragVideoInvoker.INSTANCE};
 
-    public void setup(FMLClientSetupEvent event) {
+    private void setup(FMLClientSetupEvent event) {
         this.last = GLFW.glfwSetDropCallback(Minecraft.getInstance().getWindow().getWindow(), new SourceDragCenter());
     }
 
