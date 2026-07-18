@@ -27,8 +27,24 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
 
     private @Nullable LocalSoundEngine localSoundEngine;
 
+    private double leftBottomX, leftBottomY, leftBottomZ;
+    private double leftTopX, leftTopY, leftTopZ;
+    private double rightBottomX, rightBottomY, rightBottomZ;
+    private double rightTopX, rightTopY, rightTopZ;
+
+    private double normalX, normalY, normalZ;
+    private double centerX, centerY, centerZ;
+
+    private boolean horizontal;
+    private double side1, side2;
+    private double sideBottomX, sideBottomZ;
+    private double sideLeftX, sideLeftZ;
+    private double sideTopX, sideTopZ;
+    private double sideRightX, sideRightZ;
+
     public WorldImageRenderer(BlockScreen screen) {
         this.screen = screen;
+        this.cacheScreenGeometry(screen);
     }
 
     @Override
@@ -49,294 +65,55 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
     public void render(PoseStack poseStack, MultiBufferSource bufferSource, Vec3 camera) {
         ResourceLocation nextFrame = this.textureLocation;
         if (nextFrame == null) return;
-        BlockScreen blockScreen = this.screen;
 
         MediaArgs mediaArgs = this.mediaArgs();
         assert mediaArgs != null;
-        int width = mediaArgs.width();
-        int height = mediaArgs.height();
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucent(nextFrame));
 
-        BlockPos leftBottomCorner = blockScreen.leftBottom;
-        BlockPos leftTopCorner = blockScreen.leftTop;
-        BlockPos rightBottomCorner = blockScreen.rightBottom;
-        BlockPos rightTopCorner = blockScreen.rightTop;
+        double normalX = this.normalX;
+        double normalY = this.normalY;
+        double normalZ = this.normalZ;
 
-        double leftBottomX = leftBottomCorner.getX();
-        double leftBottomY = leftBottomCorner.getY();
-        double leftBottomZ = leftBottomCorner.getZ();
-
-        double leftTopX = leftTopCorner.getX();
-        double leftTopY = leftTopCorner.getY();
-        double leftTopZ = leftTopCorner.getZ();
-
-        double rightBottomX = rightBottomCorner.getX();
-        double rightBottomY = rightBottomCorner.getY();
-        double rightBottomZ = rightBottomCorner.getZ();
-
-        double rightTopX = rightTopCorner.getX();
-        double rightTopY = rightTopCorner.getY();
-        double rightTopZ = rightTopCorner.getZ();
-
-        boolean widthX = leftBottomX != rightBottomX;
-        boolean widthY = leftBottomY != rightBottomY;
-        boolean widthZ = leftBottomZ != rightBottomZ;
-
-        boolean heightX = leftBottomX != leftTopX;
-        boolean heightY = leftBottomY != leftTopY;
-        boolean heightZ = leftBottomZ != leftTopZ;
-
-        if (widthX && heightY) {
-            if (leftTopY > leftBottomY) {
-                leftTopY += 1.0;
-                rightTopY += 1.0;
-            } else {
-                leftBottomY += 1.0;
-                rightBottomY += 1.0;
-            }
-
-            if (rightBottomX > leftBottomX) {
-                rightBottomX += 1.0;
-                rightTopX += 1.0;
-            } else {
-                leftBottomX += 1.0;
-                leftTopX += 1.0;
-            }
-        } else if (widthZ && heightY) {
-            if (leftTopY > leftBottomY) {
-                leftTopY += 1.0;
-                rightTopY += 1.0;
-            } else {
-                leftBottomY += 1.0;
-                rightBottomY += 1.0;
-            }
-
-            if (rightBottomZ > leftBottomZ) {
-                rightBottomZ += 1.0;
-                rightTopZ += 1.0;
-            } else {
-                leftBottomZ += 1.0;
-                leftTopZ += 1.0;
-            }
-        } else if (widthX && heightZ) {
-            if (leftTopZ > leftBottomZ) {
-                leftTopZ += 1.0;
-                rightTopZ += 1.0;
-            } else {
-                leftBottomZ += 1.0;
-                rightBottomZ += 1.0;
-            }
-
-            if (rightBottomX > leftBottomX) {
-                rightBottomX += 1.0;
-                rightTopX += 1.0;
-            } else {
-                leftBottomX += 1.0;
-                leftTopX += 1.0;
-            }
-        } else if (widthY && heightX) {
-            if (leftTopX > leftBottomX) {
-                leftTopX += 1.0;
-                rightTopX += 1.0;
-            } else {
-                leftBottomX += 1.0;
-                rightBottomX += 1.0;
-            }
-
-            if (rightBottomY > leftBottomY) {
-                rightBottomY += 1.0;
-                rightTopY += 1.0;
-            } else {
-                leftBottomY += 1.0;
-                leftTopY += 1.0;
-            }
-        } else if (widthY && heightZ) {
-            if (leftTopZ > leftBottomZ) {
-                leftTopZ += 1.0;
-                rightTopZ += 1.0;
-            } else {
-                leftBottomZ += 1.0;
-                rightBottomZ += 1.0;
-            }
-
-            if (rightBottomY > leftBottomY) {
-                rightBottomY += 1.0;
-                rightTopY += 1.0;
-            } else {
-                leftBottomY += 1.0;
-                leftTopY += 1.0;
-            }
-        } else if (widthZ && heightX) {
-            if (leftTopX > leftBottomX) {
-                leftTopX += 1.0;
-                rightTopX += 1.0;
-            } else {
-                leftBottomX += 1.0;
-                rightBottomX += 1.0;
-            }
-
-            if (rightBottomZ > leftBottomZ) {
-                rightBottomZ += 1.0;
-                rightTopZ += 1.0;
-            } else {
-                leftBottomZ += 1.0;
-                leftTopZ += 1.0;
-            }
-        }
-
-        double leftCornerDistX = leftTopX - leftBottomX;
-        double leftCornerDistY = leftTopY - leftBottomY;
-        double leftCornerDistZ = leftTopZ - leftBottomZ;
-
-        double rightCornerDistX = rightBottomX - leftBottomX;
-        double rightCornerDistY = rightBottomY - leftBottomY;
-        double rightCornerDistZ = rightBottomZ - leftBottomZ;
-
-        double normalX = leftCornerDistY * rightCornerDistZ - leftCornerDistZ * rightCornerDistY;
-        double normalY = leftCornerDistZ * rightCornerDistX - leftCornerDistX * rightCornerDistZ;
-        double normalZ = leftCornerDistX * rightCornerDistY - leftCornerDistY * rightCornerDistX;
-
-        double length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
-
-        normalX /= length;
-        normalY /= length;
-        normalZ /= length;
-
-        double centerX = (leftBottomX + rightTopX) / 2.0;
-        double centerY = (leftBottomY + rightTopY) / 2.0;
-        double centerZ = (leftBottomZ + rightTopZ) / 2.0;
-
-        double toCameraX = camera.x - centerX;
-        double toCameraY = camera.y - centerY;
-        double toCameraZ = camera.z - centerZ;
-
+        double toCameraX = camera.x - this.centerX;
+        double toCameraY = camera.y - this.centerY;
+        double toCameraZ = camera.z - this.centerZ;
         double dot = normalX * toCameraX + normalY * toCameraY + normalZ * toCameraZ;
-
         boolean isFrontFacing = dot > 0;
 
-        if (dot < 0) {
+        if (!isFrontFacing) {
             normalX = -normalX;
             normalY = -normalY;
             normalZ = -normalZ;
         }
 
+        double leftBottomX = this.leftBottomX;
+        double leftBottomY = this.leftBottomY;
+        double leftBottomZ = this.leftBottomZ;
+        double leftTopX = this.leftTopX;
+        double leftTopY = this.leftTopY;
+        double leftTopZ = this.leftTopZ;
+        double rightBottomX = this.rightBottomX;
+        double rightBottomY = this.rightBottomY;
+        double rightBottomZ = this.rightBottomZ;
+        double rightTopX = this.rightTopX;
+        double rightTopY = this.rightTopY;
+        double rightTopZ = this.rightTopZ;
+
         if (isFrontFacing) {
-            leftBottomX += normalX;
-            leftBottomY += normalY;
-            leftBottomZ += normalZ;
-
-            leftTopX += normalX;
-            leftTopY += normalY;
-            leftTopZ += normalZ;
-
-            rightBottomX += normalX;
-            rightBottomY += normalY;
-            rightBottomZ += normalZ;
-
-            rightTopX += normalX;
-            rightTopY += normalY;
-            rightTopZ += normalZ;
+            leftBottomX += normalX; leftBottomY += normalY; leftBottomZ += normalZ;
+            leftTopX += normalX; leftTopY += normalY; leftTopZ += normalZ;
+            rightBottomX += normalX; rightBottomY += normalY; rightBottomZ += normalZ;
+            rightTopX += normalX; rightTopY += normalY; rightTopZ += normalZ;
         }
 
         double againstZFighting = 0.05;
+        leftBottomX += normalX * againstZFighting; leftBottomY += normalY * againstZFighting; leftBottomZ += normalZ * againstZFighting;
+        leftTopX += normalX * againstZFighting; leftTopY += normalY * againstZFighting; leftTopZ += normalZ * againstZFighting;
+        rightBottomX += normalX * againstZFighting; rightBottomY += normalY * againstZFighting; rightBottomZ += normalZ * againstZFighting;
+        rightTopX += normalX * againstZFighting; rightTopY += normalY * againstZFighting; rightTopZ += normalZ * againstZFighting;
 
-        leftBottomX += normalX * againstZFighting;
-        leftBottomY += normalY * againstZFighting;
-        leftBottomZ += normalZ * againstZFighting;
-
-        leftTopX += normalX * againstZFighting;
-        leftTopY += normalY * againstZFighting;
-        leftTopZ += normalZ * againstZFighting;
-
-        rightBottomX += normalX * againstZFighting;
-        rightBottomY += normalY * againstZFighting;
-        rightBottomZ += normalZ * againstZFighting;
-
-        rightTopX += normalX * againstZFighting;
-        rightTopY += normalY * againstZFighting;
-        rightTopZ += normalZ * againstZFighting;
-
-        boolean isHorizontal = Math.abs(normalY) > 0.99;
-        int rot = 0;
-
-        if (isHorizontal) {
-            double side1 = Math.sqrt(leftCornerDistX * leftCornerDistX + leftCornerDistY * leftCornerDistY + leftCornerDistZ * leftCornerDistZ);
-            double side2 = Math.sqrt(rightCornerDistX * rightCornerDistX + rightCornerDistY * rightCornerDistY + rightCornerDistZ * rightCornerDistZ);
-            boolean isSquare = Math.abs(side1 - side2) < 0.1;
-
-            boolean videoPortrait = width < height;
-
-            double midBottomX = (leftBottomX + rightBottomX) / 2.0;
-            double midBottomZ = (leftBottomZ + rightBottomZ) / 2.0;
-            double midLeftX = (leftBottomX + leftTopX) / 2.0;
-            double midLeftZ = (leftBottomZ + leftTopZ) / 2.0;
-            double midTopX = (leftTopX + rightTopX) / 2.0;
-            double midTopZ = (leftTopZ + rightTopZ) / 2.0;
-            double midRightX = (rightBottomX + rightTopX) / 2.0;
-            double midRightZ = (rightBottomZ + rightTopZ) / 2.0;
-
-            double dirX = toCameraX;
-            double dirZ = toCameraZ;
-            double dirLen = Math.sqrt(dirX * dirX + dirZ * dirZ);
-            if (dirLen > 0.001) {
-                dirX /= dirLen;
-                dirZ /= dirLen;
-            } else {
-                dirX = 0; dirZ = 0;
-            }
-
-            double[] dotToSide = new double[4];
-
-            double vx = midBottomX - centerX;
-            double vz = midBottomZ - centerZ;
-            double vlen = Math.sqrt(vx * vx + vz * vz);
-            if (vlen > 0.001) {
-                vx /= vlen; vz /= vlen;
-                dotToSide[0] = dirX * vx + dirZ * vz;
-            } else dotToSide[0] = -1;
-
-            vx = midLeftX - centerX;
-            vz = midLeftZ - centerZ;
-            vlen = Math.sqrt(vx * vx + vz * vz);
-            if (vlen > 0.001) {
-                vx /= vlen; vz /= vlen;
-                dotToSide[1] = dirX * vx + dirZ * vz;
-            } else dotToSide[1] = -1;
-
-            vx = midTopX - centerX;
-            vz = midTopZ - centerZ;
-            vlen = Math.sqrt(vx * vx + vz * vz);
-            if (vlen > 0.001) {
-                vx /= vlen; vz /= vlen;
-                dotToSide[2] = dirX * vx + dirZ * vz;
-            } else dotToSide[2] = -1;
-
-            vx = midRightX - centerX;
-            vz = midRightZ - centerZ;
-            vlen = Math.sqrt(vx * vx + vz * vz);
-            if (vlen > 0.001) {
-                vx /= vlen; vz /= vlen;
-                dotToSide[3] = dirX * vx + dirZ * vz;
-            } else dotToSide[3] = -1;
-
-            int[] allowed;
-            if (isSquare) {
-                allowed = new int[]{0, 1, 2, 3};
-            } else {
-                allowed = ((side1 < side2) == videoPortrait) ? new int[]{1, 3} : new int[]{0, 2};
-            }
-
-            int bestEdge = allowed[0];
-            double maxD = dotToSide[allowed[0]];
-            for (int e : allowed) {
-                if (dotToSide[e] > maxD) {
-                    maxD = dotToSide[e];
-                    bestEdge = e;
-                }
-            }
-            rot = (4 - bestEdge) % 4;
-        }
+        int rot = this.horizontal ? this.getHorizontalRotation(mediaArgs.width(), mediaArgs.height(), toCameraX, toCameraZ) : 0;
 
         Matrix4f pose = poseStack.last().pose();
         Matrix3f normalMat = poseStack.last().normal();
@@ -355,7 +132,7 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
         }
         uv[3][1] = 1;
 
-        if (isHorizontal) {
+        if (this.horizontal) {
             for (int r = 0; r < rot; r++) {
                 for (int i = 0; i < 4; i++) {
                     double oldU = uv[i][0];
@@ -366,17 +143,133 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
             }
         }
 
-        if (isFrontFacing) {
-            vertexConsumer.vertex(pose, (float) leftBottomX, (float) leftBottomY, (float) leftBottomZ).color(255, 255, 255, 255).uv((float) uv[0][0], (float) uv[0][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-            vertexConsumer.vertex(pose, (float) leftTopX, (float) leftTopY, (float) leftTopZ).color(255, 255, 255, 255).uv((float) uv[1][0], (float) uv[1][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-            vertexConsumer.vertex(pose, (float) rightTopX, (float) rightTopY, (float) rightTopZ).color(255, 255, 255, 255).uv((float) uv[2][0], (float) uv[2][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-            vertexConsumer.vertex(pose, (float) rightBottomX, (float) rightBottomY, (float) rightBottomZ).color(255, 255, 255, 255).uv((float) uv[3][0], (float) uv[3][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-        } else {
-            vertexConsumer.vertex(pose, (float) leftBottomX, (float) leftBottomY, (float) leftBottomZ).color(255, 255, 255, 255).uv((float) uv[0][0], (float) uv[0][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-            vertexConsumer.vertex(pose, (float) leftTopX, (float) leftTopY, (float) leftTopZ).color(255, 255, 255, 255).uv((float) uv[1][0], (float) uv[1][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-            vertexConsumer.vertex(pose, (float) rightTopX, (float) rightTopY, (float) rightTopZ).color(255, 255, 255, 255).uv((float) uv[2][0], (float) uv[2][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-            vertexConsumer.vertex(pose, (float) rightBottomX, (float) rightBottomY, (float) rightBottomZ).color(255, 255, 255, 255).uv((float) uv[3][0], (float) uv[3][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
+        vertexConsumer.vertex(pose, (float) leftBottomX, (float) leftBottomY, (float) leftBottomZ).color(255, 255, 255, 255).uv((float) uv[0][0], (float) uv[0][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
+        vertexConsumer.vertex(pose, (float) leftTopX, (float) leftTopY, (float) leftTopZ).color(255, 255, 255, 255).uv((float) uv[1][0], (float) uv[1][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
+        vertexConsumer.vertex(pose, (float) rightTopX, (float) rightTopY, (float) rightTopZ).color(255, 255, 255, 255).uv((float) uv[2][0], (float) uv[2][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
+        vertexConsumer.vertex(pose, (float) rightBottomX, (float) rightBottomY, (float) rightBottomZ).color(255, 255, 255, 255).uv((float) uv[3][0], (float) uv[3][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
+    }
+
+    private void cacheScreenGeometry(BlockScreen blockScreen) {
+        BlockPos leftBottomCorner = blockScreen.leftBottom;
+        BlockPos leftTopCorner = blockScreen.leftTop;
+        BlockPos rightBottomCorner = blockScreen.rightBottom;
+        BlockPos rightTopCorner = blockScreen.rightTop;
+
+        double leftBottomX = leftBottomCorner.getX();
+        double leftBottomY = leftBottomCorner.getY();
+        double leftBottomZ = leftBottomCorner.getZ();
+        double leftTopX = leftTopCorner.getX();
+        double leftTopY = leftTopCorner.getY();
+        double leftTopZ = leftTopCorner.getZ();
+        double rightBottomX = rightBottomCorner.getX();
+        double rightBottomY = rightBottomCorner.getY();
+        double rightBottomZ = rightBottomCorner.getZ();
+        double rightTopX = rightTopCorner.getX();
+        double rightTopY = rightTopCorner.getY();
+        double rightTopZ = rightTopCorner.getZ();
+
+        boolean widthX = leftBottomX != rightBottomX;
+        boolean widthY = leftBottomY != rightBottomY;
+        boolean widthZ = leftBottomZ != rightBottomZ;
+        boolean heightX = leftBottomX != leftTopX;
+        boolean heightY = leftBottomY != leftTopY;
+        boolean heightZ = leftBottomZ != leftTopZ;
+
+        if (widthX && heightY) {
+            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
+            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
+        } else if (widthZ && heightY) {
+            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
+            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
+        } else if (widthX && heightZ) {
+            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
+            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
+        } else if (widthY && heightX) {
+            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
+            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
+        } else if (widthY && heightZ) {
+            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
+            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
+        } else if (widthZ && heightX) {
+            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
+            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
         }
+
+        this.leftBottomX = leftBottomX; this.leftBottomY = leftBottomY; this.leftBottomZ = leftBottomZ;
+        this.leftTopX = leftTopX; this.leftTopY = leftTopY; this.leftTopZ = leftTopZ;
+        this.rightBottomX = rightBottomX; this.rightBottomY = rightBottomY; this.rightBottomZ = rightBottomZ;
+        this.rightTopX = rightTopX; this.rightTopY = rightTopY; this.rightTopZ = rightTopZ;
+
+        double leftDeltaX = leftTopX - leftBottomX;
+        double leftDeltaY = leftTopY - leftBottomY;
+        double leftDeltaZ = leftTopZ - leftBottomZ;
+        double rightDeltaX = rightBottomX - leftBottomX;
+        double rightDeltaY = rightBottomY - leftBottomY;
+        double rightDeltaZ = rightBottomZ - leftBottomZ;
+
+        this.side1 = Math.sqrt(leftDeltaX * leftDeltaX + leftDeltaY * leftDeltaY + leftDeltaZ * leftDeltaZ);
+        this.side2 = Math.sqrt(rightDeltaX * rightDeltaX + rightDeltaY * rightDeltaY + rightDeltaZ * rightDeltaZ);
+
+        double normalX = leftDeltaY * rightDeltaZ - leftDeltaZ * rightDeltaY;
+        double normalY = leftDeltaZ * rightDeltaX - leftDeltaX * rightDeltaZ;
+        double normalZ = leftDeltaX * rightDeltaY - leftDeltaY * rightDeltaX;
+        double length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+        this.normalX = normalX / length;
+        this.normalY = normalY / length;
+        this.normalZ = normalZ / length;
+
+        this.centerX = (leftBottomX + rightTopX) / 2.0;
+        this.centerY = (leftBottomY + rightTopY) / 2.0;
+        this.centerZ = (leftBottomZ + rightTopZ) / 2.0;
+        this.horizontal = Math.abs(this.normalY) > 0.99;
+        if (this.horizontal) this.cacheHorizontalSideVectors();
+    }
+
+    private void cacheHorizontalSideVectors() {
+        this.sideBottomX = normalizedX((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
+        this.sideBottomZ = normalizedZ((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
+        this.sideLeftX = normalizedX((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
+        this.sideLeftZ = normalizedZ((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
+        this.sideTopX = normalizedX((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
+        this.sideTopZ = normalizedZ((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
+        this.sideRightX = normalizedX((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
+        this.sideRightZ = normalizedZ((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
+    }
+
+    private int getHorizontalRotation(int width, int height, double toCameraX, double toCameraZ) {
+        double dirLen = Math.sqrt(toCameraX * toCameraX + toCameraZ * toCameraZ);
+        double dirX = dirLen > 0.001 ? toCameraX / dirLen : 0;
+        double dirZ = dirLen > 0.001 ? toCameraZ / dirLen : 0;
+        double[] dotToSide = new double[]{
+                dotOrMinusOne(dirX, dirZ, this.sideBottomX, this.sideBottomZ),
+                dotOrMinusOne(dirX, dirZ, this.sideLeftX, this.sideLeftZ),
+                dotOrMinusOne(dirX, dirZ, this.sideTopX, this.sideTopZ),
+                dotOrMinusOne(dirX, dirZ, this.sideRightX, this.sideRightZ)
+        };
+        int[] allowed = Math.abs(this.side1 - this.side2) < 0.1 ? new int[]{0, 1, 2, 3} : ((this.side1 < this.side2) == (width < height) ? new int[]{1, 3} : new int[]{0, 2});
+        int bestEdge = allowed[0];
+        double maxD = dotToSide[bestEdge];
+        for (int edge : allowed) {
+            if (dotToSide[edge] > maxD) {
+                maxD = dotToSide[edge];
+                bestEdge = edge;
+            }
+        }
+        return (4 - bestEdge) % 4;
+    }
+
+    private static double normalizedX(double x, double z) {
+        double length = Math.sqrt(x * x + z * z);
+        return length > 0.001 ? x / length : 0;
+    }
+
+    private static double normalizedZ(double x, double z) {
+        double length = Math.sqrt(x * x + z * z);
+        return length > 0.001 ? z / length : 0;
+    }
+
+    private static double dotOrMinusOne(double dirX, double dirZ, double sideX, double sideZ) {
+        return sideX == 0 && sideZ == 0 ? -1 : dirX * sideX + dirZ * sideZ;
     }
 
     @Override
