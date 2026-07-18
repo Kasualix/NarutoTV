@@ -26,13 +26,15 @@ public class BlockScreen {
 
     public ResourceLocation localSound = NO_LOCAL_SOUND;
 
-    public String video, audio;
+    public String video = "", audio = "";
 
     private LongSet areaInvolved, borderInvolved;
 
-    public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound) {
+    public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio) {
         this(BlockPos.of(corners[0]), BlockPos.of(corners[1]), BlockPos.of(corners[2]), BlockPos.of(corners[3]), dimension);
         this.localSound = localSound;
+        this.video = video;
+        this.audio = audio;
     }
 
     public BlockScreen(@NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2, @NotNull BlockPos topCorner1, @NotNull BlockPos topCorner2, ResourceLocation dimension) {

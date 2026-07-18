@@ -24,6 +24,8 @@ public class BlockScreens extends SavedData {
     private static final String DIMENSION_KEY = "Dimension";
     private static final String CORNERS_KEY = "Corners";
     private static final String LOCAL_SOUND_KEY = "LocalSound";
+    private static final String VIDEO_KEY = "Video";
+    private static final String AUDIO_KEY = "Audio";
 
     private final Object2ObjectOpenHashMap<ResourceLocation, ObjectOpenHashSet<BlockScreen>> data = new Object2ObjectOpenHashMap<>();
 
@@ -64,6 +66,7 @@ public class BlockScreens extends SavedData {
                 screenTag.putString(DIMENSION_KEY, dimension.toString());
                 screenTag.putLongArray(CORNERS_KEY, blockScreen.toLongArray());
                 screenTag.putString(LOCAL_SOUND_KEY, blockScreen.localSound.toString());
+                screenTag.putString(VIDEO_KEY, blockScreen.video);
                 screensList.add(screenTag);
             }
         }
@@ -80,7 +83,7 @@ public class BlockScreens extends SavedData {
 
             ResourceLocation dimension = ResourceLocation.parse(screenTag.getString(DIMENSION_KEY));
 
-            blockScreens.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new BlockScreen(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY))));
+            blockScreens.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new BlockScreen(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY)), screenTag.getString(VIDEO_KEY), screenTag.getString(AUDIO_KEY)));
         }
 
         return blockScreens;

@@ -9,6 +9,7 @@ import me.kall.narutotv.impl.world.data.client.ClientRenderers;
 import me.kall.narutotv.impl.world.network.packet.base.ScreenPacket;
 import me.kall.narutotv.impl.world.util.AudioZipGenerator;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,12 @@ public class ScreenSyncPacket {
             int innerSize = buffer.readVarInt();
             ObjectOpenHashSet<BlockScreen> screens = new ObjectOpenHashSet<>();
             for (int innerIndex = 0; innerIndex < innerSize; innerIndex++) {
-                screens.add(new BlockScreen(buffer.readLongArray(), buffer.readResourceLocation(), buffer.readResourceLocation()));
+                long[] corners = buffer.readLongArray();
+                ResourceLocation dimension = buffer.readResourceLocation();
+                ResourceLocation localSound = buffer.readResourceLocation();
+                String video = buffer.readUtf();
+                String audio = buffer.readUtf();
+                screens.add(new BlockScreen(corners, dimension, localSound, video, audio));
             }
             this.blockScreens.add(screens);
         }
@@ -42,6 +48,8 @@ public class ScreenSyncPacket {
                 buffer.writeLongArray(blockScreen.toLongArray());
                 buffer.writeResourceLocation(blockScreen.dimension);
                 buffer.writeResourceLocation(blockScreen.localSound);
+                buffer.writeUtf(blockScreen.video);
+                buffer.writeUtf(blockScreen.audio);
             });
         });
     }

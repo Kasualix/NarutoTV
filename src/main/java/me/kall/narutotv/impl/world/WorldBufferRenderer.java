@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class WorldBufferRenderer extends ByteBufferRenderer implements BindScreen {
     private final BlockScreen screen;
 
-    private @Nullable LocalSoundEngine localSoundEngine;
+    private @Nullable LocalSoundEngine localSound;
 
     public WorldBufferRenderer(BlockScreen screen) {
         this.screen = screen;
@@ -99,17 +99,17 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
     public synchronized void shutdown() {
         super.shutdown();
 
-        if (this.localSoundEngine != null) {
-            this.localSoundEngine.off.run();
-            this.localSoundEngine = null;
+        if (this.localSound != null) {
+            this.localSound.off.run();
+            this.localSound = null;
         }
     }
 
     @Override
     public @Nullable AudioProducer initAudio(double seekTo) {
         if (this.screen.hasLocalSound()) {
-            this.localSoundEngine = new LocalSoundEngine(this.screen);
-            this.localSoundEngine.on.accept(0D);
+            this.localSound = new LocalSoundEngine(this.screen);
+            this.localSound.on.accept(0D);
             return null;
         } else {
             return super.initAudio(seekTo);
@@ -118,8 +118,8 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
 
     @Override
     public Runnable pauseAudio() {
-        if (this.localSoundEngine != null) {
-            return this.localSoundEngine.off;
+        if (this.localSound != null) {
+            return this.localSound.off;
         } else {
             return super.pauseAudio();
         }
@@ -127,7 +127,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
 
     @Override
     public Runnable resumeAudio() {
-        LocalSoundEngine localSoundEngine = this.localSoundEngine;
+        LocalSoundEngine localSoundEngine = this.localSound;
         if (localSoundEngine != null) {
             return () -> {
                 var life = this.life();

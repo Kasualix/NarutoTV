@@ -44,6 +44,7 @@ public class AudioZipGenerator {
 
     public void generate(Runnable validation) {
         Minecraft minecraft = Minecraft.getInstance();
+
         CompletableFuture.runAsync(() -> {
             try {
                 Path resourcepacks = FMLLoader.getGamePath().resolve("resourcepacks");
@@ -70,8 +71,6 @@ public class AudioZipGenerator {
                 validation.run();
                 return;
             }
-
-            if (repository.getPack(packID) == null) return;
 
             Collection<String> newSelected = new ArrayList<>(selected);
             newSelected.add(packID);
