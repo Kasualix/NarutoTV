@@ -18,7 +18,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.network.PacketDistributor;
@@ -68,7 +67,7 @@ public class ScreenConstruction {
             BlockPos lastCorner = blockCorner.get(uuid);
             blockCorner.remove(uuid);
 
-            BlockScreen built = BlockScreenDetector.detectAndCreate(level, lastCorner, pos);
+            BlockScreen built = Detector.build(level, lastCorner, pos);
 
             BlockScreens.get(level).update(built, false);
             NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new ScreenLifePacket(built));
@@ -77,9 +76,9 @@ public class ScreenConstruction {
         }
     }
 
-    public static final class BlockScreenDetector {
+    public static final class Detector {
         @NotNull
-        public static BlockScreen detectAndCreate(@NotNull ServerLevel level, @NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2) {
+        public static BlockScreen build(@NotNull ServerLevel level, @NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2) {
             MutableBlockPos m1 = new MutableBlockPos();
             MutableBlockPos m2 = new MutableBlockPos();
             MutableBlockPos cursor = new MutableBlockPos();
@@ -110,7 +109,7 @@ public class ScreenConstruction {
                 throw new IllegalArgumentException("bottomCorner1 and bottomCorner2 are the same block");
             }
 
-            BlockScreenDetector.setAxisStep(m1, edgeAxis, edgeSign);
+            Detector.setAxisStep(m1, edgeAxis, edgeSign);
 
             List<Direction.Axis> perpendicularAxes = new ArrayList<>(2);
             for (Direction.Axis axis : Direction.Axis.VALUES) {
@@ -119,18 +118,18 @@ public class ScreenConstruction {
 
             for (Direction.Axis axis : perpendicularAxes) {
                 for (int sign : new int[]{1, -1}) {
-                    BlockScreenDetector.setAxisStep(m2, axis, sign);
+                    Detector.setAxisStep(m2, axis, sign);
 
                     int sideLength = 0;
                     cursor.set(bottomCorner1);
-                    while (level.getBlockState(cursor).is(Blocks.GLASS)) {
+                    while (Displayers.isDisplayer(level, cursor.asLong())) {
                         sideLength++;
                         cursor.move(m2);
                     }
 
                     if (sideLength <= 1) continue;
 
-                    if (BlockScreenDetector.isCorrectBorder(level, bottomCorner1, m1, edgeLength, m2, sideLength)) {
+                    if (Detector.isCorrectBorder(level, bottomCorner1, m1, edgeLength, m2, sideLength)) {
                         MutableBlockPos top1 = new MutableBlockPos();
                         top1.set(bottomCorner1);
                         top1.move(m2.getX() * (sideLength - 1), m2.getY() * (sideLength - 1), m2.getZ() * (sideLength - 1));

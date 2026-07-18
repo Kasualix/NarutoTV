@@ -9,6 +9,7 @@ import me.kall.narutotv.impl.qol.KeybindCenter;
 import me.kall.narutotv.impl.qol.SourceDragCenter;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
 import me.kall.narutotv.impl.world.event.ScreenConstruction;
+import me.kall.narutotv.impl.world.network.NarutoPackets;
 import me.kall.narutotv.override.CustomOverride;
 import me.kall.narutotv.override.OverrideApi;
 import net.minecraftforge.common.MinecraftForge;
@@ -52,6 +53,7 @@ public final class NarutoTV {
         }
 
         NarutoConfig.Server.register(context);
+        NarutoPackets.register();
     }
 
     public static ExecutorService io() {
