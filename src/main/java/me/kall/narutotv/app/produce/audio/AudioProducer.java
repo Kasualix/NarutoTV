@@ -56,7 +56,7 @@ public final class AudioProducer extends AbstractProducer {
             EXTThreadLocalContext.alcSetThreadContext(context);
             AL.createCapabilities(ALC.createCapabilities(device));
 
-            this.source.set(AL10.alGenSources());
+            this.source.set(AL11.alGenSources());
 
             byte[] bufferArray = new byte[8192];
             int read;
@@ -65,21 +65,21 @@ public final class AudioProducer extends AbstractProducer {
                 ByteBuffer data = MemoryUtil.memAlloc(read);
                 data.put(bufferArray, 0, read).flip();
 
-                int buffer = AL10.alGenBuffers();
-                AL10.alBufferData(buffer, this.mediaArgs.openALFormat(), data, this.mediaArgs.sampleRate());
+                int buffer = AL11.alGenBuffers();
+                AL11.alBufferData(buffer, this.mediaArgs.openALFormat(), data, this.mediaArgs.sampleRate());
                 MemoryUtil.memFree(data);
 
                 int source = this.source.get();
-                AL10.alSourceQueueBuffers(source, buffer);
+                AL11.alSourceQueueBuffers(source, buffer);
 
                 if (this.volumeInit.compareAndSet(true, false)) {
-                    AL10.alSourcef(source, AL10.AL_GAIN, this.getVolume());
+                    AL11.alSourcef(source, AL11.AL_GAIN, this.getVolume());
                 }
 
-                if (AL10.alGetSourcei(source, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) AL10.alSourcePlay(source);
+                if (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
 
-                int processed = AL10.alGetSourcei(source, AL10.AL_BUFFERS_PROCESSED);
-                while (processed-- > 0) AL10.alDeleteBuffers(AL10.alSourceUnqueueBuffers(source));
+                int processed = AL11.alGetSourcei(source, AL11.AL_BUFFERS_PROCESSED);
+                while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
             }
         } finally {
             EXTThreadLocalContext.alcSetThreadContext(0);
@@ -97,24 +97,24 @@ public final class AudioProducer extends AbstractProducer {
             if (context != 0 && device != 0) {
                 EXTThreadLocalContext.alcSetThreadContext(context);
                 AL.createCapabilities(ALC.createCapabilities(device));
-                AL10.alSourceStop(source);
-                int queued = AL10.alGetSourcei(source, AL10.AL_BUFFERS_QUEUED);
-                while (queued-- > 0) AL10.alDeleteBuffers(AL10.alSourceUnqueueBuffers(source));
-                AL10.alDeleteSources(source);
+                AL11.alSourceStop(source);
+                int queued = AL11.alGetSourcei(source, AL11.AL_BUFFERS_QUEUED);
+                while (queued-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
+                AL11.alDeleteSources(source);
                 EXTThreadLocalContext.alcSetThreadContext(0);
             }
         }
 
         long context = this.context.getAndSet(0);
         long device = this.device.getAndSet(0);
-        if (context != 0L) ALC10.alcDestroyContext(context);
-        if (device != 0L) ALC10.alcCloseDevice(device);
+        if (context != 0L) ALC11.alcDestroyContext(context);
+        if (device != 0L) ALC11.alcCloseDevice(device);
     }
 
     @Override
     public void setup(double setupTime) {
-        long device = ALC10.alcOpenDevice((ByteBuffer) null);
-        long context = ALC10.alcCreateContext(device, (IntBuffer) null);
+        long device = ALC11.alcOpenDevice((ByteBuffer) null);
+        long context = ALC11.alcCreateContext(device, (IntBuffer) null);
 
         this.device.set(device);
         this.context.set(context);

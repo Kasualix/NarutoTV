@@ -68,7 +68,7 @@ public class ScreenSyncPacket {
                     }
                 }));
             } catch (Throwable throwable) {
-                ScreenPacket.LOGGER.error("Error handing ScreenDeathPacket", throwable);
+                ScreenPacket.LOGGER.error("Error handing ScreenSyncPacket", throwable);
             }
         });
     }

@@ -27,7 +27,7 @@ public class ScreenUpdatePacket extends ScreenPacket {
             try {
                 ServerPlayer player = context.getSender();
                 if (player == null) return;
-                BlockScreens.get(player.serverLevel()).update(this.blockScreen, true);
+                BlockScreens.get(player.serverLevel()).update(this.blockScreen);
             } catch (Throwable throwable) {
                 LOGGER.error("Error handling ScreenUpdatePacket", throwable);
             }

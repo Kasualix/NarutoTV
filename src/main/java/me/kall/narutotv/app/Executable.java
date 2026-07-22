@@ -26,7 +26,7 @@ public final class Executable {
             process = new ProcessBuilder(command).redirectErrorStream(true).start();
         } catch (IOException exception) {
             LOGGER.severe("Exception building process for command " + Arrays.toString(command));
-            exception.printStackTrace(System.err);
+            LOGGER.severe(exception.getMessage());
             return null;
         }
 
@@ -39,7 +39,7 @@ public final class Executable {
             }
         } catch (IOException exception) {
             LOGGER.severe("Exception reading input stream for command " + Arrays.toString(command));
-            exception.printStackTrace(System.err);
+            LOGGER.severe(exception.getMessage());
             return null;
         }
 

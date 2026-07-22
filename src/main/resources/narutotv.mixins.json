@@ -9,6 +9,7 @@
   },
   "client": [
     "base.MixinGameRenderer",
+    "base.MixinResourceLoadStateTracker",
     "context.MixinMinecraft",
     "context.NativeImageAccessor",
     "fade.MixinFont",
@@ -23,6 +24,8 @@
     "override.screen.MixinScreen",
     "override.screen.MixinTitleScreen",
     "override.screen.MixinWinScreen",
+    "sound.ChannelAccessor",
+    "sound.MixinMinecraft",
     "sound.MixinOptions",
     "sound.MixinSoundEngine"
   ],

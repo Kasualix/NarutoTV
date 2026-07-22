@@ -51,8 +51,8 @@ public class Displayers extends ChunkData.BlockData {
         return NarutoConfig.Server.displayers().contains(RegistryEntry.get(state));
     }
 
-    public static boolean isDisplayer(ServerLevel level, long position) {
-        return Displayers.get(level).has(level, Positions.toChunk(position), position);
+    public static boolean nonDisplayer(ServerLevel level, long position) {
+        return !Displayers.get(level).has(level, Positions.toChunk(position), position);
     }
 
     @SubscribeEvent

@@ -4,8 +4,8 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppPaths;
 import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.app.produce.video.BufferFrameProducer;
+import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.LoadingFrame;
-import me.kall.narutotv.base.renderer.gl.GuiGLEngine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,9 +14,9 @@ import java.nio.ByteBuffer;
 public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     private final LoadingFrame loading = new LoadingFrame();
 
-    protected @Nullable GuiGLEngine engine;
+    protected @Nullable AbstractGLEngine engine;
 
-    public @Nullable GuiGLEngine engine() {
+    public @Nullable AbstractGLEngine engine() {
         return this.engine;
     }
 
@@ -42,24 +42,29 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     public synchronized void onSetup(double seekTo) {
         MediaArgs mediaArgs = this.mediaArgs();
 
-        if (mediaArgs == null) return;
+        assert mediaArgs != null;
 
         this.engine = this.initEngine();
-        this.engine.initTexture(mediaArgs.width(), mediaArgs.height());
+        this.engine.setup(mediaArgs.width(), mediaArgs.height());
         this.update(null);
     }
 
     @Override
     public synchronized void render() {
         super.render();
-        if (this.engine != null) this.engine.render();
+        if (this.engine != null) {
+            this.engine.render();
+        }
     }
 
     @Override
     public synchronized void shutdown() {
         super.shutdown();
-        if (this.engine != null) this.engine.shutdown();
+        if (this.engine != null) {
+            this.engine.shutdown();
+            this.engine = null;
+        }
     }
 
-    protected abstract GuiGLEngine initEngine();
+    protected abstract AbstractGLEngine initEngine();
 }

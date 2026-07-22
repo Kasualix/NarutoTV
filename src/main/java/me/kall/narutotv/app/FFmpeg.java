@@ -93,7 +93,7 @@ public final class FFmpeg {
             LOGGER.severe("Exception reading audio " + absAudioPath + " using " + this.absFFprobePath);
             LOGGER.severe(audioJson);
             LOGGER.severe("————————————————————————————");
-            throwable.printStackTrace(System.err);
+            LOGGER.severe(throwable.getMessage());
             throw new RuntimeException(throwable);
         }
     }

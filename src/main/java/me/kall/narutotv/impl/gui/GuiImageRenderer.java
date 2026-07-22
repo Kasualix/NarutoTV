@@ -20,10 +20,10 @@ import org.jetbrains.annotations.NotNull;
 public class GuiImageRenderer extends NativeImageRenderer {
     @Override
     public boolean isRunnable() {
+        if (Sources.isEmpty()) return false;
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = minecraft.screen;
         if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
-        if (screen != null && screen.isPauseScreen()) return true;
         if (minecraft.getOverlay() instanceof LoadingOverlay) return true;
         if (minecraft.level != null) {
             this.shutdown();
@@ -56,7 +56,6 @@ public class GuiImageRenderer extends NativeImageRenderer {
     public void render() {
         super.render();
         GuiGraphics guiGraphics = Graphics.get();
-
         if (guiGraphics == null || this.textureLocation == null || this.dynamicTexture == null) return;
 
         int width = guiGraphics.guiWidth();

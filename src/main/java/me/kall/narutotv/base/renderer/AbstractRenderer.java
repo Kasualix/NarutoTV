@@ -72,7 +72,7 @@ public abstract class AbstractRenderer<T> {
         if (life != null) life.tick();
 
         var video = this.video();
-        if (video != null && life != null && life.shouldUpdateFrame()) this.update(video.fetch());
+        if (video != null && life != null && life.checkUpdate()) this.update(video.fetch());
     }
 
     public synchronized void shutdown() {
@@ -115,15 +115,17 @@ public abstract class AbstractRenderer<T> {
             var audio = this.audio();
             var life = this.life();
             if (audio != null && life != null) {
-                audio.setup((double) life.nanoTimeFromSetup() / 1_000_000_000D);
+                audio.setup((double) life.sinceSetup() / 1_000_000_000D);
             }
         };
     }
 
-    public void restart(double seekTo) {
-        synchronized (this) {
-            this.shutdown();
-            this.setup(seekTo);
-        }
+    public synchronized void restart() {
+        this.restart(0D);
+    }
+
+    public synchronized void restart(double seekTo) {
+        this.shutdown();
+        this.setup(seekTo);
     }
 }

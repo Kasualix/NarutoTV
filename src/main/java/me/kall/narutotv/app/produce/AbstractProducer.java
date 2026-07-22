@@ -9,8 +9,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 public abstract class AbstractProducer {
+    protected static final Logger LOGGER = Logger.getLogger(AbstractProducer.class.getSimpleName());
+
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private final AtomicReference<ExecutorService> executor = new AtomicReference<>();
     private final AtomicReference<Process> process = new AtomicReference<>();
@@ -49,11 +52,11 @@ public abstract class AbstractProducer {
                 this.input.set(input);
 
                 this.forInput(input);
-            } catch (IOException | InterruptedException ioException) {
+            } catch (IOException | InterruptedException exception) {
                 if (this.isCanceled()) return;
-                System.err.println("Exception executing " + Arrays.toString(command));
-                ioException.printStackTrace(System.err);
-                throw new RuntimeException(ioException);
+                LOGGER.severe("Exception executing " + Arrays.toString(command));
+                LOGGER.severe(exception.getMessage());
+                throw new RuntimeException(exception);
             }
         });
     }
@@ -72,7 +75,7 @@ public abstract class AbstractProducer {
             try {
                 input.close();
             } catch (Throwable throwable) {
-                throwable.printStackTrace(System.err);
+                LOGGER.severe(throwable.getMessage());
                 throw new RuntimeException(throwable);
             }
         }

@@ -1,6 +1,5 @@
 package me.kall.narutotv.base.renderer.gl;
 
-import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -8,48 +7,19 @@ import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL30C.*;
 
-public class GuiGLEngine {
-    int[] pboArray;
-    long frameCount;
+public class GuiGLEngine extends AbstractGLEngine {
     int program, vertexArray, buffer;
 
-    int @Nullable [] textures;
+    int[] textures;
     int width, height;
 
-    final String fragmentSource, vertexSource;
-
     public GuiGLEngine(String fragmentSource, String vertexSource) {
-        this.fragmentSource = fragmentSource;
-        this.vertexSource = vertexSource;
+        super(fragmentSource, vertexSource);
     }
 
-    public synchronized void initTexture(int width, int height) {
-        this.width = width;
-        this.height = height;
-
-        int vertex = this.compileShader(GL_VERTEX_SHADER, this.vertexSource);
-        int fragment = this.compileShader(GL_FRAGMENT_SHADER, this.fragmentSource);
-
-        this.program = glCreateProgram();
-        glAttachShader(this.program, vertex);
-        glAttachShader(this.program, fragment);
-        glLinkProgram(this.program);
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
-
-        if (glGetProgrami(this.program, GL_LINK_STATUS) == GL_FALSE) {
-            String log = glGetProgramInfoLog(this.program);
-            glDeleteProgram(this.program);
-            throw new RuntimeException("Shader link failed: " + log);
-        }
-
-        glUseProgram(this.program);
-        glUniform1i(glGetUniformLocation(this.program, "uTexY"), 0);
-        glUniform1i(glGetUniformLocation(this.program, "uTexU"), 1);
-        glUniform1i(glGetUniformLocation(this.program, "uTexV"), 2);
-        glUseProgram(0);
-
-        float[] vertexList = {-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f};
+    @Override
+    protected void initVaoVbo() {
+        float[] vertices = {-1F, -1F, 1F, -1F, -1F, 1F, 1F, 1F};
 
         this.vertexArray = glGenVertexArrays();
         this.buffer = glGenBuffers();
@@ -57,9 +27,9 @@ public class GuiGLEngine {
         glBindVertexArray(this.vertexArray);
         glBindBuffer(GL_ARRAY_BUFFER, this.buffer);
 
-        FloatBuffer floatBuffer = MemoryUtil.memAllocFloat(vertexList.length);
+        FloatBuffer floatBuffer = MemoryUtil.memAllocFloat(vertices.length);
         try {
-            floatBuffer.put(vertexList).flip();
+            floatBuffer.put(vertices).flip();
             glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STATIC_DRAW);
         } finally {
             MemoryUtil.memFree(floatBuffer);
@@ -69,65 +39,6 @@ public class GuiGLEngine {
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-
-        int wHalf = width / 2;
-        int hHalf = height / 2;
-
-        this.textures = new int[3];
-        glGenTextures(textures);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-        glBindTexture(GL_TEXTURE_2D, this.textures[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-        this.applyTexParams();
-
-        glBindTexture(GL_TEXTURE_2D, this.textures[1]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, wHalf, hHalf, 0, GL_RED, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-        this.applyTexParams();
-
-        glBindTexture(GL_TEXTURE_2D, this.textures[2]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, wHalf, hHalf, 0, GL_RED, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-        this.applyTexParams();
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        int[] old = this.pboArray;
-        if (old != null) glDeleteBuffers(old);
-
-        long ySize = (long) width * height;
-        long uvSize = (long) (width / 2) * (height / 2);
-
-        this.pboArray = new int[6];
-        glGenBuffers(this.pboArray);
-
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, this.pboArray[0]); glBufferData(GL_PIXEL_UNPACK_BUFFER, ySize, GL_STREAM_DRAW);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, this.pboArray[1]); glBufferData(GL_PIXEL_UNPACK_BUFFER, ySize, GL_STREAM_DRAW);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, this.pboArray[2]); glBufferData(GL_PIXEL_UNPACK_BUFFER, uvSize, GL_STREAM_DRAW);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, this.pboArray[3]); glBufferData(GL_PIXEL_UNPACK_BUFFER, uvSize, GL_STREAM_DRAW);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, this.pboArray[4]); glBufferData(GL_PIXEL_UNPACK_BUFFER, uvSize, GL_STREAM_DRAW);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, this.pboArray[5]); glBufferData(GL_PIXEL_UNPACK_BUFFER, uvSize, GL_STREAM_DRAW);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-        this.frameCount = 0L;
-    }
-
-    int compileShader(int type, String src) {
-        int id = glCreateShader(type);
-        glShaderSource(id, src);
-        glCompileShader(id);
-        if (glGetShaderi(id, GL_COMPILE_STATUS) == GL_FALSE) {
-            String log = glGetShaderInfoLog(id);
-            glDeleteShader(id);
-            throw new RuntimeException("Shader compile failed: " + log);
-        }
-        return id;
-    }
-
-    void applyTexParams() {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
     public synchronized void update(ByteBuffer frame) {
@@ -155,28 +66,12 @@ public class GuiGLEngine {
 
         int uploadSlot = (frameCount == 0) ? current : previous;
 
-        this.upload(textures[0], this.width, this.height, this.pboArray[uploadSlot]);
-        this.upload(textures[1], this.width / 2, this.height / 2, this.pboArray[2 + uploadSlot]);
-        this.upload(textures[2], this.width / 2, this.height / 2, this.pboArray[4 + uploadSlot]);
+        this.upload(this.textures[0], this.width, this.height, this.pboArray[uploadSlot]);
+        this.upload(this.textures[1], this.width / 2, this.height / 2, this.pboArray[2 + uploadSlot]);
+        this.upload(this.textures[2], this.width / 2, this.height / 2, this.pboArray[4 + uploadSlot]);
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    void stage(int pbo, ByteBuffer src, int srcOffset, int length) {
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-
-        ByteBuffer dst = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, length, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-        if (dst != null) {
-            MemoryUtil.memCopy(MemoryUtil.memSlice(src, srcOffset, length), dst);
-            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-        }
-    }
-
-    void upload(int texName, int w, int h, int pbo) {
-        glBindTexture(GL_TEXTURE_2D, texName);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RED, GL_UNSIGNED_BYTE, 0L);
     }
 
     public synchronized void render() {

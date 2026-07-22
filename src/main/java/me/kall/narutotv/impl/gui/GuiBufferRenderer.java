@@ -60,10 +60,10 @@ public class GuiBufferRenderer extends ByteBufferRenderer {
 
     @Override
     public boolean isRunnable() {
+        if (Sources.isEmpty()) return false;
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = minecraft.screen;
         if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
-        if (screen != null && screen.isPauseScreen()) return true;
         if (minecraft.getOverlay() instanceof LoadingOverlay) return true;
         if (minecraft.level != null) {
             this.shutdown();

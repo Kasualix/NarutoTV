@@ -4,11 +4,11 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.ByteBufferRenderer;
-import me.kall.narutotv.base.renderer.gl.GuiGLEngine;
+import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import me.kall.narutotv.impl.world.ext.BindScreen;
-import me.kall.narutotv.impl.world.sound.LocalSoundEngine;
+import me.kall.narutotv.impl.world.sound.LocalSound;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class WorldBufferRenderer extends ByteBufferRenderer implements BindScreen {
     private final BlockScreen screen;
 
-    private @Nullable LocalSoundEngine localSound;
+    private @Nullable LocalSound localSound;
 
     public WorldBufferRenderer(BlockScreen screen) {
         this.screen = screen;
@@ -28,7 +28,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
     }
 
     @Override
-    protected GuiGLEngine initEngine() {
+    protected AbstractGLEngine initEngine() {
         String fragmentSource = """
                 #version 330 core
 
@@ -77,6 +77,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
 
     @Override
     public boolean isRunnable() {
+        if (Sources.isEmpty()) return false;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             this.shutdown();
@@ -108,7 +109,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
     @Override
     public @Nullable AudioProducer initAudio(double seekTo) {
         if (this.screen.hasLocalSound()) {
-            this.localSound = new LocalSoundEngine(this.screen);
+            this.localSound = new LocalSound(this.screen);
             this.localSound.on.accept(0D);
             return null;
         } else {
@@ -127,11 +128,11 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
 
     @Override
     public Runnable resumeAudio() {
-        LocalSoundEngine localSoundEngine = this.localSound;
-        if (localSoundEngine != null) {
+        LocalSound localSound = this.localSound;
+        if (localSound != null) {
             return () -> {
                 var life = this.life();
-                if (life != null) localSoundEngine.on.accept((double) life.nanoTimeFromSetup() / 1_000_000_000D);
+                if (life != null) localSound.on.accept((double) life.sinceSetup() / 1_000_000_000D);
             };
         } else {
             return super.resumeAudio();

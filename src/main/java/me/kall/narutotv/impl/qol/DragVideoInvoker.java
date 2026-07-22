@@ -7,6 +7,8 @@ import me.kall.narutotv.impl.gui.NarutoGuiCenter;
 import net.minecraft.client.Minecraft;
 import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFWDropCallback;
 
 import java.io.File;
@@ -17,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class DragVideoInvoker implements SourceDragCenter.Invoker {
     public static final DragVideoInvoker INSTANCE = new DragVideoInvoker();
+    private static final Logger LOGGER = LogManager.getLogger(DragVideoInvoker.class);
 
     @Override
     public void invoke(long window, int count, long names) {
@@ -29,14 +32,14 @@ public class DragVideoInvoker implements SourceDragCenter.Invoker {
                 Path target = dir.resolve("video." + FileNameUtils.getExtension(source.getName()));
 
                 long start = System.nanoTime();
-                System.out.println("Start to copy " + source + ". Target: " + target);
+                LOGGER.info("Start to copy {}. Target: {}", source, target);
                 FileUtils.copyFile(source, target.toFile());
-                System.out.println("Successfully copy " + source + " to " + target + ". Time cost: " + ((System.nanoTime() - start) / 1_000_000_000.0D) + " seconds.");
+                LOGGER.info("Successfully copy {} to {}. Time cost: {} seconds.", source, target, (System.nanoTime() - start) / 1_000_000_000.0D);
                 Sources.cutInLine(target, null);
                 Minecraft.getInstance().execute(NarutoGuiCenter.getActive()::shutdown);
             } catch (IOException exception) {
-                System.err.println("Exception dragging video " + source.getName());
-                exception.printStackTrace(System.err);
+                LOGGER.error("Exception dragging video {}", source.getName());
+                LOGGER.error("Details: ", exception);
             }
         }, NarutoTV.io());
     }

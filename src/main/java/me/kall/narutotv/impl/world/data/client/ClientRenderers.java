@@ -4,7 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
+import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
 import me.kall.narutotv.impl.world.ext.BindScreen;
 import me.kall.narutotv.impl.world.WorldBufferRenderer;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class ClientRenderers {
     private static final ClientRenderers INSTANCE = new ClientRenderers();
@@ -82,7 +85,7 @@ public class ClientRenderers {
         }
     }
 
-    public boolean isImageRenderer() {
+    private boolean isImageRenderer() {
         if (this.renderers.isEmpty()) return NarutoTV.COMPAT.shaderUsing();
         for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
             for (AbstractRenderer<?> renderer : inDimension.values()) return !(renderer instanceof WorldBufferRenderer);
@@ -91,31 +94,44 @@ public class ClientRenderers {
     }
 
     public void swap() {
-        this.validateThread();
-        this.forEach(AbstractRenderer::shutdown);
-        boolean isImageRenderer = this.isImageRenderer();
-        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
-            inDimension.replaceAll((pos, renderer) -> {
+        Minecraft.getInstance().execute(() -> {
+            this.forEach(AbstractRenderer::shutdown);
+            boolean isImageRenderer = this.isImageRenderer();
+            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
+                inDimension.replaceAll((pos, renderer) -> {
+                    BlockScreen screen = ((BindScreen)renderer).screen();
+                    return isImageRenderer ? new WorldBufferRenderer(screen) : new WorldImageRenderer(screen);
+                });
+            }
+            this.forEach(renderer -> {
                 BlockScreen screen = ((BindScreen)renderer).screen();
-                return isImageRenderer ? new WorldBufferRenderer(screen) : new WorldImageRenderer(screen);
+                if (!screen.video.isBlank() && !screen.audio.isBlank()) Sources.cutInLine(screen.video, screen.audio);
+                renderer.setup(0D);
             });
-        }
+        });
     }
 
     public void forEach(@NotNull Consumer<AbstractRenderer<?>> action) {
-        this.validateThread();
-        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
-            for (AbstractRenderer<?> renderer : inDimension.values()) {
-                action.accept(renderer);
+        Minecraft.getInstance().execute(() -> {
+            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
+                for (AbstractRenderer<?> renderer : inDimension.values()) {
+                    action.accept(renderer);
+                }
             }
-        }
+        });
     }
 
-    public void reload() {
-        Minecraft.getInstance().execute(() -> this.forEach((renderer) -> {
-            renderer.shutdown();
-            renderer.setup(0D);
-        }));
+    public void forSpecific(Predicate<AbstractRenderer<?>> condition, Consumer<AbstractRenderer<?>> action) {
+        Minecraft.getInstance().execute(() -> {
+            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
+                for (AbstractRenderer<?> renderer : inDimension.values()) {
+                    if (condition.test(renderer)) {
+                        action.accept(renderer);
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     private void logOutClean(ClientPlayerNetworkEvent.LoggingOut event) {
@@ -159,8 +175,8 @@ public class ClientRenderers {
             poseStack.translate(-camera.x, - camera.y, - camera.z);
 
             if (renderer instanceof WorldBufferRenderer bufferRenderer) {
-                WorldGLEngine engine = bufferRenderer.engine();
-                if (engine != null) engine.render(poseStack, camera);
+                AbstractGLEngine engine = bufferRenderer.engine();
+                if (engine instanceof WorldGLEngine worldGLEngine) worldGLEngine.render(poseStack, camera);
             } else if (renderer instanceof WorldImageRenderer imageRenderer) {
                 imageRenderer.render(poseStack, bufferSource, camera);
             } else {
@@ -171,7 +187,7 @@ public class ClientRenderers {
         }
     }
 
-    private void validateThread() {
+    private synchronized void validateThread() {
         if (!Minecraft.getInstance().isSameThread()) throw new UnsupportedOperationException("Invalid thread: " + Thread.currentThread().getName());
     }
 }

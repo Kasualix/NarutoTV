@@ -8,8 +8,11 @@ import org.objectweb.asm.tree.*;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
+import java.util.logging.Logger;
 
 public class NarutoTransformer implements ClassFileTransformer {
+    private static final Logger LOGGER = Logger.getLogger("NarutoTransformer");
+
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain domain, byte[] classFileBuffer) {
         if ("net/minecraftforge/fml/earlydisplay/DisplayWindow".equals(className)) {
@@ -31,9 +34,9 @@ public class NarutoTransformer implements ClassFileTransformer {
                 classNode.accept(classWriter);
                 return classWriter.toByteArray();
 
-            } catch (Exception e) {
-                e.printStackTrace(System.err);
-                throw new RuntimeException(e);
+            } catch (Exception exception) {
+                LOGGER.severe(exception.getMessage());
+                throw new RuntimeException(exception);
             }
         }
 

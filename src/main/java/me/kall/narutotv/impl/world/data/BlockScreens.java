@@ -29,9 +29,9 @@ public class BlockScreens extends SavedData {
 
     private final Object2ObjectOpenHashMap<ResourceLocation, ObjectOpenHashSet<BlockScreen>> data = new Object2ObjectOpenHashMap<>();
 
-    public void update(@NotNull BlockScreen argSource, boolean removeLast) {
+    public void update(@NotNull BlockScreen argSource) {
         ObjectSet<BlockScreen> screens = this.data.computeIfAbsent(argSource.dimension, key -> new ObjectOpenHashSet<>());
-        if (removeLast) screens.remove(argSource);
+        screens.remove(argSource);
         screens.add(argSource);
         this.setDirty();
     }
@@ -67,6 +67,7 @@ public class BlockScreens extends SavedData {
                 screenTag.putLongArray(CORNERS_KEY, blockScreen.toLongArray());
                 screenTag.putString(LOCAL_SOUND_KEY, blockScreen.localSound.toString());
                 screenTag.putString(VIDEO_KEY, blockScreen.video);
+                screenTag.putString(AUDIO_KEY, blockScreen.audio);
                 screensList.add(screenTag);
             }
         }

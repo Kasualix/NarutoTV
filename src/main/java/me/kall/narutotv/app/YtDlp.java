@@ -63,7 +63,7 @@ public final class YtDlp {
                 Files.writeString(audioDownloading, audioUrl);
             } catch (Throwable throwable) {
                 LOGGER.severe("Exception storing download source. Video: " + videoUrl + ". Audio: " + audioUrl + ". Output directory: " + outputDirectory);
-                throwable.printStackTrace(System.err);
+                LOGGER.severe(throwable.getMessage());
                 throw new RuntimeException(throwable);
             }
 
@@ -75,7 +75,7 @@ public final class YtDlp {
                 Files.move(audioDownloading, outputDirectory.resolve(AUDIO_DOWNLOADED_FILE));
             } catch (Throwable throwable) {
                 LOGGER.severe("Exception validating downloaded source url. Output directory: " + outputDirectory);
-                throwable.printStackTrace(System.err);
+                LOGGER.severe(throwable.getMessage());
                 throw new RuntimeException(throwable);
             }
 

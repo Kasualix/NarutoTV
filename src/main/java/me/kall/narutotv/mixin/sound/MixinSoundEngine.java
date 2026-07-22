@@ -2,24 +2,36 @@ package me.kall.narutotv.mixin.sound;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import me.kall.narutotv.app.produce.audio.AudioProducer;
-import me.kall.narutotv.app.util.LifetimeController;
-import me.kall.narutotv.base.renderer.AbstractRenderer;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.blaze3d.audio.Channel;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
+import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.sound.NarutoSound;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEngine;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.openal.AL11;
+import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(SoundEngine.class)
 public abstract class MixinSoundEngine {
     @WrapMethod(method = "reload")
-    private void reloadSound(@NotNull Operation<Void> original) {
-        AbstractRenderer<?> renderer = NarutoGuiCenter.getActive();
-        LifetimeController life = renderer.life();
-        AudioProducer audio = renderer.audio();
-        long start = System.nanoTime();
-        if (audio != null && life != null) audio.shutdown();
+    private void reloadGuiSound(@NotNull Operation<Void> original) {
+        Minecraft.getInstance().execute(NarutoGuiCenter.getActive().pauseAudio());
+        ClientRenderers.getInstance().forEach(renderer -> renderer.pauseAudio().run());
         original.call();
-        if (audio != null && life != null) audio.setup((System.nanoTime() - start + life.nanoTimeFromSetup()) / 1_000_000_000.0D);
+        ClientRenderers.getInstance().forEach(renderer -> renderer.resumeAudio().run());
+        Minecraft.getInstance().execute(NarutoGuiCenter.getActive().resumeAudio());
+    }
+
+    @Dynamic
+    @WrapOperation(method = {"lambda$play$6", "method_19752"}, at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/audio/Channel;play()V"))
+    private void playSound(@NotNull Channel channel, Operation<Void> original, @Local(argsOnly = true) SoundInstance sound) {
+        if (sound instanceof NarutoSound narutoSound) AL11.alSourcef(((ChannelAccessor)channel).narutotv$source(), AL11.AL_SEC_OFFSET, (float) narutoSound.seekTo);
+        channel.play();
     }
 }

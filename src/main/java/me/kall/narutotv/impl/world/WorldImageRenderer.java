@@ -9,7 +9,7 @@ import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.NativeImageRenderer;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import me.kall.narutotv.impl.world.ext.BindScreen;
-import me.kall.narutotv.impl.world.sound.LocalSoundEngine;
+import me.kall.narutotv.impl.world.sound.LocalSound;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -25,139 +25,10 @@ import org.joml.Matrix4f;
 public class WorldImageRenderer extends NativeImageRenderer implements BindScreen {
     private final BlockScreen screen;
 
-    private @Nullable LocalSoundEngine localSoundEngine;
-
-    private final double leftBottomX;
-    private final double leftBottomY;
-    private final double leftBottomZ;
-
-    private final double leftTopX;
-    private final double leftTopY;
-    private final double leftTopZ;
-
-    private final double rightBottomX;
-    private final double rightBottomY;
-    private final double rightBottomZ;
-
-    private final double rightTopX;
-    private final double rightTopY;
-    private final double rightTopZ;
-
-    private final double normalX;
-    private final double normalY;
-    private final double normalZ;
-
-    private final double centerX;
-    private final double centerY;
-    private final double centerZ;
-
-    private final boolean horizontal;
-
-    private final double side1;
-    private final double side2;
-
-    private double sideBottomX, sideBottomZ;
-    private double sideLeftX, sideLeftZ;
-    private double sideTopX, sideTopZ;
-    private double sideRightX, sideRightZ;
+    private @Nullable LocalSound localSound;
 
     public WorldImageRenderer(@NotNull BlockScreen screen) {
         this.screen = screen;
-
-        BlockPos leftBottomCorner = screen.leftBottom;
-        BlockPos leftTopCorner = screen.leftTop;
-        BlockPos rightBottomCorner = screen.rightBottom;
-        BlockPos rightTopCorner = screen.rightTop;
-
-        double leftBottomX = leftBottomCorner.getX();
-        double leftBottomY = leftBottomCorner.getY();
-        double leftBottomZ = leftBottomCorner.getZ();
-        double leftTopX = leftTopCorner.getX();
-        double leftTopY = leftTopCorner.getY();
-        double leftTopZ = leftTopCorner.getZ();
-        double rightBottomX = rightBottomCorner.getX();
-        double rightBottomY = rightBottomCorner.getY();
-        double rightBottomZ = rightBottomCorner.getZ();
-        double rightTopX = rightTopCorner.getX();
-        double rightTopY = rightTopCorner.getY();
-        double rightTopZ = rightTopCorner.getZ();
-
-        boolean widthX = leftBottomX != rightBottomX;
-        boolean widthY = leftBottomY != rightBottomY;
-        boolean widthZ = leftBottomZ != rightBottomZ;
-        boolean heightX = leftBottomX != leftTopX;
-        boolean heightY = leftBottomY != leftTopY;
-        boolean heightZ = leftBottomZ != leftTopZ;
-
-        if (widthX && heightY) {
-            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
-            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
-        } else if (widthZ && heightY) {
-            if (leftTopY > leftBottomY) { leftTopY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; rightBottomY += 1.0; }
-            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
-        } else if (widthX && heightZ) {
-            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
-            if (rightBottomX > leftBottomX) { rightBottomX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; leftTopX += 1.0; }
-        } else if (widthY && heightX) {
-            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
-            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
-        } else if (widthY && heightZ) {
-            if (leftTopZ > leftBottomZ) { leftTopZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; rightBottomZ += 1.0; }
-            if (rightBottomY > leftBottomY) { rightBottomY += 1.0; rightTopY += 1.0; } else { leftBottomY += 1.0; leftTopY += 1.0; }
-        } else if (widthZ && heightX) {
-            if (leftTopX > leftBottomX) { leftTopX += 1.0; rightTopX += 1.0; } else { leftBottomX += 1.0; rightBottomX += 1.0; }
-            if (rightBottomZ > leftBottomZ) { rightBottomZ += 1.0; rightTopZ += 1.0; } else { leftBottomZ += 1.0; leftTopZ += 1.0; }
-        }
-
-        this.leftBottomX = leftBottomX; this.leftBottomY = leftBottomY; this.leftBottomZ = leftBottomZ;
-        this.leftTopX = leftTopX; this.leftTopY = leftTopY; this.leftTopZ = leftTopZ;
-        this.rightBottomX = rightBottomX; this.rightBottomY = rightBottomY; this.rightBottomZ = rightBottomZ;
-        this.rightTopX = rightTopX; this.rightTopY = rightTopY; this.rightTopZ = rightTopZ;
-
-        double leftDeltaX = leftTopX - leftBottomX;
-        double leftDeltaY = leftTopY - leftBottomY;
-        double leftDeltaZ = leftTopZ - leftBottomZ;
-        double rightDeltaX = rightBottomX - leftBottomX;
-        double rightDeltaY = rightBottomY - leftBottomY;
-        double rightDeltaZ = rightBottomZ - leftBottomZ;
-
-        this.side1 = Math.sqrt(leftDeltaX * leftDeltaX + leftDeltaY * leftDeltaY + leftDeltaZ * leftDeltaZ);
-        this.side2 = Math.sqrt(rightDeltaX * rightDeltaX + rightDeltaY * rightDeltaY + rightDeltaZ * rightDeltaZ);
-
-        double normalX = leftDeltaY * rightDeltaZ - leftDeltaZ * rightDeltaY;
-        double normalY = leftDeltaZ * rightDeltaX - leftDeltaX * rightDeltaZ;
-        double normalZ = leftDeltaX * rightDeltaY - leftDeltaY * rightDeltaX;
-        double length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
-        this.normalX = normalX / length;
-        this.normalY = normalY / length;
-        this.normalZ = normalZ / length;
-
-        this.centerX = (leftBottomX + rightTopX) / 2.0;
-        this.centerY = (leftBottomY + rightTopY) / 2.0;
-        this.centerZ = (leftBottomZ + rightTopZ) / 2.0;
-        this.horizontal = Math.abs(this.normalY) > 0.99;
-
-        if (this.horizontal) {
-            this.sideBottomX = normalizedX((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
-            this.sideBottomZ = normalizedZ((this.leftBottomX + this.rightBottomX) / 2.0 - this.centerX, (this.leftBottomZ + this.rightBottomZ) / 2.0 - this.centerZ);
-            this.sideLeftX = normalizedX((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
-            this.sideLeftZ = normalizedZ((this.leftBottomX + this.leftTopX) / 2.0 - this.centerX, (this.leftBottomZ + this.leftTopZ) / 2.0 - this.centerZ);
-            this.sideTopX = normalizedX((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
-            this.sideTopZ = normalizedZ((this.leftTopX + this.rightTopX) / 2.0 - this.centerX, (this.leftTopZ + this.rightTopZ) / 2.0 - this.centerZ);
-            this.sideRightX = normalizedX((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
-            this.sideRightZ = normalizedZ((this.rightBottomX + this.rightTopX) / 2.0 - this.centerX, (this.rightBottomZ + this.rightTopZ) / 2.0 - this.centerZ);
-
-        }
-    }
-
-    private static double normalizedX(double x, double z) {
-        double length = Math.sqrt(x * x + z * z);
-        return length > 0.001 ? x / length : 0;
-    }
-
-    private static double normalizedZ(double x, double z) {
-        double length = Math.sqrt(x * x + z * z);
-        return length > 0.001 ? z / length : 0;
     }
 
     @Override
@@ -167,6 +38,7 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
 
     @Override
     public boolean isRunnable() {
+        if (Sources.isEmpty()) return false;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             this.shutdown();
@@ -176,120 +48,204 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
     }
 
     public void render(PoseStack poseStack, MultiBufferSource bufferSource, Vec3 camera) {
-        ResourceLocation nextFrame = this.textureLocation;
-        if (nextFrame == null) return;
+        if (this.textureLocation == null || this.dynamicTexture == null) return;
 
-        MediaArgs mediaArgs = this.mediaArgs();
-        assert mediaArgs != null;
+        BlockPos leftBottom = screen.leftBottom;
+        BlockPos rightBottom = screen.rightBottom;
+        BlockPos leftTop = screen.leftTop;
+        BlockPos rightTop = screen.rightTop;
 
-        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucent(nextFrame));
+        int minX = Math.min(Math.min(leftBottom.getX(), rightBottom.getX()), Math.min(leftTop.getX(), rightTop.getX()));
+        int maxX = Math.max(Math.max(leftBottom.getX(), rightBottom.getX()), Math.max(leftTop.getX(), rightTop.getX())) + 1;
+        int minY = Math.min(Math.min(leftBottom.getY(), rightBottom.getY()), Math.min(leftTop.getY(), rightTop.getY()));
+        int maxY = Math.max(Math.max(leftBottom.getY(), rightBottom.getY()), Math.max(leftTop.getY(), rightTop.getY())) + 1;
+        int minZ = Math.min(Math.min(leftBottom.getZ(), rightBottom.getZ()), Math.min(leftTop.getZ(), rightTop.getZ()));
+        int maxZ = Math.max(Math.max(leftBottom.getZ(), rightBottom.getZ()), Math.max(leftTop.getZ(), rightTop.getZ())) + 1;
 
-        double normalX = this.normalX;
-        double normalY = this.normalY;
-        double normalZ = this.normalZ;
+        Vec3 bottomEdge = new Vec3(rightBottom.getX() - leftBottom.getX(), rightBottom.getY() - leftBottom.getY(), rightBottom.getZ() - leftBottom.getZ());
+        Vec3 leftEdge = new Vec3(leftTop.getX() - leftBottom.getX(), leftTop.getY() - leftBottom.getY(), leftTop.getZ() - leftBottom.getZ());
+        Vec3 normal = bottomEdge.cross(leftEdge).normalize();
 
-        double toCameraX = camera.x - this.centerX;
-        double toCameraY = camera.y - this.centerY;
-        double toCameraZ = camera.z - this.centerZ;
-        double dot = normalX * toCameraX + normalY * toCameraY + normalZ * toCameraZ;
-        boolean isFrontFacing = dot > 0;
+        Vec3 center = new Vec3(
+                (leftBottom.getX() + rightBottom.getX() + leftTop.getX() + rightTop.getX()) / 4.0,
+                (leftBottom.getY() + rightBottom.getY() + leftTop.getY() + rightTop.getY()) / 4.0,
+                (leftBottom.getZ() + rightBottom.getZ() + leftTop.getZ() + rightTop.getZ()) / 4.0
+        );
 
-        if (!isFrontFacing) {
+        Vec3 toCamera = camera.subtract(center);
+        boolean isBack = toCamera.dot(normal) < 0;
+
+        float normalX = (float) normal.x;
+        float normalY = (float) normal.y;
+        float normalZ = (float) normal.z;
+
+        if (isBack) {
             normalX = -normalX;
             normalY = -normalY;
             normalZ = -normalZ;
         }
+        double x1, y1, z1; float u1, v1;
+        double x2, y2, z2; float u2, v2;
+        double x3, y3, z3; float u3, v3;
+        double x4, y4, z4; float u4, v4;
 
-        double leftBottomX = this.leftBottomX;
-        double leftBottomY = this.leftBottomY;
-        double leftBottomZ = this.leftBottomZ;
-        double leftTopX = this.leftTopX;
-        double leftTopY = this.leftTopY;
-        double leftTopZ = this.leftTopZ;
-        double rightBottomX = this.rightBottomX;
-        double rightBottomY = this.rightBottomY;
-        double rightBottomZ = this.rightBottomZ;
-        double rightTopX = this.rightTopX;
-        double rightTopY = this.rightTopY;
-        double rightTopZ = this.rightTopZ;
+        if (Math.abs(normalX) > 0.5) {
+            double surfaceX = (normalX > 0 ? maxX : minX) + normalX * 0.01;
+            x1 = x2 = x3 = x4 = surfaceX;
+            y1 = y2 = minY;
+            y3 = y4 = maxY;
+            z1 = z4 = minZ;
+            z2 = z3 = maxZ;
 
-        if (isFrontFacing) {
-            leftBottomX += normalX; leftBottomY += normalY; leftBottomZ += normalZ;
-            leftTopX += normalX; leftTopY += normalY; leftTopZ += normalZ;
-            rightBottomX += normalX; rightBottomY += normalY; rightBottomZ += normalZ;
-            rightTopX += normalX; rightTopY += normalY; rightTopZ += normalZ;
+            float uBase1 = 0.0F, uBase2 = 1.0F, uBase3 = 1.0F, uBase4 = 0.0F;
+
+            if (isBack) {
+                u1 = 1.0F - uBase1; u2 = 1.0F - uBase2; u3 = 1.0F - uBase3; u4 = 1.0F - uBase4;
+            } else {
+                u1 = uBase1; u2 = uBase2; u3 = uBase3; u4 = uBase4;
+            }
+
+            v1 = 1.0F; v2 = 1.0F; v3 = 0.0F; v4 = 0.0F;
+        } else if (Math.abs(normalY) > 0.5) {
+            double surfaceY = (normalY > 0 ? maxY : minY) + normalY * 0.01;
+            y1 = y2 = y3 = y4 = surfaceY;
+
+            if (Math.abs(bottomEdge.x) >= Math.abs(bottomEdge.z)) {
+                x1 = x4 = minX;  x2 = x3 = maxX;
+                z1 = z2 = minZ;  z3 = z4 = maxZ;
+
+                if (leftBottom.getZ() == minZ) {
+                    u1 = 0f; v1 = 1f;
+                    u2 = 1f; v2 = 1f;
+                    u3 = 1f; v3 = 0f;
+                    u4 = 0f; v4 = 0f;
+                } else {
+                    u1 = 0f; v1 = 0f;
+                    u2 = 1f; v2 = 0f;
+                    u3 = 1f; v3 = 1f;
+                    u4 = 0f; v4 = 1f;
+                }
+            } else {
+                x1 = minX; z1 = minZ;
+                x2 = maxX; z2 = minZ;
+                x3 = maxX; z3 = maxZ;
+                x4 = minX; z4 = maxZ;
+
+                if (leftBottom.getX() == minX) {
+                    u1 = 0f; v1 = 1f;
+                    u2 = 0f; v2 = 0f;
+                    u3 = 1f; v3 = 0f;
+                    u4 = 1f; v4 = 1f;
+                } else {
+                    u1 = 0f; v1 = 0f;
+                    u2 = 0f; v2 = 1f;
+                    u3 = 1f; v3 = 1f;
+                    u4 = 1f; v4 = 0f;
+                }
+            }
+
+            Vec3 toPlayer = new Vec3(camera.x - center.x, 0, camera.z - center.z);
+            if (toPlayer.lengthSqr() > 1e-6) {
+                toPlayer = toPlayer.normalize();
+                Vec3 upDir = new Vec3(leftEdge.x, 0, leftEdge.z).normalize();
+
+                double angle = Math.atan2(upDir.cross(toPlayer).y, upDir.dot(toPlayer));
+
+                double deg = Math.toDegrees(angle);
+
+                int rotationSteps = getSteps(this.mediaArgs(), deg);
+
+                float[] us = {u1, u2, u3, u4};
+                float[] vs = {v1, v2, v3, v4};
+                for (int i = 0; i < 4; i++) {
+                    float u = us[i];
+                    float v = vs[i];
+                    float du = u - 0.5f;
+                    float dv = v - 0.5f;
+                    switch (rotationSteps) {
+                        case 0:
+                            break;
+                        case 1:
+                            us[i] = 0.5f + dv;
+                            vs[i] = 0.5f - du;
+                            break;
+                        case 2:
+                            us[i] = 0.5f - du;
+                            vs[i] = 0.5f - dv;
+                            break;
+                        case 3:
+                            us[i] = 0.5f - dv;
+                            vs[i] = 0.5f + du;
+                            break;
+                    }
+                }
+                u1 = us[0]; v1 = vs[0];
+                u2 = us[1]; v2 = vs[1];
+                u3 = us[2]; v3 = vs[2];
+                u4 = us[3]; v4 = vs[3];
+            }
+
+            if (isBack) {
+                u1 = 1.0F - u1;
+                u2 = 1.0F - u2;
+                u3 = 1.0F - u3;
+                u4 = 1.0F - u4;
+            }
+        } else {
+            double surfaceZ = (normalZ > 0 ? maxZ : minZ) + normalZ * 0.01;
+            x1 = x4 = minX;
+            x2 = x3 = maxX;
+            y1 = y2 = minY;
+            y3 = y4 = maxY;
+            z1 = z2 = z3 = z4 = surfaceZ;
+
+            float uBase1 = 0.0F, uBase2 = 1.0F, uBase3 = 1.0F, uBase4 = 0.0F;
+            if (isBack) {
+                u1 = 1.0F - uBase1; u2 = 1.0F - uBase2; u3 = 1.0F - uBase3; u4 = 1.0F - uBase4;
+            } else {
+                u1 = uBase1; u2 = uBase2; u3 = uBase3; u4 = uBase4;
+            }
+            v1 = 1.0F; v2 = 1.0F; v3 = 0.0F; v4 = 0.0F;
         }
 
-        double againstZFighting = 0.05;
-        leftBottomX += normalX * againstZFighting; leftBottomY += normalY * againstZFighting; leftBottomZ += normalZ * againstZFighting;
-        leftTopX += normalX * againstZFighting; leftTopY += normalY * againstZFighting; leftTopZ += normalZ * againstZFighting;
-        rightBottomX += normalX * againstZFighting; rightBottomY += normalY * againstZFighting; rightBottomZ += normalZ * againstZFighting;
-        rightTopX += normalX * againstZFighting; rightTopY += normalY * againstZFighting; rightTopZ += normalZ * againstZFighting;
-
-        int rot = this.horizontal ? this.getHorizontalRotation(mediaArgs.width(), mediaArgs.height(), toCameraX, toCameraZ) : 0;
+        if (isBack && Math.abs(normalY) > 0.5) {
+            u1 = 1.0F - u1;  v1 = 1.0F - v1;
+            u2 = 1.0F - u2;  v2 = 1.0F - v2;
+            u3 = 1.0F - u3;  v3 = 1.0F - v3;
+            u4 = 1.0F - u4;  v4 = 1.0F - v4;
+        }
 
         Matrix4f pose = poseStack.last().pose();
         Matrix3f normalMat = poseStack.last().normal();
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(this.textureLocation));
 
-        double[][] uv = new double[4][2];
-        if (isFrontFacing) {
-            uv[0][0] = 1; uv[0][1] = 1;
-            uv[1][0] = 1; uv[1][1] = 0;
-            uv[2][0] = 0; uv[2][1] = 0;
-            uv[3][0] = 0;
+        vertex(consumer, pose, normalMat, x1, y1, z1, u1, v1, normalX, normalY, normalZ);
+        vertex(consumer, pose, normalMat, x2, y2, z2, u2, v2, normalX, normalY, normalZ);
+        vertex(consumer, pose, normalMat, x3, y3, z3, u3, v3, normalX, normalY, normalZ);
+        vertex(consumer, pose, normalMat, x4, y4, z4, u4, v4, normalX, normalY, normalZ);
+    }
+
+    public static int getSteps(@Nullable MediaArgs mediaArgs, double deg) {
+        assert mediaArgs != null;
+
+        boolean square = Math.abs(mediaArgs.width() - mediaArgs.height()) < 1;
+        int rotationSteps;
+        if (square) {
+            int steps = (int) Math.round(deg / 90.0);
+            steps = ((steps % 4) + 4) % 4;
+            rotationSteps = steps;
         } else {
-            uv[0][0] = 0; uv[0][1] = 1;
-            uv[1][0] = 0; uv[1][1] = 0;
-            uv[2][0] = 1; uv[2][1] = 0;
-            uv[3][0] = 1;
-        }
-        uv[3][1] = 1;
-
-        if (this.horizontal) {
-            for (int r = 0; r < rot; r++) {
-                for (int i = 0; i < 4; i++) {
-                    double oldU = uv[i][0];
-                    double oldV = uv[i][1];
-                    uv[i][0] = oldV;
-                    uv[i][1] = 1.0 - oldU;
-                }
+            if (deg > 90 || deg < -90) {
+                rotationSteps = 2;
+            } else {
+                rotationSteps = 0;
             }
         }
-
-        vertexConsumer.vertex(pose, (float) leftBottomX, (float) leftBottomY, (float) leftBottomZ).color(255, 255, 255, 255).uv((float) uv[0][0], (float) uv[0][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-        vertexConsumer.vertex(pose, (float) leftTopX, (float) leftTopY, (float) leftTopZ).color(255, 255, 255, 255).uv((float) uv[1][0], (float) uv[1][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-        vertexConsumer.vertex(pose, (float) rightTopX, (float) rightTopY, (float) rightTopZ).color(255, 255, 255, 255).uv((float) uv[2][0], (float) uv[2][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
-        vertexConsumer.vertex(pose, (float) rightBottomX, (float) rightBottomY, (float) rightBottomZ).color(255, 255, 255, 255).uv((float) uv[3][0], (float) uv[3][1]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
+        return rotationSteps;
     }
 
-    private int getHorizontalRotation(int width, int height, double toCameraX, double toCameraZ) {
-        double[] dotToSide = this.getDotToSide(toCameraX, toCameraZ);
-        int[] allowed = Math.abs(this.side1 - this.side2) < 0.1 ? new int[]{0, 1, 2, 3} : ((this.side1 < this.side2) == (width < height) ? new int[]{1, 3} : new int[]{0, 2});
-        int bestEdge = allowed[0];
-        double maxD = dotToSide[bestEdge];
-        for (int edge : allowed) {
-            if (dotToSide[edge] > maxD) {
-                maxD = dotToSide[edge];
-                bestEdge = edge;
-            }
-        }
-        return (4 - bestEdge) % 4;
-    }
-
-    private double @NotNull [] getDotToSide(double toCameraX, double toCameraZ) {
-        double dirLen = Math.sqrt(toCameraX * toCameraX + toCameraZ * toCameraZ);
-        double dirX = dirLen > 0.001 ? toCameraX / dirLen : 0;
-        double dirZ = dirLen > 0.001 ? toCameraZ / dirLen : 0;
-        return new double[]{
-                dotOrMinusOne(dirX, dirZ, this.sideBottomX, this.sideBottomZ),
-                dotOrMinusOne(dirX, dirZ, this.sideLeftX, this.sideLeftZ),
-                dotOrMinusOne(dirX, dirZ, this.sideTopX, this.sideTopZ),
-                dotOrMinusOne(dirX, dirZ, this.sideRightX, this.sideRightZ)
-        };
-    }
-
-    private static double dotOrMinusOne(double dirX, double dirZ, double sideX, double sideZ) {
-        return sideX == 0 && sideZ == 0 ? -1 : dirX * sideX + dirZ * sideZ;
+    private static void vertex(@NotNull VertexConsumer vertexConsumer, Matrix4f pose, Matrix3f normalMat, double x, double y, double z, float u, float v, double normalX, double normalY, double normalZ) {
+        vertexConsumer.vertex(pose, (float) x, (float) y, (float) z).color(255, 255, 255, 255).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(normalMat, (float) normalX, (float) normalY, (float) normalZ).endVertex();
     }
 
     @Override
@@ -306,17 +262,17 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
     public synchronized void shutdown() {
         super.shutdown();
 
-        if (this.localSoundEngine != null) {
-            this.localSoundEngine.off.run();
-            this.localSoundEngine = null;
+        if (this.localSound != null) {
+            this.localSound.off.run();
+            this.localSound = null;
         }
     }
 
     @Override
     public @Nullable AudioProducer initAudio(double seekTo) {
         if (this.screen.hasLocalSound()) {
-            this.localSoundEngine = new LocalSoundEngine(this.screen);
-            this.localSoundEngine.on.accept(0D);
+            this.localSound = new LocalSound(this.screen);
+            this.localSound.on.accept(0D);
             return null;
         } else {
             return super.initAudio(seekTo);
@@ -325,8 +281,8 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
 
     @Override
     public Runnable pauseAudio() {
-        if (this.localSoundEngine != null) {
-            return this.localSoundEngine.off;
+        if (this.localSound != null) {
+            return this.localSound.off;
         } else {
             return super.pauseAudio();
         }
@@ -334,11 +290,11 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
 
     @Override
     public Runnable resumeAudio() {
-        LocalSoundEngine localSoundEngine = this.localSoundEngine;
-        if (localSoundEngine != null) {
+        LocalSound localSound = this.localSound;
+        if (localSound != null) {
             return () -> {
                 var life = this.life();
-                if (life != null) localSoundEngine.on.accept((double) life.nanoTimeFromSetup() / 1_000_000_000D);
+                if (life != null) localSound.on.accept((double) life.sinceSetup() / 1_000_000_000D);
             };
         } else {
             return super.resumeAudio();

@@ -59,6 +59,7 @@ public class NarutoEarlyRenderer extends ByteBufferRenderer {
 
     @Override
     public boolean isRunnable() {
+        if (Sources.isEmpty()) return false;
         String shutdown = System.getProperty(NarutoProperties.SHUTDOWN);
         if (shutdown == null) {
             if (System.getProperty(NarutoProperties.EARLY_START) == null) System.setProperty(NarutoProperties.EARLY_START, String.valueOf(System.nanoTime()));

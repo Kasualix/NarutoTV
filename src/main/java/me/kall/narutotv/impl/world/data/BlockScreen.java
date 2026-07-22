@@ -31,10 +31,14 @@ public class BlockScreen {
     private LongSet areaInvolved, borderInvolved;
 
     public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio) {
-        this(BlockPos.of(corners[0]), BlockPos.of(corners[1]), BlockPos.of(corners[2]), BlockPos.of(corners[3]), dimension);
-        this.localSound = localSound;
+        this(corners, dimension, localSound);
         this.video = video;
         this.audio = audio;
+    }
+
+    public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound) {
+        this(BlockPos.of(corners[0]), BlockPos.of(corners[1]), BlockPos.of(corners[2]), BlockPos.of(corners[3]), dimension);
+        this.localSound = localSound;
     }
 
     public BlockScreen(@NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2, @NotNull BlockPos topCorner1, @NotNull BlockPos topCorner2, ResourceLocation dimension) {
@@ -72,11 +76,11 @@ public class BlockScreen {
         this.id = String.valueOf(this.leftBottom.getX()) + this.leftBottom.getY() + this.leftBottom.getZ() +
                 this.rightBottom.getX() + this.rightBottom.getY() + this.rightBottom.getZ() +
                 this.leftTop.getX() + this.leftTop.getY() + this.leftTop.getZ() +
-                this.rightBottom.getX() + this.rightBottom.getY() + this.rightBottom.getZ() + this.dimension.toString();
+                this.rightBottom.getX() + this.rightBottom.getY() + this.rightBottom.getZ() + this.dimension.getNamespace() + "_" + this.dimension.getPath();
     }
 
     public boolean hasLocalSound() {
-        return this.localSound != NO_LOCAL_SOUND;
+        return !this.localSound.equals(NO_LOCAL_SOUND);
     }
 
     public boolean tooFar(@NotNull Player player) {
@@ -91,7 +95,7 @@ public class BlockScreen {
 
     @Contract(" -> new")
     public long @NotNull [] toLongArray() {
-        return new long[]{this.leftBottom.asLong(), this.leftTop.asLong(), this.rightBottom.asLong(), this.rightTop.asLong()};
+        return new long[]{this.leftBottom.asLong(), this.rightBottom.asLong(), this.leftTop.asLong(), this.rightTop.asLong()};
     }
 
     public LongSet areaInvolved() {
@@ -124,7 +128,7 @@ public class BlockScreen {
         return this.borderInvolved;
     }
 
-    private static @NotNull LongList getLine(@NotNull BlockPos from, @NotNull BlockPos to) {
+    public static @NotNull LongList getLine(@NotNull BlockPos from, @NotNull BlockPos to) {
         LongList line = new LongArrayList(Math.max(Math.abs(to.getX() - from.getX()), Math.max(Math.abs(to.getY() - from.getY()), Math.abs(to.getZ() - from.getZ()))) + 1);
 
         int deltaX = Integer.compare(to.getX(), from.getX());

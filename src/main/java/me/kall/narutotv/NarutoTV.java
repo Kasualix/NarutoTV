@@ -8,7 +8,7 @@ import me.kall.narutotv.impl.gui.NarutoGuiCenter;
 import me.kall.narutotv.impl.qol.KeybindCenter;
 import me.kall.narutotv.impl.qol.SourceDragCenter;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
-import me.kall.narutotv.impl.world.event.ScreenConstruction;
+import me.kall.narutotv.impl.world.event.ScreenLifeEvents;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
 import me.kall.narutotv.override.CustomOverride;
 import me.kall.narutotv.override.OverrideApi;
@@ -35,15 +35,14 @@ public final class NarutoTV {
     public static final ICompat COMPAT = FMLLoader.getLoadingModList().getModFileById("oculus") != null ? new OculusCompat() : () -> false;
 
     public NarutoTV(@NotNull FMLJavaModLoadingContext context) {
-        if (FMLLoader.getDist().isClient()) {
-            IEventBus forgeBus = MinecraftForge.EVENT_BUS;
-            IEventBus modBus = context.getModEventBus();
+        IEventBus forgeBus = MinecraftForge.EVENT_BUS;
+        IEventBus modBus = context.getModEventBus();
 
+        if (FMLLoader.getDist().isClient()) {
             FadeCenter.register(forgeBus);
             KeybindCenter.register(forgeBus);
             CustomOverride.register(forgeBus);
             ClientRenderers.register(forgeBus);
-            ScreenConstruction.register(forgeBus);
 
             SourceDragCenter.register(modBus);
 
@@ -51,6 +50,8 @@ public final class NarutoTV {
 
             OverrideApi.getInstance().set(NarutoGuiCenter.getActive()::isRunnable, NarutoGuiCenter.getActive()::render);
         }
+
+        ScreenLifeEvents.register(forgeBus);
 
         NarutoConfig.Server.register(context);
         NarutoPackets.register();

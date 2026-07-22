@@ -11,6 +11,7 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,14 +28,13 @@ public class NarutoConfig {
         static {
             ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
             builder.push("NarutoTV");
-            DISPLAYERS = builder.defineList("Displayers", Lists.newArrayList(), Predicates.alwaysTrue());
+            DISPLAYERS = builder.defineList("Displayers", Lists.newArrayList("minecraft:glass"), Predicates.alwaysTrue());
             SCREEN_BUILDER = builder.define("ScreenBuilder", "minecraft:stick");
             builder.pop();
             CONFIG = builder.build();
         }
 
         private static final Supplier<Set<ResourceLocation>> DISPLAYERS_CACHE = Suppliers.memoize(() -> DISPLAYERS.get().stream().map(ResourceLocation::parse).collect(ObjectOpenHashSet::new, ObjectOpenHashSet::add, ObjectOpenHashSet::addAll));
-
 
         public static void register(@NotNull ModLoadingContext context) {
             context.registerConfig(ModConfig.Type.SERVER, CONFIG);
@@ -44,7 +44,8 @@ public class NarutoConfig {
             return DISPLAYERS_CACHE.get();
         }
 
-        public static ResourceLocation builder() {
+        @Contract(" -> new")
+        public static @NotNull ResourceLocation builder() {
             return ResourceLocation.parse(SCREEN_BUILDER.get());
         }
     }
