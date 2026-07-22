@@ -47,13 +47,15 @@ public class NarutoGuiCenter {
     }
 
     public synchronized void swap() {
-        AbstractRenderer<?> last = this.active.get();
-        MediaArgs mediaArgs = last.mediaArgs();
+        AbstractRenderer<?> now = this.active.get();
 
-        last.shutdown();
+        MediaArgs mediaArgs = now.mediaArgs();
         if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
-        this.active.set(last == this.nativeImage ? this.byteBuffer : this.nativeImage);
 
+        this.nativeImage.shutdown();
+        this.byteBuffer.shutdown();
+
+        this.active.set(now == this.nativeImage ? this.byteBuffer : this.nativeImage);
         LOGGER.info("Current Naruto Gui Mode: {}", this.active.get().equals(this.byteBuffer) ? "ByteBuffer" : "NativeImage");
     }
 }
