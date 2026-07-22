@@ -72,12 +72,11 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements BindScree
                 }
                 """;
 
-        return new WorldGLEngine(fragmentSource, vertexSource, this.screen);
+        return new WorldGLEngine(fragmentSource, vertexSource, this.screen, this.mediaArgs());
     }
 
     @Override
     public boolean isRunnable() {
-        if (Sources.isEmpty()) return false;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             this.shutdown();

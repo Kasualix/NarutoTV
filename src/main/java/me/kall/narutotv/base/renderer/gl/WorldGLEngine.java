@@ -2,6 +2,7 @@ package me.kall.narutotv.base.renderer.gl;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
@@ -24,14 +25,14 @@ public class WorldGLEngine extends AbstractGLEngine {
 
     Vec3 normal;
 
-    public WorldGLEngine(String fragmentSource, String vertexSource, @NotNull BlockScreen screen) {
-        super(fragmentSource, vertexSource);
+    public WorldGLEngine(String fragmentSource, String vertexSource, @NotNull BlockScreen screen, MediaArgs mediaArgs) {
+        super(fragmentSource, vertexSource, mediaArgs);
         this.screen = screen;
     }
 
     @Override
-    public synchronized void setup(int width, int height) {
-        super.setup(width, height);
+    public synchronized void setup() {
+        super.setup();
         this.mvpUniformLocation = glGetUniformLocation(this.program, "uMVP");
         this.mirrorUniformLocation = glGetUniformLocation(this.program, "uMirror");
     }

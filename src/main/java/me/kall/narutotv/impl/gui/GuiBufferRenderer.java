@@ -55,12 +55,11 @@ public class GuiBufferRenderer extends ByteBufferRenderer {
                 }
                 """;
 
-        return new GuiGLEngine(fragmentSource, vertexSource);
+        return new GuiGLEngine(fragmentSource, vertexSource, this.mediaArgs());
     }
 
     @Override
     public boolean isRunnable() {
-        if (Sources.isEmpty()) return false;
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = minecraft.screen;
         if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;

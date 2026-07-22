@@ -45,7 +45,6 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
         assert mediaArgs != null;
 
         this.engine = this.initEngine();
-        this.engine.setup(mediaArgs.width(), mediaArgs.height());
         this.update(null);
     }
 

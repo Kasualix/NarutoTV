@@ -47,10 +47,6 @@ public class Sources {
         LINE_CUTTER.set(source);
     }
 
-    public static synchronized boolean isEmpty() {
-        return SOURCES.isEmpty() && LINE_CUTTER.get() == null;
-    }
-
     public static synchronized @NotNull MediaArgs get() {
         Source lastDragged = LINE_CUTTER.getAndSet(null);
         if (lastDragged != null) {

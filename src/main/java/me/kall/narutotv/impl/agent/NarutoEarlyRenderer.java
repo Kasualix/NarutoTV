@@ -54,12 +54,11 @@ public class NarutoEarlyRenderer extends ByteBufferRenderer {
                         gl_Position = vec4(Position, 0.0, 1.0);
                     }
                     """;
-        return new GuiGLEngine(fragmentSource, vertexSource);
+        return new GuiGLEngine(fragmentSource, vertexSource, this.mediaArgs());
     }
 
     @Override
     public boolean isRunnable() {
-        if (Sources.isEmpty()) return false;
         String shutdown = System.getProperty(NarutoProperties.SHUTDOWN);
         if (shutdown == null) {
             if (System.getProperty(NarutoProperties.EARLY_START) == null) System.setProperty(NarutoProperties.EARLY_START, String.valueOf(System.nanoTime()));

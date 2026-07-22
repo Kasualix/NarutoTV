@@ -1,20 +1,15 @@
 package me.kall.narutotv.base.renderer.gl;
 
+import me.kall.narutotv.app.data.MediaArgs;
 import org.lwjgl.system.MemoryUtil;
 
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL30C.*;
 
 public class GuiGLEngine extends AbstractGLEngine {
-    int program, vertexArray, buffer;
-
-    int[] textures;
-    int width, height;
-
-    public GuiGLEngine(String fragmentSource, String vertexSource) {
-        super(fragmentSource, vertexSource);
+    public GuiGLEngine(String fragmentSource, String vertexSource, MediaArgs mediaArgs) {
+        super(fragmentSource, vertexSource, mediaArgs);
     }
 
     @Override
@@ -41,41 +36,8 @@ public class GuiGLEngine extends AbstractGLEngine {
         glBindVertexArray(0);
     }
 
-    public synchronized void update(ByteBuffer frame) {
-        if (this.textures == null) return;
-        if (!glIsTexture(this.textures[0]) || !glIsTexture(this.textures[1]) || !glIsTexture(this.textures[2])) return;
-
-        if (this.pboArray == null) return;
-
-        long frameCount = this.frameCount++;
-
-        int ySize = this.width * this.height;
-        int uvSize = (this.width / 2) * (this.height / 2);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-
-        int current = (int) (frameCount & 1);
-        int previous = 1 - current;
-
-        this.stage(this.pboArray[current], frame, 0, ySize);
-        this.stage(this.pboArray[2 + current], frame, ySize, uvSize);
-        this.stage(this.pboArray[4 + current], frame, ySize + uvSize, uvSize);
-
-        int uploadSlot = (frameCount == 0) ? current : previous;
-
-        this.upload(this.textures[0], this.width, this.height, this.pboArray[uploadSlot]);
-        this.upload(this.textures[1], this.width / 2, this.height / 2, this.pboArray[2 + uploadSlot]);
-        this.upload(this.textures[2], this.width / 2, this.height / 2, this.pboArray[4 + uploadSlot]);
-
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
     public synchronized void render() {
-        if (this.textures == null) return;
+        if (!this.running) this.setup();
         int prevProg = glGetInteger(GL_CURRENT_PROGRAM);
         int prevVao = glGetInteger(GL_VERTEX_ARRAY_BINDING);
         int prevActive = glGetInteger(GL_ACTIVE_TEXTURE);
@@ -125,20 +87,5 @@ public class GuiGLEngine extends AbstractGLEngine {
         if (wasScissorTest) glEnable(GL_SCISSOR_TEST);
         if (wasDepthTest) glEnable(GL_DEPTH_TEST);
         if (wasBlend) glEnable(GL_BLEND);
-    }
-
-    public synchronized void shutdown() {
-        if (this.textures != null) glDeleteTextures(this.textures);
-        if (this.pboArray != null) glDeleteBuffers(this.pboArray);
-        if (this.buffer != 0) glDeleteBuffers(this.buffer);
-        if (this.vertexArray != 0) glDeleteVertexArrays(this.vertexArray);
-        if (this.program != 0) glDeleteProgram(this.program);
-        this.buffer = 0;
-        this.vertexArray = 0;
-        this.program = 0;
-        this.pboArray = null;
-        this.textures = null;
-        this.width = 0;
-        this.height = 0;
     }
 }

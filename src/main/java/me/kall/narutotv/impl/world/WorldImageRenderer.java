@@ -38,7 +38,6 @@ public class WorldImageRenderer extends NativeImageRenderer implements BindScree
 
     @Override
     public boolean isRunnable() {
-        if (Sources.isEmpty()) return false;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             this.shutdown();

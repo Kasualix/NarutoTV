@@ -1,6 +1,7 @@
 package me.kall.narutotv.base.renderer.gl;
 
-import org.jetbrains.annotations.Nullable;
+import me.kall.narutotv.app.data.MediaArgs;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -8,30 +9,33 @@ import java.nio.ByteBuffer;
 import static org.lwjgl.opengl.GL30C.*;
 
 public abstract class AbstractGLEngine {
+    final int width, height;
+
+    final String fragmentSource, vertexSource;
+
     int[] pboArray;
     long frameCount;
     int program, vertexArray, buffer;
 
-    int @Nullable [] textures;
-    int width, height;
+    int[] textures;
 
-    final String fragmentSource, vertexSource;
+    boolean running;
 
-    public AbstractGLEngine(String fragmentSource, String vertexSource) {
+    public AbstractGLEngine(String fragmentSource, String vertexSource, @NotNull MediaArgs mediaArgs) {
         this.fragmentSource = fragmentSource;
         this.vertexSource = vertexSource;
+        this.width = mediaArgs.width();
+        this.height = mediaArgs.height();
     }
 
-    public synchronized void setup(int width, int height) {
-        this.width = width;
-        this.height = height;
-
+    public synchronized void setup() {
         this.program = this.initProgram();
         this.initVaoVbo();
-        this.textures = this.initTextures(width, height);
-        this.pboArray = this.initPboArray(width, height);
+        this.textures = this.initTextures(this.width, this.height);
+        this.pboArray = this.initPboArray(this.width, this.height);
 
         this.frameCount = 0L;
+        this.running = true;
     }
 
     protected int initProgram() {
@@ -124,10 +128,8 @@ public abstract class AbstractGLEngine {
     }
 
     public synchronized void update(ByteBuffer frame) {
-        if (this.textures == null) return;
+        if (!this.running) this.setup();
         if (!glIsTexture(this.textures[0]) || !glIsTexture(this.textures[1]) || !glIsTexture(this.textures[2])) return;
-
-        if (this.pboArray == null) return;
 
         long frameCount = this.frameCount++;
 
@@ -185,7 +187,6 @@ public abstract class AbstractGLEngine {
         this.program = 0;
         this.pboArray = null;
         this.textures = null;
-        this.width = 0;
-        this.height = 0;
+        this.running = false;
     }
 }
