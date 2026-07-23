@@ -71,7 +71,7 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
     @Override
     @Contract("_ -> new")
     protected String @NotNull [] setCommand(double setupTime) {
-        return new String[]{this.absFFmpegPath, "-loglevel", "quiet", "-hwaccel", "auto", "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absVideoPath(), "-map", "0:v:0", "-an", "-sn", "-dn", "-threads", "0", "-vf", "fps=" + this.mediaArgs.fps() + ",scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear,format=rgba", "-f", "rawvideo", "-vcodec", "rawvideo", "-tune", "zerolatency", "-"};
+        return new String[]{this.absFFmpegPath, "-loglevel", "quiet", "-hwaccel", "auto", "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absVideoPath(), "-map", "0:v:0", "-an", "-sn", "-dn", "-threads", "0", "-vf", "scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear," + "fps=" + this.mediaArgs.fps() + "," + "format=rgba", "-f", "rawvideo", "-vcodec", "rawvideo", "-"};
     }
 
     @Override

@@ -10,15 +10,15 @@ public record MediaArgs(String absVideoPath, String absAudioPath, int channelCou
     @Override
     public @NotNull String toString() {
         return
-                "absVideoPath:" + Base64.getEncoder().encodeToString(this.absVideoPath.getBytes(StandardCharsets.UTF_8)) +
-                ",absAudioPath:" + Base64.getEncoder().encodeToString(this.absAudioPath.getBytes(StandardCharsets.UTF_8)) +
-                ",channelCount:" + this.channelCount +
-                ",sampleRate:" + this.sampleRate +
-                ",openALFormat:" + this.openALFormat +
-                ",fps:" + this.fps +
-                ",width:" + this.width +
-                ",height:" + this.height +
-                ",duration:" + this.duration;
+                "absVideoPath:" + Base64.getEncoder().encodeToString(this.absVideoPath().getBytes(StandardCharsets.UTF_8)) +
+                ",absAudioPath:" + Base64.getEncoder().encodeToString(this.absAudioPath().getBytes(StandardCharsets.UTF_8)) +
+                ",channelCount:" + this.channelCount() +
+                ",sampleRate:" + this.sampleRate() +
+                ",openALFormat:" + this.openALFormat() +
+                ",fps:" + this.fps() +
+                ",width:" + this.width() +
+                ",height:" + this.height() +
+                ",duration:" + this.duration();
     }
 
     @Contract("_ -> new")
