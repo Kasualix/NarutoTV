@@ -43,7 +43,7 @@ public class Sources {
     public static void cutInLine(String video, String audio) {
         Source source = new Source();
         source.video = video;
-        source.audio = audio != null ? audio : video;
+        source.audio = audio != null && !audio.isBlank() ? audio : video;
         LINE_CUTTER.set(source);
     }
 

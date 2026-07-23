@@ -39,13 +39,13 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     private final AtomicReference<AudioProducer> audio = new AtomicReference<>();
     private final AtomicReference<Double2ObjectFunction<AudioProducer>> audioCreation = new AtomicReference<>();
 
-    protected AbstractFrameProducer(MediaArgs mediaArgs, int frameSize, int bufferSeconds, String absFFmpegPath) {
+    protected AbstractFrameProducer(@NotNull MediaArgs mediaArgs, int frameSize, int bufferSeconds, String absFFmpegPath) {
         this.mediaArgs = mediaArgs;
         this.frameSize = frameSize;
         this.bufferCapacity = (int) (this.mediaArgs.fps() * bufferSeconds);
         this.absFFmpegPath = absFFmpegPath;
         this.frames = new LinkedBlockingQueue<>(this.bufferCapacity);
-        this.frameReading = new TimeCostDebugger(this.debugLength(), "Frame Reading");
+        this.frameReading = new TimeCostDebugger(this.debugLength(), "Frame Reading For " + mediaArgs.absVideoPath());
     }
 
     public AbstractFrameProducer<T> setLifeCreation(Double2ObjectFunction<LifetimeController> lifeCreation) {
@@ -88,15 +88,12 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         if (frame == null) {
             life.detectLagSpike();
             this.frameReading.printDebug();
-            this.onLagSpike();
             return null;
         }
 
         this.lastFrame.set(frame.data());
         return frame.data();
     }
-
-    protected void onLagSpike() {}
 
     @Override
     protected void forInput(@NotNull InputStream input) throws IOException, InterruptedException {

@@ -4,11 +4,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 public final class TimeCostDebugger {
-    private static final Logger LOGGER = Logger.getLogger(TimeCostDebugger.class.getSimpleName());
-
     private final int size;
     private final long[] costs;
     private int timeIndex = 0;
@@ -39,7 +36,7 @@ public final class TimeCostDebugger {
     public synchronized void printDebug() {
         if (System.nanoTime() - this.lastPrint < 2_000_000_000L) return;
         this.lastPrint = System.nanoTime();
-        LOGGER.info("[" + this.reason + "] Costs of the last " + this.count + " records in ms: " + Arrays.toString(this.costsMillis()));
+        System.err.println("[" + this.reason + "] Costs of the last " + this.count + " records in ms: " + Arrays.toString(this.costsMillis()));
     }
 
     @Contract(pure = true)

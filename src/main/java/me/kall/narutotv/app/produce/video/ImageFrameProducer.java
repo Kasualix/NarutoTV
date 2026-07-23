@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.doubles.Double2ObjectFunction;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.app.util.LifetimeController;
-import me.kall.narutotv.app.util.TimeCostDebugger;
 import me.kall.narutotv.mixin.context.NativeImageAccessor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +14,6 @@ import java.nio.ByteBuffer;
 
 public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage> {
     private ByteBuffer frame;
-
-    private final TimeCostDebugger frameBuilding = new TimeCostDebugger(20, "Frame Building");
 
     private ImageFrameProducer(MediaArgs mediaArgs, int bufferSeconds, String absFFmpegPath) {
         super(mediaArgs, mediaArgs.width() * mediaArgs.height() * 4, bufferSeconds, absFFmpegPath);
@@ -61,8 +58,6 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
 
     @Override
     protected void onFrameCreated(ByteBuffer frame, long frameIndex) throws InterruptedException {
-        long start = System.nanoTime();
-
         int width = this.mediaArgs.width();
         int height = this.mediaArgs.height();
 
@@ -70,13 +65,7 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
 
         MemoryUtil.memCopy(MemoryUtil.memAddress(frame), ((NativeImageAccessor)(Object)image).getPixels(), (long) width * height * 4L);
 
-        this.frameBuilding.record(System.nanoTime() - start);
         this.frames.put(new Frame<>(frameIndex, image));
-    }
-
-    @Override
-    protected void onLagSpike() {
-        this.frameBuilding.printDebug();
     }
 
     @Override

@@ -85,7 +85,7 @@ public class ClientRenderers {
         }
     }
 
-    private boolean isImageRenderer() {
+    public boolean isImageRenderer() {
         if (this.renderers.isEmpty()) return NarutoTV.COMPAT.shaderUsing();
         for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
             for (AbstractRenderer<?> renderer : inDimension.values()) return !(renderer instanceof WorldBufferRenderer);
@@ -109,6 +109,11 @@ public class ClientRenderers {
                 renderer.setup(0D);
             });
         });
+    }
+
+    public void compat() {
+        if (this.isImageRenderer()) return;
+        this.swap();
     }
 
     public void forEach(@NotNull Consumer<AbstractRenderer<?>> action) {
@@ -176,11 +181,13 @@ public class ClientRenderers {
 
             if (renderer instanceof WorldBufferRenderer bufferRenderer) {
                 AbstractGLEngine engine = bufferRenderer.engine();
-                if (engine instanceof WorldGLEngine worldGLEngine) worldGLEngine.render(poseStack, camera);
+                if (engine instanceof WorldGLEngine worldGLEngine) {
+                    worldGLEngine.capture(poseStack, camera);
+                    worldGLEngine.render();
+                    worldGLEngine.deprecate();
+                }
             } else if (renderer instanceof WorldImageRenderer imageRenderer) {
                 imageRenderer.render(poseStack, bufferSource, camera);
-            } else {
-                throw new UnsupportedOperationException("Invalid renderer type: " + renderer.getClass().getSimpleName());
             }
 
             poseStack.popPose();

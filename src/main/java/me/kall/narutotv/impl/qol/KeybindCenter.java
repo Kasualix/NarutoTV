@@ -84,12 +84,12 @@ public class KeybindCenter {
     }
 
     private void restart() {
-        NarutoGuiCenter.getActive().restart();
-        ClientRenderers.getInstance().forEach(AbstractRenderer::restart);
+        NarutoGuiCenter.getActive().shutdown();
+        ClientRenderers.getInstance().forEach(AbstractRenderer::shutdown);
     }
 
     private void swap() {
-        NarutoGuiCenter.getInstance().swap();
+        if (NarutoGuiCenter.getActive().isRunning()) NarutoGuiCenter.getInstance().swap();
         ClientRenderers.getInstance().swap();
     }
 

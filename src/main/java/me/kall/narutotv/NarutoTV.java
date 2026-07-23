@@ -6,6 +6,7 @@ import me.kall.narutotv.fade.FadeCenter;
 import me.kall.narutotv.impl.config.NarutoConfig;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
 import me.kall.narutotv.impl.qol.KeybindCenter;
+import me.kall.narutotv.impl.qol.ShaderDetection;
 import me.kall.narutotv.impl.qol.SourceDragCenter;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
 import me.kall.narutotv.impl.world.event.ScreenLifeEvents;
@@ -32,7 +33,8 @@ public final class NarutoTV {
         return thread;
     });
 
-    public static final ICompat COMPAT = FMLLoader.getLoadingModList().getModFileById("oculus") != null ? new OculusCompat() : () -> false;
+    private static final boolean HAS_SHADER_MOD = isLoaded("oculus") || isLoaded("iris");
+    public static final ICompat COMPAT = HAS_SHADER_MOD ? new OculusCompat() : () -> false;
 
     public NarutoTV(@NotNull FMLJavaModLoadingContext context) {
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
@@ -43,6 +45,10 @@ public final class NarutoTV {
             KeybindCenter.register(forgeBus);
             CustomOverride.register(forgeBus);
             ClientRenderers.register(forgeBus);
+
+            if (HAS_SHADER_MOD) {
+                ShaderDetection.register(forgeBus);
+            }
 
             SourceDragCenter.register(modBus);
 
@@ -55,6 +61,10 @@ public final class NarutoTV {
 
         NarutoConfig.Server.register(context);
         NarutoPackets.register();
+    }
+
+    private static boolean isLoaded(String modID) {
+        return FMLLoader.getLoadingModList().getModFileById(modID) != null;
     }
 
     public static ExecutorService io() {
