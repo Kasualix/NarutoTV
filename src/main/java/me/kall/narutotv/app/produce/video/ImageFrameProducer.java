@@ -11,19 +11,12 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage> {
-    private final LinkedBlockingQueue<NativeImage> freeImages;
-    private final Set<NativeImage> allImages = ConcurrentHashMap.newKeySet();
-
-    private NativeImage currentImage;
+    private ByteBuffer frame;
 
     private ImageFrameProducer(MediaArgs mediaArgs, int bufferSeconds, String absFFmpegPath) {
         super(mediaArgs, mediaArgs.width() * mediaArgs.height() * 4, bufferSeconds, absFFmpegPath);
-        this.freeImages = new LinkedBlockingQueue<>(this.bufferCapacity);
     }
 
     @Contract("_, _, _ -> new")
@@ -45,7 +38,7 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
 
     @Override
     protected void recycleFrame(@NotNull NativeImage frame) {
-        this.freeImages.offer(frame);
+        frame.close();
     }
 
     @Override
@@ -55,20 +48,24 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
 
     @Override
     protected ByteBuffer frameCreation() {
-        NativeImage image = this.freeImages.poll();
-        if (image == null) {
-            image = new NativeImage(this.mediaArgs.width(), this.mediaArgs.height(), false);
-            this.allImages.add(image);
+        if (this.frame == null) {
+            this.frame = MemoryUtil.memAlloc(this.frameSize);
+        } else {
+            this.frame.clear();
         }
-
-        this.currentImage = image;
-        return MemoryUtil.memByteBuffer(((NativeImageAccessor)(Object)image).getPixels(), this.frameSize);
+        return this.frame;
     }
 
     @Override
     protected void onFrameCreated(ByteBuffer frame, long frameIndex) throws InterruptedException {
-        this.frames.put(new Frame<>(frameIndex, this.currentImage));
-        this.currentImage = null;
+        int width = this.mediaArgs.width();
+        int height = this.mediaArgs.height();
+
+        NativeImage image = new NativeImage(width, height, false);
+
+        MemoryUtil.memCopy(MemoryUtil.memAddress(frame), ((NativeImageAccessor)(Object)image).getPixels(), (long) width * height * 4L);
+
+        this.frames.put(new Frame<>(frameIndex, image));
     }
 
     @Override
@@ -78,24 +75,11 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
     }
 
     @Override
-    public void setup(double setupTime) {
-        for (int i = 0; i < this.bufferCapacity; i++) {
-            NativeImage image = new NativeImage(this.mediaArgs.width(), this.mediaArgs.height(), false);
-            this.allImages.add(image);
-            this.freeImages.offer(image);
-        }
-
-        super.setup(setupTime);
-    }
-
-    @Override
     public void shutdown() {
         super.shutdown();
-        synchronized (this.allImages) {
-            for (NativeImage image : this.allImages) image.close();
-            this.allImages.clear();
+        if (this.frame != null) {
+            MemoryUtil.memFree(this.frame);
+            this.frame = null;
         }
-        this.freeImages.clear();
-        this.currentImage = null;
     }
 }
