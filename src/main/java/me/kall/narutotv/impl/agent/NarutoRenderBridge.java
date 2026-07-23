@@ -4,13 +4,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.util.logging.Logger;
 
 @SuppressWarnings({"resource", "unused"})
 public class NarutoRenderBridge {
     public static final Path NARUTO_JAR;
-
-    private static final Logger LOGGER = Logger.getLogger("NarutoEarlyRenderer");
 
     static {
         Path narutoJar = null;
@@ -35,7 +32,7 @@ public class NarutoRenderBridge {
             DISPLAY_WINDOW = narutoClassLoader.loadClass("me.kall.narutotv.impl.agent.NarutoEarlyRenderer");
             RENDER = DISPLAY_WINDOW.getMethod("bridge");
         } catch (Exception exception) {
-            LOGGER.severe(exception.getMessage());
+            exception.printStackTrace(System.err);
             throw new RuntimeException(exception);
         }
     }
@@ -44,7 +41,7 @@ public class NarutoRenderBridge {
         try {
             RENDER.invoke(null);
         } catch (IllegalAccessException | InvocationTargetException exception) {
-            LOGGER.severe(exception.getMessage());
+            exception.printStackTrace(System.err);
             throw new RuntimeException(exception);
         }
     }

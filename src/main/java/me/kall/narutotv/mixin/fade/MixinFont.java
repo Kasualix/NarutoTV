@@ -12,7 +12,7 @@ import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-@Mixin(value = Font.class, priority = 500)
+@Mixin(value = Font.class, priority = 1500)
 public abstract class MixinFont {
     @Unique private static final Component EMPTY_COMPONENT = Component.empty();
     @Unique private static final String EMPTY_STRING = "";

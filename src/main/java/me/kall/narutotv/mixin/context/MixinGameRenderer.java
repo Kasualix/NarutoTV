@@ -1,4 +1,4 @@
-package me.kall.narutotv.mixin.base;
+package me.kall.narutotv.mixin.context;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

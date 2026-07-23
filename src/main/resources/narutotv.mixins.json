@@ -8,8 +8,8 @@
     "defaultRequire": 1
   },
   "client": [
-    "base.MixinGameRenderer",
-    "base.MixinResourceLoadStateTracker",
+    "context.MixinGameRenderer",
+    "context.MixinResourceLoadStateTracker",
     "context.MixinMinecraft",
     "context.NativeImageAccessor",
     "fade.MixinFont",

@@ -1,0 +1,18 @@
+{
+  "screen.narutotv.gui.title": "NarutoTV",
+
+  "button.narutotv.random": "随机",
+  "button.narutotv.swap": "切换",
+
+  "checkbox.narutotv.fadable": "界面渐隐",
+  "checkbox.narutotv.mute_music": "静音音乐",
+
+  "box.narutotv.video": "视频",
+  "box.narutotv.audio": "音频",
+
+  "tooltip.narutotv.random": "从尚未播放的来源中随机选取一个。",
+  "tooltip.narutotv.swap": "在兼容模式和性能模式之间切换。",
+
+  "mode.narutotv.compatibility": "当前：兼容模式",
+  "mode.narutotv.performance": "当前：性能模式"
+}

@@ -8,20 +8,22 @@ import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
-import me.kall.narutotv.impl.world.ext.BindScreen;
 import me.kall.narutotv.impl.world.WorldBufferRenderer;
 import me.kall.narutotv.impl.world.WorldImageRenderer;
 import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.ext.InWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,96 +31,85 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientRenderers {
-    private static final ClientRenderers INSTANCE = new ClientRenderers();
-    
-    public static ClientRenderers getInstance() {
-        return INSTANCE;
-    }
+    private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> RENDERERS = new Object2ObjectOpenHashMap<>();
 
-    public static void register(@NotNull IEventBus forgeBus) {
-        forgeBus.addListener(INSTANCE::logOutClean);
-        forgeBus.addListener(INSTANCE::tick);
-        forgeBus.addListener(INSTANCE::renderLevel);
-    }
-
-    private final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> renderers = new Object2ObjectOpenHashMap<>();
-
-    public @Nullable AbstractRenderer<?> get(ResourceLocation dimension, double centerX, double centerY, double centerZ) {
-        this.validateThread();
-        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = this.renderers.get(dimension);
+    public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, double centerX, double centerY, double centerZ) {
+        validateThread();
+        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
         if (inDimension == null || inDimension.isEmpty()) return null;
         return inDimension.get(new Vec3(centerX, centerY, centerZ));
     }
 
-    public @Nullable AbstractRenderer<?> get(@NotNull BlockScreen blockScreen) {
-        return this.get(blockScreen.dimension, blockScreen.centerX, blockScreen.centerY, blockScreen.centerZ);
+    public static @Nullable AbstractRenderer<?> get(@NotNull BlockScreen blockScreen) {
+        return get(blockScreen.dimension, blockScreen.centerX, blockScreen.centerY, blockScreen.centerZ);
     }
 
-    public @NotNull Optional<AbstractRenderer<?>> remove(@NotNull ResourceLocation dimension, double centerX, double centerY, double centerZ) {
-        this.validateThread();
-        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = this.renderers.get(dimension);
+    public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull ResourceLocation dimension, double centerX, double centerY, double centerZ) {
+        validateThread();
+        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
         if (inDimension == null || inDimension.isEmpty()) return Optional.empty();
         return Optional.ofNullable(inDimension.remove(new Vec3(centerX, centerY, centerZ)));
     }
 
-    public @NotNull Optional<AbstractRenderer<?>> remove(@NotNull AbstractRenderer<?> renderer) {
-        BlockScreen screen = ((BindScreen)renderer).screen();
-        return this.remove(screen.dimension, screen.centerX, screen.centerY, screen.centerZ);
+    public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull AbstractRenderer<?> renderer) {
+        BlockScreen screen = ((InWorld)renderer).screen();
+        return remove(screen.dimension, screen.centerX, screen.centerY, screen.centerZ);
     }
 
-    public @NotNull Optional<AbstractRenderer<?>> remove(@NotNull BlockScreen screen) {
-        return this.remove(screen.dimension, screen.centerX, screen.centerY, screen.centerZ);
+    public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull BlockScreen screen) {
+        return remove(screen.dimension, screen.centerX, screen.centerY, screen.centerZ);
     }
 
-    public @NotNull Optional<AbstractRenderer<?>> add(@NotNull AbstractRenderer<?> renderer) {
-        this.validateThread();
-        BlockScreen screen = ((BindScreen)renderer).screen();
-        return Optional.ofNullable(this.renderers.computeIfAbsent(screen.dimension, key -> new Object2ObjectOpenHashMap<>()).put(new Vec3(screen.centerX, screen.centerY, screen.centerZ), renderer));
+    public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull AbstractRenderer<?> renderer) {
+        validateThread();
+        BlockScreen screen = ((InWorld)renderer).screen();
+        return Optional.ofNullable(RENDERERS.computeIfAbsent(screen.dimension, key -> new Object2ObjectOpenHashMap<>()).put(new Vec3(screen.centerX, screen.centerY, screen.centerZ), renderer));
     }
 
-    public @NotNull Optional<AbstractRenderer<?>> add(@NotNull BlockScreen screen) {
-        if (this.isImageRenderer()) {
-            return this.add(new WorldImageRenderer(screen));
+    public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull BlockScreen screen) {
+        if (isImageRenderer()) {
+            return add(new WorldImageRenderer(screen));
         } else {
-            return this.add(new WorldBufferRenderer(screen));
+            return add(new WorldBufferRenderer(screen));
         }
     }
 
-    public boolean isImageRenderer() {
-        if (this.renderers.isEmpty()) return NarutoTV.COMPAT.shaderUsing();
-        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
+    public static boolean isImageRenderer() {
+        if (RENDERERS.isEmpty()) return NarutoTV.shaderUsing();
+        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
             for (AbstractRenderer<?> renderer : inDimension.values()) return !(renderer instanceof WorldBufferRenderer);
         }
-        return NarutoTV.COMPAT.shaderUsing();
+        return NarutoTV.shaderUsing();
     }
 
-    public void swap() {
+    public static void swap() {
         Minecraft.getInstance().execute(() -> {
-            this.forEach(AbstractRenderer::shutdown);
-            boolean isImageRenderer = this.isImageRenderer();
-            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
+            forEach(AbstractRenderer::shutdown);
+            boolean isImageRenderer = isImageRenderer();
+            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
                 inDimension.replaceAll((pos, renderer) -> {
-                    BlockScreen screen = ((BindScreen)renderer).screen();
+                    BlockScreen screen = ((InWorld)renderer).screen();
                     return isImageRenderer ? new WorldBufferRenderer(screen) : new WorldImageRenderer(screen);
                 });
             }
-            this.forEach(renderer -> {
-                BlockScreen screen = ((BindScreen)renderer).screen();
+            forEach(renderer -> {
+                BlockScreen screen = ((InWorld)renderer).screen();
                 if (!screen.video.isBlank() && !screen.audio.isBlank()) Sources.cutInLine(screen.video, screen.audio);
                 renderer.setup(0D);
             });
         });
     }
 
-    public void compat() {
-        if (this.isImageRenderer()) return;
-        this.swap();
+    public static void compat() {
+        if (isImageRenderer()) return;
+        swap();
     }
 
-    public void forEach(@NotNull Consumer<AbstractRenderer<?>> action) {
+    public static void forEach(@NotNull Consumer<AbstractRenderer<?>> action) {
         Minecraft.getInstance().execute(() -> {
-            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
+            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
                 for (AbstractRenderer<?> renderer : inDimension.values()) {
                     action.accept(renderer);
                 }
@@ -126,9 +117,9 @@ public class ClientRenderers {
         });
     }
 
-    public void forSpecific(Predicate<AbstractRenderer<?>> condition, Consumer<AbstractRenderer<?>> action) {
+    public static void forSpecific(Predicate<AbstractRenderer<?>> condition, Consumer<AbstractRenderer<?>> action) {
         Minecraft.getInstance().execute(() -> {
-            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : this.renderers.values()) {
+            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
                 for (AbstractRenderer<?> renderer : inDimension.values()) {
                     if (condition.test(renderer)) {
                         action.accept(renderer);
@@ -139,21 +130,24 @@ public class ClientRenderers {
         });
     }
 
-    private void logOutClean(ClientPlayerNetworkEvent.LoggingOut event) {
+    @SubscribeEvent
+    public static void logOutClean(ClientPlayerNetworkEvent.LoggingOut event) {
         Minecraft.getInstance().execute(() -> {
-            this.forEach(AbstractRenderer::shutdown);
-            this.renderers.clear();
+            forEach(AbstractRenderer::shutdown);
+            RENDERERS.clear();
         });
     }
 
-    private void tick(TickEvent.@NotNull RenderTickEvent event) {
+    @SubscribeEvent
+    public static void tick(TickEvent.@NotNull RenderTickEvent event) {
         if (event.phase.equals(TickEvent.Phase.START)) {
-            if (this.renderers.isEmpty()) return;
-            this.forEach(AbstractRenderer::render);
+            if (RENDERERS.isEmpty()) return;
+            forEach(AbstractRenderer::render);
         }
     }
 
-    private void renderLevel(@NotNull RenderLevelStageEvent event) {
+    @SubscribeEvent
+    public static void renderLevel(@NotNull RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SOLID_BLOCKS) return;
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -164,7 +158,7 @@ public class ClientRenderers {
         if (player == null) return;
 
         ResourceLocation dimension = level.dimension().location();
-        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = this.renderers.get(dimension);
+        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
 
         if (inDimension == null || inDimension.isEmpty()) return;
 
@@ -173,7 +167,7 @@ public class ClientRenderers {
         Vec3 camera = event.getCamera().getPosition();
 
         for (AbstractRenderer<?> renderer : inDimension.values()) {
-            BlockScreen screen = ((BindScreen)renderer).screen();
+            BlockScreen screen = ((InWorld)renderer).screen();
             if (screen.tooFar(player)) continue;
 
             poseStack.pushPose();
@@ -194,7 +188,7 @@ public class ClientRenderers {
         }
     }
 
-    private synchronized void validateThread() {
+    private static void validateThread() {
         if (!Minecraft.getInstance().isSameThread()) throw new UnsupportedOperationException("Invalid thread: " + Thread.currentThread().getName());
     }
 }

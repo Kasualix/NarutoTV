@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Logger;
 
 public final class YtDlp {
     public static final String VIDEO_DOWNLOADING_FILE = "video-downloading.txt";
@@ -20,8 +19,6 @@ public final class YtDlp {
 
     private static final String VIDEO_DOWNLOADED_FILE = "video-downloaded.txt";
     private static final String AUDIO_DOWNLOADED_FILE = "audio-downloaded.txt";
-
-    private static final Logger LOGGER = Logger.getLogger(YtDlp.class.getSimpleName());
 
     private static final ExecutorService DOWNLOADER = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "NarutoDownloadThread");
@@ -62,8 +59,8 @@ public final class YtDlp {
                 Files.writeString(videoDownloading, videoUrl);
                 Files.writeString(audioDownloading, audioUrl);
             } catch (Throwable throwable) {
-                LOGGER.severe("Exception storing download source. Video: " + videoUrl + ". Audio: " + audioUrl + ". Output directory: " + outputDirectory);
-                LOGGER.severe(throwable.getMessage());
+                System.err.println("Exception storing download source. Video: " + videoUrl + ". Audio: " + audioUrl + ". Output directory: " + outputDirectory);
+                throwable.printStackTrace(System.err);
                 throw new RuntimeException(throwable);
             }
 
@@ -74,8 +71,8 @@ public final class YtDlp {
                 Files.move(videoDownloading, outputDirectory.resolve(VIDEO_DOWNLOADED_FILE));
                 Files.move(audioDownloading, outputDirectory.resolve(AUDIO_DOWNLOADED_FILE));
             } catch (Throwable throwable) {
-                LOGGER.severe("Exception validating downloaded source url. Output directory: " + outputDirectory);
-                LOGGER.severe(throwable.getMessage());
+                System.err.println("Exception validating downloaded source url. Output directory: " + outputDirectory);
+                throwable.printStackTrace(System.err);
                 throw new RuntimeException(throwable);
             }
 

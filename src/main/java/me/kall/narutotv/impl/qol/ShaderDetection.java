@@ -8,25 +8,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShaderDetection {
     public static void register(@NotNull IEventBus forgeBus) {
-        forgeBus.addListener(new ShaderDetection()::tickClient);
+        forgeBus.addListener(ShaderDetection::tickClient);
     }
 
-    private boolean shaderUsed;
-    private int interval;
+    private static boolean shaderUsed;
+    private static int interval;
 
-    private void tickClient(TickEvent.@NotNull ClientTickEvent event) {
+    private static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
         if (!event.phase.equals(TickEvent.Phase.START)) return;
 
-        if (this.interval >= 0) {
-            this.interval--;
+        if (interval >= 0) {
+            interval--;
             return;
         }
 
-        this.interval = 10;
+        interval = 10;
 
-        boolean shaderUsed = IrisApi.getInstance().isShaderPackInUse();
-        if (shaderUsed != this.shaderUsed) ClientRenderers.getInstance().compat();
+        boolean current = IrisApi.getInstance().isShaderPackInUse();
+        if (current != shaderUsed) ClientRenderers.compat();
 
-        this.shaderUsed = shaderUsed;
+        shaderUsed = current;
     }
 }

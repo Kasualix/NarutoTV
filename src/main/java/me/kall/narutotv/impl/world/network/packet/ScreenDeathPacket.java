@@ -25,7 +25,7 @@ public class ScreenDeathPacket extends ScreenPacket {
         context.setPacketHandled(true);
         context.enqueueWork(() -> {
             try {
-                ClientRenderers.getInstance().remove(this.blockScreen).ifPresent(AbstractRenderer::shutdown);
+                ClientRenderers.remove(this.blockScreen).ifPresent(AbstractRenderer::shutdown);
             } catch (Throwable throwable) {
                 LOGGER.error("Error handing ScreenDeathPacket", throwable);
             }

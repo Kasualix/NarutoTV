@@ -7,13 +7,13 @@ import me.kall.narutotv.base.renderer.ByteBufferRenderer;
 import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
 import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.ext.BindScreen;
+import me.kall.narutotv.impl.world.ext.InWorld;
 import me.kall.narutotv.impl.world.sound.LocalSound;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class WorldBufferRenderer extends ByteBufferRenderer implements BindScreen {
+public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     private final BlockScreen screen;
 
     private @Nullable LocalSound localSound;

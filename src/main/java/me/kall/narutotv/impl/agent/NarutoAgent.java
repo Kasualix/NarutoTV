@@ -8,21 +8,19 @@ import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarFile;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class NarutoAgent {
     private static final String[] BOOTSTRAP_ENTRIES = {"me/kall/narutotv/impl/agent/NarutoClassLoader.class", "me/kall/narutotv/impl/agent/NarutoRenderBridge.class"};
-    private static final Logger LOGGER = Logger.getLogger("NarutoAgent");
 
     public static void premain(String agentArgs, @NotNull Instrumentation instrumentation) {
         instrumentation.addTransformer(new NarutoTransformer(), false);
         try {
             instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(createBootstrapOnlyJar().toFile()));
         } catch (Exception exception) {
-            LOGGER.severe(exception.getMessage());
+            exception.printStackTrace(System.err);
             throw new RuntimeException(exception);
         }
     }
@@ -30,7 +28,7 @@ public class NarutoAgent {
     private static @NotNull Path createBootstrapOnlyJar() {
         try {
             Path narutoBootstrap = NarutoRenderBridge.NARUTO_JAR.getParent().resolve("naruto-bootstrap.jar");
-            if (narutoBootstrap.toFile().exists() && narutoBootstrap.toFile().delete()) LOGGER.info("Deleting existing naruto-bootstrap.jar for update");
+            if (narutoBootstrap.toFile().exists() && narutoBootstrap.toFile().delete()) System.out.println("Deleting existing naruto-bootstrap.jar for update");
             Files.createFile(narutoBootstrap);
 
             try (ZipFile source = new ZipFile(NarutoRenderBridge.NARUTO_JAR.toFile());

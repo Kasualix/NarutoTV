@@ -10,7 +10,6 @@ import org.lwjgl.openal.AL10;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,8 +23,6 @@ public final class FFmpeg {
     private static final Pattern AUDIO_STREAM = Pattern.compile("\\{[^}]*\"codec_type\"\\s*:\\s*\"audio\"[^}]*}");
     private static final Pattern SAMPLE_RATE = Pattern.compile("\"sample_rate\"\\s*:\\s*\"(\\d+)\"");
     private static final Pattern CHANNEL_COUNT = Pattern.compile("\"channels\"\\s*:\\s*(\\d+)");
-
-    private static final Logger LOGGER = Logger.getLogger(FFmpeg.class.getSimpleName());
 
     private final String absFFmpegPath, absFFprobePath;
 
@@ -91,14 +88,14 @@ public final class FFmpeg {
             double duration = Double.parseDouble(durationMatcher.group(1)) * 1000D;
             return new MediaArgs(absVideoPath, absAudioPath, channelCount, sampleRate, channelCount == 1 ? AL10.AL_FORMAT_MONO16 : AL10.AL_FORMAT_STEREO16, avgFps > 0 ? avgFps : rFps, width, height, duration);
         } catch (Throwable throwable) {
-            LOGGER.severe("————————————————————————————");
-            LOGGER.severe("Exception reading video " + absVideoPath + " using " + this.absFFprobePath);
-            LOGGER.severe(videoJson);
-            LOGGER.severe("————————————————————————————");
-            LOGGER.severe("Exception reading audio " + absAudioPath + " using " + this.absFFprobePath);
-            LOGGER.severe(audioJson);
-            LOGGER.severe("————————————————————————————");
-            LOGGER.severe(throwable.getMessage());
+            System.err.println("————————————————————————————");
+            System.err.println("Exception reading video " + absVideoPath + " using " + this.absFFprobePath);
+            System.err.println(videoJson);
+            System.err.println("————————————————————————————");
+            System.err.println("Exception reading audio " + absAudioPath + " using " + this.absFFprobePath);
+            System.err.println(audioJson);
+            System.err.println("————————————————————————————");
+            throwable.printStackTrace(System.err);
             throw new RuntimeException(throwable);
         }
     }

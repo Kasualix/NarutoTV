@@ -60,7 +60,7 @@ public class ScreenSyncPacket {
         context.enqueueWork(() -> {
             try {
                 this.blockScreens.forEach(screens -> screens.forEach(screen -> {
-                    Runnable validation = () -> ClientRenderers.getInstance().add(screen).ifPresent(AbstractRenderer::shutdown);
+                    Runnable validation = () -> ClientRenderers.add(screen).ifPresent(AbstractRenderer::shutdown);
                     if (screen.hasLocalSound()) {
                         AudioZipGenerator.get(Paths.absolute(screen.audio)).generate(validation);
                     } else {

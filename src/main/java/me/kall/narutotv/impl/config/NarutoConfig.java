@@ -28,8 +28,8 @@ public class NarutoConfig {
         static {
             ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
             builder.push("NarutoTV");
-            DISPLAYERS = builder.defineList("Displayers", Lists.newArrayList("minecraft:glass"), Predicates.alwaysTrue());
-            SCREEN_BUILDER = builder.define("ScreenBuilder", "minecraft:stick");
+            DISPLAYERS = builder.defineList("displayers", Lists.newArrayList("minecraft:glass"), Predicates.alwaysTrue());
+            SCREEN_BUILDER = builder.define("screenBuilder", "minecraft:stick");
             builder.pop();
             CONFIG = builder.build();
         }

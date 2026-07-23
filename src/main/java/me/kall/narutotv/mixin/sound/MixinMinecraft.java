@@ -17,12 +17,12 @@ public abstract class MixinMinecraft {
     @Inject(method = "runTick", at = @At("TAIL"))
     private void checkPause(CallbackInfo ci) {
         if (this.isPaused()) {
-            ClientRenderers.getInstance().forEach(renderer -> {
+            ClientRenderers.forEach(renderer -> {
                 LifetimeController life = renderer.life();
                 if (life != null) life.pause();
             });
         } else {
-            ClientRenderers.getInstance().forEach(renderer -> {
+            ClientRenderers.forEach(renderer -> {
                 LifetimeController life = renderer.life();
                 if (life != null) life.resume();
             });

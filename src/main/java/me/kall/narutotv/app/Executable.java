@@ -8,15 +8,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 public final class Executable {
-    private static final Logger LOGGER = Logger.getLogger(Executable.class.getSimpleName());
-
     public static void runCommand(@NotNull List<String> command, boolean print) {
         String[] commandArray = command.toArray(String[]::new);
         if (Executable.runCommand(commandArray, print) == null) {
-            LOGGER.severe("Error executing command " + Arrays.toString(commandArray));
+            System.err.println("Error executing command " + Arrays.toString(commandArray));
         }
     }
 
@@ -25,8 +22,8 @@ public final class Executable {
         try {
             process = new ProcessBuilder(command).redirectErrorStream(true).start();
         } catch (IOException exception) {
-            LOGGER.severe("Exception building process for command " + Arrays.toString(command));
-            LOGGER.severe(exception.getMessage());
+            System.err.println("Exception building process for command " + Arrays.toString(command));
+            exception.printStackTrace(System.err);
             return null;
         }
 
@@ -38,16 +35,16 @@ public final class Executable {
                 output.append(line.trim()).append("\n");
             }
         } catch (IOException exception) {
-            LOGGER.severe("Exception reading input stream for command " + Arrays.toString(command));
-            LOGGER.severe(exception.getMessage());
+            System.err.println("Exception reading input stream for command " + Arrays.toString(command));
+            exception.printStackTrace(System.err);
             return null;
         }
 
         try {
             int exitCode = process.waitFor();
-            if (exitCode != 0) LOGGER.severe("Command exited with code " + exitCode + ": " + Arrays.toString(command));
+            if (exitCode != 0) System.err.println("Command exited with code " + exitCode + ": " + Arrays.toString(command));
         } catch (InterruptedException exception) {
-            LOGGER.severe("Exception finalizing process for command " + Arrays.toString(command));
+            System.err.println("Exception finalizing process for command " + Arrays.toString(command));
             return null;
         }
 

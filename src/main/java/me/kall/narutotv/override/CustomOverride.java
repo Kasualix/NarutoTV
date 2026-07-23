@@ -1,23 +1,24 @@
 package me.kall.narutotv.override;
 
+import me.kall.narutotv.NarutoTV;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BooleanSupplier;
 
+@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public final class CustomOverride implements OverrideApi {
     private static final CustomOverride INSTANCE = new CustomOverride();
     public static CustomOverride getInstance() {
         return INSTANCE;
     }
 
-    public static void register(@NotNull IEventBus forgeBus) {
-        forgeBus.addListener(CustomOverride::tick);
-    }
-
-    private static void tick(TickEvent.@NotNull RenderTickEvent event) {
+    @SubscribeEvent
+    public static void tick(TickEvent.@NotNull RenderTickEvent event) {
         if (event.phase.equals(TickEvent.Phase.START)) {
             CustomOverride.getInstance().setTickConsumed(false);
         }

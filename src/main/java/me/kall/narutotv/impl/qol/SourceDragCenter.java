@@ -1,31 +1,29 @@
 package me.kall.narutotv.impl.qol;
 
+import me.kall.narutotv.NarutoTV;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWDropCallback;
 
+@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class SourceDragCenter extends GLFWDropCallback {
-    private static final SourceDragCenter INSTANCE = new SourceDragCenter();
+    private static @Nullable GLFWDropCallback last;
 
-    public static void register(@NotNull IEventBus modBus) {
-        modBus.addListener(INSTANCE::setup);
-    }
+    private final Invoker[] invokers = new Invoker[]{new DragVideoInvoker()};
 
-    private @Nullable GLFWDropCallback last;
-
-    private final Invoker[] invokers = new Invoker[]{DragVideoInvoker.INSTANCE};
-
-    private void setup(FMLClientSetupEvent event) {
-        this.last = GLFW.glfwSetDropCallback(Minecraft.getInstance().getWindow().getWindow(), new SourceDragCenter());
+    @SubscribeEvent
+    public static void setup(FMLClientSetupEvent event) {
+        last = GLFW.glfwSetDropCallback(Minecraft.getInstance().getWindow().getWindow(), new SourceDragCenter());
     }
 
     @Override
     public void invoke(long window, int count, long names) {
-        if (this.last != null) this.last.invoke(window, count, names);
+        if (last != null) last.invoke(window, count, names);
         for (Invoker invoker : this.invokers) invoker.invoke(window, count, names);
     }
 

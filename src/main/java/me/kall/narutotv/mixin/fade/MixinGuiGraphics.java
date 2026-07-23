@@ -4,13 +4,19 @@ package me.kall.narutotv.mixin.fade;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import me.kall.narutotv.fade.FadeCenter;
 import me.kall.narutotv.fade.CustomFade;
+import me.kall.narutotv.fade.FadeCenter;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
+
+import java.util.List;
 
 @Mixin(value = GuiGraphics.class, priority = 500)
 public abstract class MixinGuiGraphics {
@@ -39,5 +45,17 @@ public abstract class MixinGuiGraphics {
     private void fade$innerBlit(ResourceLocation atlasLocation, int x1, int x2, int y1, int y2, int blitOffset, float minU, float maxU, float minV, float maxV, Operation<Void> original) {
         if (FadeCenter.isHidden() && !CustomFade.getInstance().isUnfadable(atlasLocation)) return;
         original.call(atlasLocation, x1, x2, y1, y2, blitOffset, minU, maxU, minV, maxV);
+    }
+
+    @WrapMethod(method = "renderTooltipInternal")
+    private void fade$renderTooltip(Font font, List<ClientTooltipComponent> components, int mouseX, int mouseY, ClientTooltipPositioner tooltipPositioner, Operation<Void> original) {
+        if (FadeCenter.isHidden()) return;
+        original.call(font, components, mouseX, mouseY, tooltipPositioner);
+    }
+
+    @WrapMethod(method = "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V")
+    private void fade$renderItemDecorations(Font font, ItemStack stack, int x, int y, String text, Operation<Void> original) {
+        if (FadeCenter.isHidden()) return;
+        original.call(font, stack, x, y, text);
     }
 }

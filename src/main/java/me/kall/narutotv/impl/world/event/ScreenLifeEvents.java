@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.kall.duplicationless.event.BlockChangeEvent;
 import me.kall.duplicationless.ext.RegistryEntry;
 import me.kall.duplicationless.util.Executor;
+import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.impl.config.NarutoConfig;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import me.kall.narutotv.impl.world.data.BlockScreens;
@@ -18,23 +19,20 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
+@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class ScreenLifeEvents {
-    public static void register(@NotNull IEventBus forgeBus) {
-        ScreenLifeEvents screenLifeEvents = new ScreenLifeEvents();
-        forgeBus.addListener(screenLifeEvents::blockChange);
-        forgeBus.addListener(screenLifeEvents::rightClick);
-    }
+    private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> blockCorners = new Object2ObjectOpenHashMap<>();
 
-    private final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> blockCorners = new Object2ObjectOpenHashMap<>();
-
-    private void blockChange(@NotNull BlockChangeEvent event) {
+    @SubscribeEvent
+    public static void blockChange(@NotNull BlockChangeEvent event) {
         ServerLevel level = event.level();
         ResourceLocation dimension = event.dim();
         long block = event.blockPos();
@@ -46,7 +44,8 @@ public class ScreenLifeEvents {
         }
     }
 
-    private void rightClick(PlayerInteractEvent.@NotNull RightClickBlock event) {
+    @SubscribeEvent
+    public static void rightClick(PlayerInteractEvent.@NotNull RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!(player.level() instanceof ServerLevel level)) return;
         if (!player.isShiftKeyDown()) return;
@@ -59,7 +58,7 @@ public class ScreenLifeEvents {
         ResourceLocation dimension = level.dimension().location();
         UUID uuid = player.getUUID();
 
-        Object2ObjectMap<UUID, BlockPos> perCreator = this.blockCorners.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>());
+        Object2ObjectMap<UUID, BlockPos> perCreator = blockCorners.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>());
 
         if (perCreator.containsKey(uuid)) {
             BlockPos last = perCreator.get(uuid);
@@ -80,7 +79,7 @@ public class ScreenLifeEvents {
 
 
     @Nullable
-    public static BlockScreen build(@NotNull ServerLevel level, @NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2) {
+    private static BlockScreen build(@NotNull ServerLevel level, @NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2) {
         LongList bottomEdge = BlockScreen.getLine(bottomCorner1, bottomCorner2);
 
         for (long pos : bottomEdge) {

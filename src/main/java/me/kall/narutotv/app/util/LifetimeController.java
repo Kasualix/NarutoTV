@@ -7,11 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.DoubleConsumer;
-import java.util.logging.Logger;
 
 public final class LifetimeController {
-    private static final Logger LOGGER = Logger.getLogger(LifetimeController.class.getSimpleName());
-
     private final AtomicLong setupTime;
     private final AtomicLong lastFetch = new AtomicLong(-1L);
 
@@ -132,7 +129,7 @@ public final class LifetimeController {
             long now = System.nanoTime();
             if (now - last > 2_000_000_000L) {
                 this.synchronizeFunc.accept((double) this.sinceSetup() / 1_000_000_000.0);
-                LOGGER.severe("Lag spike is detected. Restarting.");
+                System.err.println("Lag spike is detected. Restarting.");
                 this.lastLagSpike.set(now);
             }
         }

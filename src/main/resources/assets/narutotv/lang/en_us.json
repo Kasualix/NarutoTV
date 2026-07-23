@@ -1,0 +1,18 @@
+{
+  "screen.narutotv.gui.title": "NarutoTV",
+
+  "button.narutotv.random": "Random",
+  "button.narutotv.swap": "Swap",
+
+  "checkbox.narutotv.fadable": "Fadable GUI",
+  "checkbox.narutotv.mute_music": "Mute Music",
+
+  "box.narutotv.video": "Video",
+  "box.narutotv.audio": "Audio",
+
+  "tooltip.narutotv.random": "Randomly select one from sources that are not played yet.",
+  "tooltip.narutotv.swap": "Swap between compatibility mode and performance mode.",
+
+  "mode.narutotv.compatibility": "Current: Compatibility Mode",
+  "mode.narutotv.performance": "Current: Performance Mode"
+}

@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static me.kall.narutotv.app.YtDlp.AUDIO_DOWNLOADING_FILE;
@@ -31,27 +30,29 @@ public class Sources {
 
     private static final AtomicReference<Source> LINE_CUTTER = new AtomicReference<>();
 
-    private static final Logger LOGGER = Logger.getLogger(Sources.class.getSimpleName());
-
-    public static void cutInLine(@NotNull Path video, @Nullable Path audio) {
+    public static synchronized void cutInLine(@NotNull Path video, @Nullable Path audio) {
         Source source = new Source();
         source.video = video.toString();
         source.audio = audio != null ? audio.toString() : source.video;
         LINE_CUTTER.set(source);
     }
 
-    public static void cutInLine(String video, String audio) {
+    public static synchronized void cutInLine(String video, String audio) {
         Source source = new Source();
         source.video = video;
         source.audio = audio != null && !audio.isBlank() ? audio : video;
         LINE_CUTTER.set(source);
     }
 
+    public static synchronized void noLineCut() {
+        LINE_CUTTER.set(null);
+    }
+
     public static synchronized @NotNull MediaArgs get() {
-        Source lastDragged = LINE_CUTTER.getAndSet(null);
-        if (lastDragged != null) {
-            PLAYED.add(lastDragged);
-            return lastDragged.toMediaArgs();
+        Source lineCutter = LINE_CUTTER.getAndSet(null);
+        if (lineCutter != null) {
+            PLAYED.add(lineCutter);
+            return lineCutter.toMediaArgs();
         }
 
         Sources.scan();
@@ -84,7 +85,7 @@ public class Sources {
                         if (name.endsWith(AUDIO_FILE_NAME)) source.audio = file.toString();
                     }));
                 } catch (IOException exception) {
-                    LOGGER.severe(exception.getMessage());
+                    exception.printStackTrace(System.err);
                 }
 
                 if (source.video != null) {
@@ -94,7 +95,7 @@ public class Sources {
 
             }));
         } catch (IOException exception) {
-            LOGGER.severe(exception.getMessage());
+            exception.printStackTrace(System.err);
         }
 
         if (SOURCES.size() <= PLAYED.size()) PLAYED.clear();

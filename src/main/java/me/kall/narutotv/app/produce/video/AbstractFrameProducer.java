@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractFrameProducer<T> extends AbstractProducer {
-    protected final MediaArgs mediaArgs;
+    public final MediaArgs mediaArgs;
 
     protected final int frameSize, bufferCapacity;
 

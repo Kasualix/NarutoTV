@@ -2,16 +2,10 @@ package me.kall.narutotv;
 
 import me.kall.narutotv.compat.ICompat;
 import me.kall.narutotv.compat.OculusCompat;
-import me.kall.narutotv.fade.FadeCenter;
 import me.kall.narutotv.impl.config.NarutoConfig;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
-import me.kall.narutotv.impl.qol.KeybindCenter;
 import me.kall.narutotv.impl.qol.ShaderDetection;
-import me.kall.narutotv.impl.qol.SourceDragCenter;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
-import me.kall.narutotv.impl.world.event.ScreenLifeEvents;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
-import me.kall.narutotv.override.CustomOverride;
 import me.kall.narutotv.override.OverrideApi;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -34,36 +28,27 @@ public final class NarutoTV {
     });
 
     private static final boolean HAS_SHADER_MOD = isLoaded("oculus") || isLoaded("iris");
-    public static final ICompat COMPAT = HAS_SHADER_MOD ? new OculusCompat() : () -> false;
+    private static final ICompat COMPAT = HAS_SHADER_MOD ? new OculusCompat() : () -> false;
 
     public NarutoTV(@NotNull FMLJavaModLoadingContext context) {
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
-        IEventBus modBus = context.getModEventBus();
 
         if (FMLLoader.getDist().isClient()) {
-            FadeCenter.register(forgeBus);
-            KeybindCenter.register(forgeBus);
-            CustomOverride.register(forgeBus);
-            ClientRenderers.register(forgeBus);
-
-            if (HAS_SHADER_MOD) {
-                ShaderDetection.register(forgeBus);
-            }
-
-            SourceDragCenter.register(modBus);
-
+            if (HAS_SHADER_MOD) ShaderDetection.register(forgeBus);
             NarutoConfig.Client.register(context);
 
-            OverrideApi.getInstance().set(NarutoGuiCenter.getActive()::isRunnable, NarutoGuiCenter.getActive()::render);
+            OverrideApi.setTask(() -> NarutoGuiCenter.getActive().isRunnable(), () -> NarutoGuiCenter.getActive().render());
         }
-
-        ScreenLifeEvents.register(forgeBus);
 
         NarutoConfig.Server.register(context);
         NarutoPackets.register();
     }
 
-    private static boolean isLoaded(String modID) {
+    public static boolean shaderUsing() {
+        return COMPAT.shaderUsing();
+    }
+
+    public static boolean isLoaded(String modID) {
         return FMLLoader.getLoadingModList().getModFileById(modID) != null;
     }
 

@@ -8,7 +8,7 @@ import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.NativeImageRenderer;
 import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.ext.BindScreen;
+import me.kall.narutotv.impl.world.ext.InWorld;
 import me.kall.narutotv.impl.world.sound.LocalSound;
 import me.kall.narutotv.impl.world.util.WorldMath;
 import net.minecraft.client.Minecraft;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
-public class WorldImageRenderer extends NativeImageRenderer implements BindScreen {
+public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
     private final BlockScreen screen;
 
     private @Nullable LocalSound localSound;

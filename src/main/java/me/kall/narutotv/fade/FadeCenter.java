@@ -1,13 +1,17 @@
 package me.kall.narutotv.fade;
 
+import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.impl.config.NarutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 
+@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class FadeCenter {
     private static final float HIDDEN = 0F;
     private static final float FULL = 1F;
@@ -16,12 +20,6 @@ public class FadeCenter {
 
     private static int stopTicks = 0;
     private static int fadeAlpha = 100;
-
-    public static void register(@NotNull IEventBus forgeBus) {
-        forgeBus.addListener(FadeCenter::tickClient);
-        forgeBus.addListener(FadeCenter::anyInput);
-        forgeBus.addListener(FadeCenter::mouseInput);
-    }
 
     public static boolean isHidden() {
         return fadeAlpha == 0;
@@ -44,7 +42,8 @@ public class FadeCenter {
         return (color & 0x00FFFFFF) | (alpha << 24);
     }
 
-    private static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
+    @SubscribeEvent
+    public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START && NarutoConfig.Client.fadable()) {
             Minecraft minecraft = Minecraft.getInstance();
             MouseHandler mouseHandler = minecraft.mouseHandler;
@@ -64,11 +63,13 @@ public class FadeCenter {
         }
     }
 
-    private static void anyInput(InputEvent event) {
+    @SubscribeEvent
+    public static void anyInput(InputEvent event) {
         Minecraft.getInstance().execute(() -> stopTicks = 0);
     }
 
-    private static void mouseInput(InputEvent.MouseButton event) {
+    @SubscribeEvent
+    public static void mouseInput(InputEvent.MouseButton event) {
         Minecraft.getInstance().execute(() -> fadeAlpha = 100);
     }
 

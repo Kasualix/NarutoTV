@@ -1,4 +1,4 @@
-package me.kall.narutotv.mixin.base;
+package me.kall.narutotv.mixin.context;
 
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinResourceLoadStateTracker {
     @Inject(method = "finishReload", at = @At("TAIL"))
     private void onFinishReload(CallbackInfo ci) {
-        ClientRenderers.getInstance().forEach(AbstractRenderer::restart);
+        ClientRenderers.forEach(AbstractRenderer::restart);
     }
 }
