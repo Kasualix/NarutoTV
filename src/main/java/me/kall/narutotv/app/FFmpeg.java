@@ -84,8 +84,9 @@ public final class FFmpeg {
             int height = Integer.parseInt(heightMatcher.group(1));
 
             double scale = Math.min(1.0, Math.min((double) 1920 / width, (double) 1080 / height));
-            width = (int) (width * scale);
-            height = (int) (height * scale);
+
+            width = ((int) (width * scale)) & ~1;
+            height = ((int) (height * scale)) & ~1;
 
             double duration = Double.parseDouble(durationMatcher.group(1)) * 1000D;
             return new MediaArgs(absVideoPath, absAudioPath, channelCount, sampleRate, channelCount == 1 ? AL10.AL_FORMAT_MONO16 : AL10.AL_FORMAT_STEREO16, avgFps > 0 ? avgFps : rFps, width, height, duration);
