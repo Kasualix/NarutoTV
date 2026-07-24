@@ -2,6 +2,7 @@ package me.kall.narutotv.app;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,7 @@ public final class FFmpeg {
             height = ((int) (height * scale)) & ~1;
 
             double duration = Double.parseDouble(durationMatcher.group(1)) * 1000D;
+
             return new MediaArgs(absVideoPath, absAudioPath, channelCount, sampleRate, channelCount == 1 ? AL10.AL_FORMAT_MONO16 : AL10.AL_FORMAT_STEREO16, avgFps > 0 ? avgFps : rFps, width, height, duration);
         } catch (Throwable throwable) {
             System.err.println("————————————————————————————");
@@ -118,7 +120,7 @@ public final class FFmpeg {
 
             Executable.runCommand(Lists.newArrayList(this.absFFmpegPath, "-i", absSource, "-vn", "-acodec", "libvorbis", "-ac", "1", "-q:a", "4", "-y", absOutputPath), false);
             return absOutput.exists() ? absOutputPath : null;
-        });
+        }, NarutoTV.io());
     }
 
     private @NotNull File setOutput(String absSource) {

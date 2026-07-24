@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.base.data.Paths;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientRenderers {
@@ -44,6 +44,19 @@ public class ClientRenderers {
 
     public static @Nullable AbstractRenderer<?> get(@NotNull BlockScreen blockScreen) {
         return get(blockScreen.dimension, blockScreen.centerX, blockScreen.centerY, blockScreen.centerZ);
+    }
+
+    public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, long position) {
+        validateThread();
+        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
+        if (inDimension == null || inDimension.isEmpty()) return null;
+        for (AbstractRenderer<?> renderer : inDimension.values()) {
+            BlockScreen screen = ((InWorld)renderer).screen();
+            if (screen.areaInvolved().contains(position)) {
+                return renderer;
+            }
+        }
+        return null;
     }
 
     public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull ResourceLocation dimension, double centerX, double centerY, double centerZ) {
@@ -96,7 +109,7 @@ public class ClientRenderers {
             }
             forEach(renderer -> {
                 BlockScreen screen = ((InWorld)renderer).screen();
-                if (!screen.video.isBlank() && !screen.audio.isBlank()) Sources.cutInLine(screen.video, screen.audio);
+                if (!screen.video.isBlank() && !screen.audio.isBlank()) Sources.cutInLine(Paths.absolute(screen.video), Paths.absolute(screen.audio));
                 renderer.setup(0D);
             });
         });
@@ -112,19 +125,6 @@ public class ClientRenderers {
             for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
                 for (AbstractRenderer<?> renderer : inDimension.values()) {
                     action.accept(renderer);
-                }
-            }
-        });
-    }
-
-    public static void forSpecific(Predicate<AbstractRenderer<?>> condition, Consumer<AbstractRenderer<?>> action) {
-        Minecraft.getInstance().execute(() -> {
-            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
-                for (AbstractRenderer<?> renderer : inDimension.values()) {
-                    if (condition.test(renderer)) {
-                        action.accept(renderer);
-                        break;
-                    }
                 }
             }
         });

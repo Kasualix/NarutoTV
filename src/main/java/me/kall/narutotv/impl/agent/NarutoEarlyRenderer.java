@@ -4,6 +4,7 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.ByteBufferRenderer;
 import me.kall.narutotv.base.renderer.gl.GuiGLEngine;
+import me.kall.narutotv.impl.NarutoProperties;
 import org.jetbrains.annotations.NotNull;
 
 public class NarutoEarlyRenderer extends ByteBufferRenderer {

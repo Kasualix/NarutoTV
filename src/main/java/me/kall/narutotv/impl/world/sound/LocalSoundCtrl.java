@@ -6,12 +6,15 @@ import net.minecraft.sounds.SoundSource;
 
 import java.util.function.DoubleConsumer;
 
-public class LocalSound {
+public class LocalSoundCtrl {
     public final Runnable off;
     public final DoubleConsumer on;
 
-    public LocalSound(BlockScreen screen) {
-        this.on = (seekTo) -> Minecraft.getInstance().getSoundManager().play(new NarutoSound(screen, seekTo));
+    public LocalSoundCtrl(BlockScreen screen) {
         this.off = () -> Minecraft.getInstance().getSoundManager().stop(screen.localSound, SoundSource.MUSIC);
+        this.on = (seekTo) -> {
+            this.off.run();
+            Minecraft.getInstance().getSoundManager().play(new NarutoSound(screen, seekTo));
+        };
     }
 }

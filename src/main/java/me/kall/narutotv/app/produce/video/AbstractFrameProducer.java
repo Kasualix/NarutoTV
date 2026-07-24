@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -99,7 +97,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
     @Override
     protected void forInput(@NotNull InputStream input) throws IOException, InterruptedException {
-        ReadableByteChannel channel = Channels.newChannel(input);
+        byte[] temp = new byte[Math.min(this.frameSize, 256 * 1024)];
 
         while (!this.isCanceled()) {
             ByteBuffer frame = this.frameCreation();
@@ -107,7 +105,9 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
             long start = System.nanoTime();
             while (frame.hasRemaining()) {
-                if (channel.read(frame) == -1) return;
+                int read = input.read(temp, 0, Math.min(temp.length, frame.remaining()));
+                if (read == -1) return;
+                frame.put(temp, 0, read);
             }
 
             this.frameReading.record(System.nanoTime() - start);

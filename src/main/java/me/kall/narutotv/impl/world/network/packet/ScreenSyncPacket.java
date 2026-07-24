@@ -2,7 +2,9 @@ package me.kall.narutotv.impl.world.network.packet;
 
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import me.kall.narutotv.app.file.AppInstances;
 import me.kall.narutotv.base.data.Paths;
+import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
@@ -60,9 +62,26 @@ public class ScreenSyncPacket {
         context.enqueueWork(() -> {
             try {
                 this.blockScreens.forEach(screens -> screens.forEach(screen -> {
-                    Runnable validation = () -> ClientRenderers.add(screen).ifPresent(AbstractRenderer::shutdown);
+                    Runnable validation = () -> {
+                        ClientRenderers.add(screen).ifPresent(AbstractRenderer::shutdown);
+
+                        AbstractRenderer<?> renderer = ClientRenderers.get(screen);
+                        assert renderer != null;
+
+                        Sources.cutInLine(Paths.absolute(screen.video), Paths.absolute(screen.audio));
+
+                        renderer.shutdown();
+                        renderer.setup(0D);
+                    };
+
                     if (screen.hasLocalSound()) {
-                        AudioZipGenerator.get(Paths.absolute(screen.audio)).generate(validation);
+                        AppInstances.ffmpeg().convertAudio(Paths.absolute(screen.audio)).whenCompleteAsync((converted, throwable) -> {
+                            if (throwable != null) {
+                                throwable.printStackTrace(System.err);
+                                throw new RuntimeException(throwable);
+                            }
+                            AudioZipGenerator.get(converted).generate(id -> validation.run());
+                        });
                     } else {
                         validation.run();
                     }

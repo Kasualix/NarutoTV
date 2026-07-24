@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockScreen {
-    public static final ResourceLocation HAS_LOCAL_SOUND = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "has"), NO_LOCAL_SOUND = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "no");
+    public static final ResourceLocation NO_LOCAL_SOUND = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "no");
 
     public final BlockPos leftBottom;
     public final BlockPos leftTop;

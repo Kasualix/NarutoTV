@@ -13,6 +13,7 @@ import me.kall.narutotv.impl.world.data.BlockScreens;
 import me.kall.narutotv.impl.world.data.Displayers;
 import me.kall.narutotv.impl.world.ext.ScreenLevel;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
+import me.kall.narutotv.impl.world.network.packet.ScreenGuiPacket;
 import me.kall.narutotv.impl.world.network.packet.ScreenLifePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -28,11 +29,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
-public class ScreenLifeEvents {
-    private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> blockCorners = new Object2ObjectOpenHashMap<>();
+public class ScreenEvents {
+    private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> BLOCK_CORNERS = new Object2ObjectOpenHashMap<>();
 
     @SubscribeEvent
-    public static void blockChange(@NotNull BlockChangeEvent event) {
+    public static void removeScreen(@NotNull BlockChangeEvent event) {
         ServerLevel level = event.level();
         ResourceLocation dimension = event.dim();
         long block = event.blockPos();
@@ -45,7 +46,18 @@ public class ScreenLifeEvents {
     }
 
     @SubscribeEvent
-    public static void rightClick(PlayerInteractEvent.@NotNull RightClickBlock event) {
+    public static void configScreen(PlayerInteractEvent.@NotNull RightClickBlock event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!(player.level() instanceof ServerLevel level)) return;
+        if (!player.isShiftKeyDown()) return;
+        if (!player.getMainHandItem().isEmpty()) return;
+        BlockScreen screen = BlockScreens.get(level).get(level.dimension().location(), event.getPos().asLong());
+        if (screen == null) return;
+        NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ScreenGuiPacket(screen));
+    }
+
+    @SubscribeEvent
+    public static void buildScreen(PlayerInteractEvent.@NotNull RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!(player.level() instanceof ServerLevel level)) return;
         if (!player.isShiftKeyDown()) return;
@@ -58,7 +70,7 @@ public class ScreenLifeEvents {
         ResourceLocation dimension = level.dimension().location();
         UUID uuid = player.getUUID();
 
-        Object2ObjectMap<UUID, BlockPos> perCreator = blockCorners.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>());
+        Object2ObjectMap<UUID, BlockPos> perCreator = BLOCK_CORNERS.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>());
 
         if (perCreator.containsKey(uuid)) {
             BlockPos last = perCreator.get(uuid);

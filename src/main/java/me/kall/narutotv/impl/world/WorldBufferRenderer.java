@@ -8,7 +8,7 @@ import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import me.kall.narutotv.impl.world.ext.InWorld;
-import me.kall.narutotv.impl.world.sound.LocalSound;
+import me.kall.narutotv.impl.world.sound.LocalSoundCtrl;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     private final BlockScreen screen;
 
-    private @Nullable LocalSound localSound;
+    private @Nullable LocalSoundCtrl localSoundCtrl;
 
     public WorldBufferRenderer(BlockScreen screen) {
         this.screen = screen;
@@ -99,17 +99,17 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     public synchronized void shutdown() {
         super.shutdown();
 
-        if (this.localSound != null) {
-            this.localSound.off.run();
-            this.localSound = null;
+        if (this.localSoundCtrl != null) {
+            this.localSoundCtrl.off.run();
+            this.localSoundCtrl = null;
         }
     }
 
     @Override
     public @Nullable AudioProducer initAudio(double seekTo) {
         if (this.screen.hasLocalSound()) {
-            this.localSound = new LocalSound(this.screen);
-            this.localSound.on.accept(0D);
+            this.localSoundCtrl = new LocalSoundCtrl(this.screen);
+            this.localSoundCtrl.on.accept(0D);
             return null;
         } else {
             return super.initAudio(seekTo);
@@ -118,8 +118,8 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
 
     @Override
     public Runnable pauseAudio() {
-        if (this.localSound != null) {
-            return this.localSound.off;
+        if (this.localSoundCtrl != null) {
+            return this.localSoundCtrl.off;
         } else {
             return super.pauseAudio();
         }
@@ -127,11 +127,11 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
 
     @Override
     public Runnable resumeAudio() {
-        LocalSound localSound = this.localSound;
-        if (localSound != null) {
+        LocalSoundCtrl localSoundCtrl = this.localSoundCtrl;
+        if (this.localSoundCtrl != null) {
             return () -> {
                 var life = this.life();
-                if (life != null) localSound.on.accept((double) life.sinceSetup() / 1_000_000_000D);
+                if (life != null) localSoundCtrl.on.accept((double) life.sinceSetup() / 1_000_000_000D);
             };
         } else {
             return super.resumeAudio();

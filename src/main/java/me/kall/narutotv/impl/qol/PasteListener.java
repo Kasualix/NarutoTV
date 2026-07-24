@@ -8,9 +8,10 @@ import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
 import me.kall.narutotv.impl.screen.NarutoGuiScreen;
+import me.kall.narutotv.impl.screen.NarutoWorldScreen;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
-import me.kall.narutotv.impl.world.ext.InWorld;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
@@ -27,8 +28,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Set;
-import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public final class PasteListener {
@@ -63,15 +64,26 @@ public final class PasteListener {
                             DOWNLOADING.remove(url);
                             if (throwable != null) throw new RuntimeException(throwable);
                             if (downloaded == null) return;
-                            Sources.cutInLine(downloaded.absVideoPath(), downloaded.absAudioPath());
-                            if (NarutoGuiCenter.getActive().isRunning()) NarutoGuiCenter.getActive().shutdown();
+                            Path absVideoPath = downloaded.absVideoPath();
+                            Path absAudioPath = downloaded.absAudioPath();
 
-                            if (minecraft.hitResult instanceof BlockHitResult target && target.getType().equals(HitResult.Type.BLOCK)) {
-                                Predicate<AbstractRenderer<?>> condition = (renderer) -> renderer.isRunning() && ((InWorld)renderer).screen().borderInvolved().contains(target.getBlockPos().asLong());
-                                ClientRenderers.forSpecific(condition, AbstractRenderer::shutdown);
+                            String videoStr = absVideoPath.toString();
+                            String audioStr = absAudioPath.toString();
+
+                            Sources.cutInLine(downloaded.absVideoPath(), downloaded.absAudioPath());
+
+                            if (NarutoGuiCenter.getActive().isRunning()) {
+                                NarutoGuiCenter.getActive().shutdown();
+                                NarutoGuiScreen.sync(videoStr, audioStr);
                             }
 
-                           NarutoGuiScreen.sync(downloaded.absVideoPath().toString(), downloaded.absAudioPath().toString());
+                            ClientLevel level = minecraft.level;
+
+                            if (minecraft.hitResult instanceof BlockHitResult target && target.getType().equals(HitResult.Type.BLOCK) && level != null) {
+                                AbstractRenderer<?> renderer = ClientRenderers.get(level.dimension().location(), target.getBlockPos().asLong());
+                                if (renderer != null && renderer.isRunning()) renderer.shutdown();
+                                NarutoWorldScreen.sync(videoStr, audioStr);
+                            }
                         }, minecraft);
             } catch (IOException | UnsupportedFlavorException exception) {
                 LOGGER.error("Exception handling pasted url", exception);

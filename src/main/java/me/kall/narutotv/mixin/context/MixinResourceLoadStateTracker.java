@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinResourceLoadStateTracker {
     @Inject(method = "finishReload", at = @At("TAIL"))
     private void onFinishReload(CallbackInfo ci) {
-        ClientRenderers.forEach(AbstractRenderer::restart);
+        ClientRenderers.forEach(AbstractRenderer::shutdown);
     }
 }

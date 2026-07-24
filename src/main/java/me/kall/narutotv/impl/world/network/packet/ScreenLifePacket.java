@@ -31,11 +31,11 @@ public class ScreenLifePacket extends ScreenPacket {
 
                 AbstractRenderer<?> renderer = ClientRenderers.get(this.blockScreen);
 
-                if (renderer == null) return;
+                assert renderer != null;
                 renderer.setup(0D);
 
                 MediaArgs mediaArgs = renderer.mediaArgs();
-                if (mediaArgs == null) return;
+                assert mediaArgs != null;
 
                 this.blockScreen.video = Paths.relative(mediaArgs.absVideoPath());
                 this.blockScreen.audio = Paths.relative(mediaArgs.absAudioPath());

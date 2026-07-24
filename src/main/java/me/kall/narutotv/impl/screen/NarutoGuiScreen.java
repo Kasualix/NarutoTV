@@ -32,24 +32,32 @@ public class NarutoGuiScreen extends Screen {
 
     static final Component VIDEO = Component.translatable("box.narutotv.video");
     static final Component AUDIO = Component.translatable("box.narutotv.audio");
+    static final Component TICKS = Component.translatable("box.narutotv.ticks");
 
     static final Component COMPATIBILITY = Component.translatable("mode.narutotv.compatibility").withStyle(ChatFormatting.GREEN);
     static final Component PERFORMANCE = Component.translatable("mode.narutotv.performance").withStyle(ChatFormatting.RED);
 
     final @Nullable Screen lastScreen;
 
-    EditBox videoBox, audioBox;
+    EditBox videoBox, audioBox, ticksBox;
 
     Button randomButton, swapButton, yesButton, noButton;
-    Checkbox fadableCheckbox, muteMusicCheckbox;
+
+    Checkbox fadableCheck, muteMusicCheck;
 
     String video, audio;
 
+    int currentY;
+
     public NarutoGuiScreen(@Nullable Screen lastScreen, @NotNull MediaArgs mediaArgs) {
+        this(lastScreen, mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
+    }
+
+    public NarutoGuiScreen(@Nullable Screen lastScreen, String video, String audio) {
         super(SCREEN);
         this.lastScreen = lastScreen;
-        this.video = mediaArgs.absVideoPath();
-        this.audio = mediaArgs.absAudioPath();
+        this.video = video;
+        this.audio = audio;
     }
 
     public static void sync(String video, String audio) {
@@ -67,63 +75,85 @@ public class NarutoGuiScreen extends Screen {
         int boxHeight = 20;
         int boxSpacing = 18;
 
-        int currentY = 50;
+        int buttonWidth = 80;
+        int buttonHeight = 20;
+        int buttonSpacing = 5;
 
-        this.videoBox = new EditBox(this.font, centerX - boxWidth / 2, currentY, boxWidth, boxHeight, VIDEO);
+        int checkboxHeight = 20;
+
+        this.currentY = 25;
+
+        this.editBoxes(centerX, boxWidth, boxHeight, boxSpacing);
+        this.checkboxes(centerX, buttonWidth, checkboxHeight);
+        this.buttons(centerX, buttonWidth, buttonHeight, buttonSpacing);
+    }
+
+    void editBoxes(int centerX, int boxWidth, int boxHeight, int boxSpacing) {
+        this.videoBox = new EditBox(this.font, centerX - boxWidth / 2, this.currentY, boxWidth, boxHeight, VIDEO);
         this.videoBox.setMaxLength(Integer.MAX_VALUE);
         this.videoBox.setValue(this.video);
         this.addRenderableWidget(this.videoBox);
+        this.currentY += boxHeight + boxSpacing;
 
-        currentY += boxHeight + boxSpacing;
-
-        this.audioBox = new EditBox(this.font, centerX - boxWidth / 2, currentY, boxWidth, boxHeight, AUDIO);
+        this.audioBox = new EditBox(this.font, centerX - boxWidth / 2, this.currentY, boxWidth, boxHeight, AUDIO);
         this.audioBox.setMaxLength(Integer.MAX_VALUE);
         this.audioBox.setValue(this.audio);
         this.addRenderableWidget(this.audioBox);
+        this.currentY += boxHeight + boxSpacing;
 
-        currentY += boxHeight + boxSpacing;
+        this.ticksBox = new EditBox(this.font, centerX - boxWidth / 2, this.currentY, boxWidth, boxHeight, TICKS);
+        this.ticksBox.setMaxLength(Integer.MAX_VALUE);
+        this.ticksBox.setValue(String.valueOf(NarutoConfig.Client.ticksBeforeFade()));
+        this.addRenderableWidget(this.ticksBox);
+        this.currentY += boxHeight + boxSpacing;
+    }
 
-        int buttonWidth = 80;
-        int buttonHeight = 20;
-
-        this.randomButton = Button.builder(RANDOM, button -> this.onRandom()).bounds(centerX - buttonWidth - 5, currentY, buttonWidth * 2 + 10, buttonHeight).build();
-        this.addRenderableWidget(this.randomButton);
-
-        currentY += buttonHeight + 5;
-
-        this.swapButton = Button.builder(SWAP, button -> this.onSwap()).bounds(centerX - buttonWidth - 5, currentY, buttonWidth * 2 + 10, buttonHeight).build();
-        this.addRenderableWidget(this.swapButton);
-
-        currentY += buttonHeight + 5;
-
-        int checkboxHeight = 20;
+    void checkboxes(int centerX, int buttonWidth, int checkboxHeight) {
         int fadableWidth = this.font.width(FADABLE) + 24;
         int muteMusicWidth = this.font.width(MUTE_MUSIC) + 24;
 
-        this.fadableCheckbox = new Checkbox(centerX - buttonWidth - 5, currentY, fadableWidth, checkboxHeight, FADABLE, NarutoConfig.Client.fadable()) {
+        this.fadableCheck = new Checkbox(centerX - buttonWidth - 5, this.currentY, fadableWidth, checkboxHeight, FADABLE, NarutoConfig.Client.fadable()) {
             @Override
             public void onPress() {
                 super.onPress();
-                NarutoConfig.Client.toggleFadable();
+                NarutoConfig.Client.fadable(this.selected());
             }
         };
-        this.addRenderableWidget(this.fadableCheckbox);
+        this.addRenderableWidget(this.fadableCheck);
 
-        this.muteMusicCheckbox = new Checkbox(centerX + 5, currentY, muteMusicWidth, checkboxHeight, MUTE_MUSIC, NarutoConfig.Client.musicMuted()) {
+        this.muteMusicCheck = new Checkbox(centerX + 5, this.currentY, muteMusicWidth, checkboxHeight, MUTE_MUSIC, NarutoConfig.Client.muteMusic()) {
             @Override
             public void onPress() {
                 super.onPress();
-                NarutoConfig.Client.toggleMuteMusic();
+                NarutoConfig.Client.muteMusic(this.selected());
             }
         };
-        this.addRenderableWidget(this.muteMusicCheckbox);
+        this.addRenderableWidget(this.muteMusicCheck);
 
-        currentY += checkboxHeight + 5;
+        this.currentY += checkboxHeight + 5;
+    }
 
-        this.yesButton = Button.builder(Component.translatable("gui.yes"), button -> this.onDone()).bounds(centerX - buttonWidth - 5, currentY, buttonWidth, buttonHeight).build();
+    void buttons(int centerX, int buttonWidth, int buttonHeight, int buttonSpacing) {
+        this.randomButton = Button.builder(RANDOM, button -> this.onRandom())
+                .bounds(centerX - buttonWidth - 5, this.currentY, buttonWidth * 2 + 10, buttonHeight)
+                .build();
+        this.addRenderableWidget(this.randomButton);
+        this.currentY += buttonHeight + buttonSpacing;
+
+        this.swapButton = Button.builder(SWAP, button -> NarutoGuiCenter.swap())
+                .bounds(centerX - buttonWidth - 5, this.currentY, buttonWidth * 2 + 10, buttonHeight)
+                .build();
+        this.addRenderableWidget(this.swapButton);
+        this.currentY += buttonHeight + buttonSpacing;
+
+        this.yesButton = Button.builder(Component.translatable("gui.yes"), button -> this.onDone())
+                .bounds(centerX - buttonWidth - 5, this.currentY, buttonWidth, buttonHeight)
+                .build();
         this.addRenderableWidget(this.yesButton);
 
-        this.noButton = Button.builder(Component.translatable("gui.no"), button -> this.onClose()).bounds(centerX + 5, currentY, buttonWidth, buttonHeight).build();
+        this.noButton = Button.builder(Component.translatable("gui.no"), button -> this.onClose())
+                .bounds(centerX + 5, this.currentY, buttonWidth, buttonHeight)
+                .build();
         this.addRenderableWidget(this.noButton);
     }
 
@@ -138,10 +168,6 @@ public class NarutoGuiScreen extends Screen {
 
         this.videoBox.setValue(mediaArgs.absVideoPath());
         this.audioBox.setValue(mediaArgs.absAudioPath());
-    }
-
-    void onSwap() {
-        NarutoGuiCenter.swap();
     }
 
     void onDone() {
@@ -159,6 +185,12 @@ public class NarutoGuiScreen extends Screen {
             NarutoGuiCenter.getActive().shutdown();
         }
 
+        try {
+            NarutoConfig.Client.ticksBeforeFade(Integer.parseInt(this.ticksBox.getValue()));
+        } catch (NumberFormatException exception) {
+            this.ticksBox.setValue(String.valueOf(NarutoConfig.Client.ticksBeforeFade()));
+        }
+
         this.onClose();
     }
 
@@ -167,6 +199,7 @@ public class NarutoGuiScreen extends Screen {
         super.tick();
         this.videoBox.tick();
         this.audioBox.tick();
+        this.ticksBox.tick();
     }
 
     @Override
@@ -178,13 +211,10 @@ public class NarutoGuiScreen extends Screen {
 
         guiGraphics.drawCenteredString(this.font, VIDEO, centerX, this.videoBox.getY() - 12, 0xFFFFFF);
         guiGraphics.drawCenteredString(this.font, AUDIO, centerX, this.audioBox.getY() - 12, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, TICKS, centerX, this.ticksBox.getY() - 12, 0xFFFFFF);
 
         if (this.randomButton.isHovered()) guiGraphics.renderTooltip(this.font, RANDOM_TOOLTIP, mouseX, mouseY);
-
-        if (this.swapButton.isHovered()) {
-            boolean isCompatMode = NarutoGuiCenter.isImageRenderer();
-            guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, isCompatMode ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
-        }
+        if (this.swapButton.isHovered()) guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, NarutoGuiCenter.isImageRenderer() ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
 
         long window = this.getMinecraft().getWindow().getWindow();
 
@@ -194,6 +224,7 @@ public class NarutoGuiScreen extends Screen {
         if (shift && mouseRight) {
             if (this.videoBox.isFocused()) this.videoBox.setValue("");
             if (this.audioBox.isFocused()) this.audioBox.setValue("");
+            if (this.ticksBox.isFocused()) this.ticksBox.setValue("");
         }
     }
 

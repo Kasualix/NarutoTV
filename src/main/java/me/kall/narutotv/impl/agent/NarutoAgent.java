@@ -1,5 +1,6 @@
 package me.kall.narutotv.impl.agent;
 
+import me.kall.narutotv.impl.NarutoProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileOutputStream;
@@ -16,6 +17,8 @@ public class NarutoAgent {
     private static final String[] BOOTSTRAP_ENTRIES = {"me/kall/narutotv/impl/agent/NarutoClassLoader.class", "me/kall/narutotv/impl/agent/NarutoRenderBridge.class"};
 
     public static void premain(String agentArgs, @NotNull Instrumentation instrumentation) {
+        System.setProperty(NarutoProperties.GPU_ACCEL, "");
+
         instrumentation.addTransformer(new NarutoTransformer(), false);
         try {
             instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(createBootstrapOnlyJar().toFile()));

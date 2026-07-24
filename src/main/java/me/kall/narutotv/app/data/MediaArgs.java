@@ -21,6 +21,19 @@ public record MediaArgs(String absVideoPath, String absAudioPath, int channelCou
                 ",duration:" + this.duration();
     }
 
+    public @NotNull String toReadableString() {
+        return
+                "absVideoPath:" + this.absVideoPath() +
+                ",absAudioPath:" + this.absAudioPath() +
+                ",channelCount:" + this.channelCount() +
+                ",sampleRate:" + this.sampleRate() +
+                ",openALFormat:" + this.openALFormat() +
+                ",fps:" + this.fps() +
+                ",width:" + this.width() +
+                ",height:" + this.height() +
+                ",duration:" + this.duration();
+    }
+
     @Contract("_ -> new")
     public static @NotNull MediaArgs fromString(@NotNull String mediaArgsString) {
         String[] args = mediaArgsString.split(",");

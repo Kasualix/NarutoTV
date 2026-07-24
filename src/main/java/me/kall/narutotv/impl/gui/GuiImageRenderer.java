@@ -6,7 +6,7 @@ import me.kall.narutotv.base.data.Graphics;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.NativeImageRenderer;
 import me.kall.narutotv.fade.FadeApi;
-import me.kall.narutotv.impl.agent.NarutoProperties;
+import me.kall.narutotv.impl.NarutoProperties;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
@@ -23,7 +23,7 @@ public class GuiImageRenderer extends NativeImageRenderer {
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = minecraft.screen;
         if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
-        if (minecraft.getOverlay() instanceof LoadingOverlay) return true;
+        if (minecraft.getOverlay() instanceof LoadingOverlay && minecraft.level == null) return true;
         if (minecraft.level != null) {
             this.shutdown();
             return false;

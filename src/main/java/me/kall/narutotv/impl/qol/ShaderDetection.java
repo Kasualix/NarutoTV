@@ -11,7 +11,7 @@ public class ShaderDetection {
         forgeBus.addListener(ShaderDetection::tickClient);
     }
 
-    private static boolean shaderUsed;
+    private static boolean last;
     private static int interval;
 
     private static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
@@ -25,8 +25,8 @@ public class ShaderDetection {
         interval = 10;
 
         boolean current = IrisApi.getInstance().isShaderPackInUse();
-        if (current != shaderUsed) ClientRenderers.compat();
+        if (current != last) ClientRenderers.compat();
 
-        shaderUsed = current;
+        last = current;
     }
 }

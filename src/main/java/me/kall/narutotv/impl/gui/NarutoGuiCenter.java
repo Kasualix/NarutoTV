@@ -4,7 +4,7 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
-import me.kall.narutotv.impl.agent.NarutoProperties;
+import me.kall.narutotv.impl.NarutoProperties;
 import me.kall.narutotv.impl.screen.NarutoGuiScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;

@@ -5,6 +5,7 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.produce.AbstractProducer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.lwjgl.openal.*;
 import org.lwjgl.system.MemoryUtil;
 
@@ -12,14 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public final class AudioProducer extends AbstractProducer {
-    private final AtomicLong device = new AtomicLong(), context = new AtomicLong();
-    private final AtomicInteger source = new AtomicInteger();
-
     private final AtomicDouble volume;
     private final AtomicBoolean volumeInit = new AtomicBoolean(true);
 
@@ -37,26 +34,29 @@ public final class AudioProducer extends AbstractProducer {
         return new AudioProducer(mediaArgs, volume, absFFmpegPath);
     }
 
+    //TODO: setVolume
     public float getVolume() {
         return this.volume.floatValue();
     }
 
     @Override
-    @Contract("_ -> new")
-    protected String @NotNull [] setCommand(double setupTime) {
-        return new String[]{this.absFFmpegPath, "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-"};
+    protected @NotNull @Unmodifiable List<String> setCommand(double setupTime) {
+        return List.of(this.absFFmpegPath, "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-");
     }
 
     @Override
     protected void forInput(@NotNull InputStream input) throws IOException {
-        try {
-            long context = this.context.get();
-            long device = this.device.get();
+        long device = 0;
+        long context = 0;
+        int source = 0;
 
+        try {
+            device = ALC11.alcOpenDevice((ByteBuffer) null);
+            context = ALC11.alcCreateContext(device, (IntBuffer) null);
             EXTThreadLocalContext.alcSetThreadContext(context);
             AL.createCapabilities(ALC.createCapabilities(device));
 
-            this.source.set(AL11.alGenSources());
+            source = AL11.alGenSources();
 
             byte[] bufferArray = new byte[8192];
             int read;
@@ -66,59 +66,41 @@ public final class AudioProducer extends AbstractProducer {
                 data.put(bufferArray, 0, read).flip();
 
                 int buffer = AL11.alGenBuffers();
-                AL11.alBufferData(buffer, this.mediaArgs.openALFormat(), data, this.mediaArgs.sampleRate());
+                AL11.alBufferData(buffer, mediaArgs.openALFormat(), data, mediaArgs.sampleRate());
                 MemoryUtil.memFree(data);
 
-                int source = this.source.get();
                 AL11.alSourceQueueBuffers(source, buffer);
 
-                if (this.volumeInit.compareAndSet(true, false)) {
-                    AL11.alSourcef(source, AL11.AL_GAIN, this.getVolume());
-                }
+                if (this.volumeInit.compareAndSet(true, false)) AL11.alSourcef(source, AL11.AL_GAIN, getVolume());
 
                 if (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
 
                 int processed = AL11.alGetSourcei(source, AL11.AL_BUFFERS_PROCESSED);
                 while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
             }
+
+            if (!this.isCanceled()) {
+                if (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
+                while (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) == AL11.AL_PLAYING) {
+                    if (this.isCanceled()) break;
+                    int processed = AL11.alGetSourcei(source, AL11.AL_BUFFERS_PROCESSED);
+                    while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
+                }
+            }
         } finally {
-            EXTThreadLocalContext.alcSetThreadContext(0);
-        }
-    }
-
-    @Override
-    public void shutdown() {
-        super.shutdown();
-
-        int source = this.source.getAndSet(0);
-        if (source != 0) {
-            long context = this.context.get();
-            long device = this.device.get();
-            if (context != 0 && device != 0) {
-                EXTThreadLocalContext.alcSetThreadContext(context);
-                AL.createCapabilities(ALC.createCapabilities(device));
+            if (source != 0) {
                 AL11.alSourceStop(source);
                 int queued = AL11.alGetSourcei(source, AL11.AL_BUFFERS_QUEUED);
                 while (queued-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
                 AL11.alDeleteSources(source);
+            }
+            if (context != 0) {
                 EXTThreadLocalContext.alcSetThreadContext(0);
+                ALC11.alcDestroyContext(context);
+            }
+            if (device != 0) {
+                ALC11.alcCloseDevice(device);
             }
         }
-
-        long context = this.context.getAndSet(0);
-        long device = this.device.getAndSet(0);
-        if (context != 0L) ALC11.alcDestroyContext(context);
-        if (device != 0L) ALC11.alcCloseDevice(device);
-    }
-
-    @Override
-    public void setup(double setupTime) {
-        long device = ALC11.alcOpenDevice((ByteBuffer) null);
-        long context = ALC11.alcCreateContext(device, (IntBuffer) null);
-
-        this.device.set(device);
-        this.context.set(context);
-
-        super.setup(setupTime);
     }
 }

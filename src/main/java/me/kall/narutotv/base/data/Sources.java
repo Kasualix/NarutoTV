@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Spliterator;
@@ -81,8 +82,9 @@ public class Sources {
                     while (sourceDirectory.tryAdvance(file -> {
                         String name = file.getFileName().toString();
                         if (name.toLowerCase().endsWith(".txt")) return;
+                        if (name.toLowerCase(Locale.ROOT).endsWith(".ogg")) return;
                         if (name.startsWith(VIDEO_FILE_NAME)) source.video = file.toString();
-                        if (name.endsWith(AUDIO_FILE_NAME)) source.audio = file.toString();
+                        if (name.startsWith(AUDIO_FILE_NAME)) source.audio = file.toString();
                     }));
                 } catch (IOException exception) {
                     exception.printStackTrace(System.err);
@@ -106,7 +108,9 @@ public class Sources {
 
         @NotNull
         MediaArgs toMediaArgs() {
-            return AppInstances.ffmpeg().read(this.video, this.audio);
+            MediaArgs mediaArgs = AppInstances.ffmpeg().read(this.video, this.audio);
+            System.out.println("MediaArgs initialized: " + mediaArgs.toReadableString());
+            return mediaArgs;
         }
 
         @Override

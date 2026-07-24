@@ -15,6 +15,7 @@ public class NarutoPackets {
         INSTANCE.registerMessage(id++, ScreenDeathPacket.class, ScreenPacket::encode, ScreenDeathPacket::new, ScreenDeathPacket::handle);
         INSTANCE.registerMessage(id++, ScreenLifePacket.class, ScreenPacket::encode, ScreenLifePacket::new, ScreenLifePacket::handle);
         INSTANCE.registerMessage(id++, ScreenSyncPacket.class, ScreenSyncPacket::encode, ScreenSyncPacket::new, ScreenSyncPacket::handle);
-        INSTANCE.registerMessage(id++, ScreenUpdatePacket.class, ScreenUpdatePacket::encode, ScreenUpdatePacket::new, ScreenUpdatePacket::handle);
+        INSTANCE.registerMessage(id++, ScreenUpdatePacket.class, ScreenPacket::encode, ScreenUpdatePacket::new, ScreenUpdatePacket::handle);
+        INSTANCE.registerMessage(id++, ScreenGuiPacket.class, ScreenPacket::encode, ScreenGuiPacket::new, ScreenGuiPacket::handle);
     }
 }

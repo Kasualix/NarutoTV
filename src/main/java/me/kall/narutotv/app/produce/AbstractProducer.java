@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,7 +17,8 @@ public abstract class AbstractProducer {
     private final AtomicReference<Process> process = new AtomicReference<>();
     private final AtomicReference<InputStream> input = new AtomicReference<>();
 
-    protected abstract String[] setCommand(double setupTime);
+    protected abstract List<String> setCommand(double setupTime);
+
     protected abstract void forInput(@NotNull InputStream input) throws IOException, InterruptedException;
 
     public boolean isCanceled() {
@@ -40,7 +42,7 @@ public abstract class AbstractProducer {
         this.executor.set(executor);
 
         executor.submit(() -> {
-            String[] command = this.setCommand(setupTime);
+            List<String> command = this.setCommand(setupTime);
             try {
                 Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
                 this.process.set(process);
@@ -51,7 +53,7 @@ public abstract class AbstractProducer {
                 this.forInput(input);
             } catch (IOException | InterruptedException exception) {
                 if (this.isCanceled()) return;
-                System.err.println("Exception executing " + Arrays.toString(command));
+                System.err.println("Exception executing " + Arrays.toString(command.toArray()));
                 exception.printStackTrace(System.err);
                 throw new RuntimeException(exception);
             }

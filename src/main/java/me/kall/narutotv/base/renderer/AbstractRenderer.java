@@ -5,6 +5,7 @@ import me.kall.narutotv.app.file.AppPaths;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.app.util.LifetimeController;
+import me.kall.narutotv.base.data.Sources;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +76,18 @@ public abstract class AbstractRenderer<T> {
         if (video != null && life != null && life.checkUpdate()) this.update(video.fetch());
     }
 
+    public synchronized void pause() {
+        LifetimeController life = this.life();
+        if (life != null) life.pause();
+        this.pauseAudio();
+    }
+
+    public synchronized void resume() {
+        LifetimeController life = this.life();
+        if (life != null) life.resume();
+        this.resumeAudio();
+    }
+
     public synchronized void shutdown() {
         this.running.set(false);
 
@@ -96,7 +109,7 @@ public abstract class AbstractRenderer<T> {
         MediaArgs mediaArgs = this.mediaArgs();
         if (mediaArgs == null) return null;
         return LifetimeController.create(System.nanoTime(), mediaArgs.fps(), mediaArgs.duration())
-                .setEndRestartFunc(() -> this.restart(0D))
+                .setEndRestartFunc(this::restart)
                 .setSynchronizeFunc(this::restart)
                 .setPauseFunc(this.pauseAudio())
                 .setResumeFunc(this.resumeAudio())
@@ -125,6 +138,8 @@ public abstract class AbstractRenderer<T> {
     }
 
     public synchronized void restart(double seekTo) {
+        MediaArgs mediaArgs = this.mediaArgs();
+        if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
         this.shutdown();
         this.setup(seekTo);
     }

@@ -3,6 +3,7 @@ package me.kall.narutotv.impl.world.util;
 import me.kall.narutotv.NarutoTV;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraftforge.fml.loading.FMLLoader;
@@ -20,6 +21,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -42,7 +44,7 @@ public class AudioZipGenerator {
         return new AudioZipGenerator(absAudioPath);
     }
 
-    public void generate(Runnable validation) {
+    public void generate(Consumer<ResourceLocation> validation) {
         Minecraft minecraft = Minecraft.getInstance();
 
         CompletableFuture.runAsync(() -> {
@@ -50,25 +52,33 @@ public class AudioZipGenerator {
                 Path resourcepacks = FMLLoader.getGamePath().resolve("resourcepacks");
                 if (!Files.exists(resourcepacks)) Files.createDirectories(resourcepacks);
                 File zip = new File(resourcepacks.toString(), this.zipName);
-                if (zip.exists()) return;
-                try (ZipOutputStream output = new ZipOutputStream(new FileOutputStream(zip))) {
-                    this.mcmeta(output);
-                    this.audioFile(output);
-                    this.soundJson(output);
+                if (!zip.exists()) {
+                    try (ZipOutputStream output = new ZipOutputStream(new FileOutputStream(zip))) {
+                        this.mcmeta(output);
+                        this.audioFile(output);
+                        this.soundJson(output);
+                    }
                 }
-            } catch (Exception exception) {
-                LOGGER.error("Error generating audio zip.", exception);
-                throw new RuntimeException(exception);
+            } catch (Throwable throwable) {
+                LOGGER.error("Failed to generate audio zip.", throwable);
+                throw new RuntimeException(throwable);
             }
-        }, NarutoTV.io()).whenCompleteAsync((unused0, zipError) -> {
+        }, NarutoTV.io()).whenCompleteAsync((unused0, throwable) -> {
+            if (throwable != null) {
+                LOGGER.error("Failed to generating audio zip.", throwable);
+                throw new RuntimeException(throwable);
+            }
+
             PackRepository repository = minecraft.getResourcePackRepository();
             repository.reload();
 
             String packID = "file/" + this.zipName;
             Collection<String> selected = repository.getSelectedIds();
 
+            ResourceLocation sound = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, this.id);
+
             if (selected.contains(packID)) {
-                validation.run();
+                validation.accept(sound);
                 return;
             }
 
@@ -80,7 +90,13 @@ public class AudioZipGenerator {
             minecraft.options.resourcePacks = new ArrayList<>(newSelected);
             minecraft.options.save();
 
-            minecraft.reloadResourcePacks().whenCompleteAsync((unused1, throwable1) -> validation.run(), minecraft);
+            minecraft.reloadResourcePacks().whenCompleteAsync((unused1, throwable1) -> {
+                if (throwable1 != null) {
+                    LOGGER.error("Failed to reload resource packs", throwable1);
+                    throw new RuntimeException(throwable1);
+                }
+                validation.accept(sound);
+            }, minecraft);
         }, minecraft);
     }
 
@@ -101,8 +117,8 @@ public class AudioZipGenerator {
     private void audioFile(@NotNull ZipOutputStream output) throws Exception {
         output.putNextEntry(new ZipEntry(String.format("assets/%s/sounds/%s.ogg", NarutoTV.MOD_ID, this.id)));
 
-        try (FileInputStream inputStream = new FileInputStream(this.absAudioPath)){
-            byte[] buffer = new byte[8192];
+        try (FileInputStream inputStream = new FileInputStream(this.absAudioPath)) {
+            byte[] buffer = new byte[256 * 1024];
             int length;
             while ((length = inputStream.read(buffer)) > 0) output.write(buffer, 0, length);
         }

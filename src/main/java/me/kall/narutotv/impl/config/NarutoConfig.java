@@ -78,19 +78,22 @@ public class NarutoConfig {
             return TICKS_BEFORE_FADE.get();
         }
 
-        public static boolean musicMuted() {
+        public static boolean muteMusic() {
             return MUTE_MUSIC.get();
         }
 
-        public static void toggleFadable() {
-            FADABLE.set(!FADABLE.get());
-            LOGGER.info("[NarutoTV] fadable config option is set to {}", FADABLE.get().toString());
+        public static void fadable(boolean fadable) {
+            FADABLE.set(fadable);
             CONFIG.save();
         }
 
-        public static void toggleMuteMusic() {
-            MUTE_MUSIC.set(!MUTE_MUSIC.get());
-            LOGGER.info("[NarutoTV] muteMusic config option is set to {}", MUTE_MUSIC.get().toString());
+        public static void ticksBeforeFade(int ticksBeforeFade) {
+            TICKS_BEFORE_FADE.set(ticksBeforeFade);
+            CONFIG.save();
+        }
+
+        public static void muteMusic(boolean muteMusic) {
+            MUTE_MUSIC.set(muteMusic);
             CONFIG.save();
         }
     }

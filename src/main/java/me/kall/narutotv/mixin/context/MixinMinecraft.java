@@ -2,7 +2,7 @@ package me.kall.narutotv.mixin.context;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import me.kall.narutotv.impl.agent.NarutoProperties;
+import me.kall.narutotv.impl.NarutoProperties;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Overlay;

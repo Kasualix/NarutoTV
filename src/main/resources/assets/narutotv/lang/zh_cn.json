@@ -3,15 +3,22 @@
 
   "button.narutotv.random": "随机",
   "button.narutotv.swap": "切换",
+  "button.narutotv.clean": "清理方块",
 
   "checkbox.narutotv.fadable": "界面渐隐",
   "checkbox.narutotv.mute_music": "静音音乐",
 
+  "checkbox.narutotv.local_sound": "本地音效",
+
   "box.narutotv.video": "视频",
   "box.narutotv.audio": "音频",
+  "box.narutotv.ticks": "淡出前刻数",
 
   "tooltip.narutotv.random": "从尚未播放的来源中随机选取一个。",
+  "tooltip.narutotv.clean": "除了边框上的，清除当前方块屏幕中的所有方块。",
   "tooltip.narutotv.swap": "在兼容模式和性能模式之间切换。",
+  "tooltip.narutotv.swap.universal": "注意：世界中的所有方块屏幕都受此选项影响。",
+  "tooltip.narutotv.swap.compat": "不建议在性能模式下使用光影，否则视频可能无法正常渲染。",
 
   "mode.narutotv.compatibility": "当前：兼容模式",
   "mode.narutotv.performance": "当前：性能模式"

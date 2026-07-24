@@ -17,6 +17,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class BlockScreens extends SavedData {
@@ -34,6 +35,15 @@ public class BlockScreens extends SavedData {
         screens.remove(argSource);
         screens.add(argSource);
         this.setDirty();
+    }
+
+    public @Nullable BlockScreen get(ResourceLocation dimension, long position) {
+        ObjectOpenHashSet<BlockScreen> screens = this.data.get(dimension);
+        if (screens == null || screens.isEmpty()) return null;
+        for (BlockScreen screen : screens) {
+            if (screen.areaInvolved().contains(position)) return screen;
+        }
+        return null;
     }
 
     public void remove(ResourceLocation dimension, long position) {

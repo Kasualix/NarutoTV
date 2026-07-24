@@ -1,16 +1,19 @@
 package me.kall.narutotv.app.produce.video;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.NativeImage;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectFunction;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.app.util.LifetimeController;
+import me.kall.narutotv.impl.NarutoProperties;
 import me.kall.narutotv.mixin.context.NativeImageAccessor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage> {
     private ByteBuffer frame;
@@ -69,9 +72,30 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
     }
 
     @Override
-    @Contract("_ -> new")
-    protected String @NotNull [] setCommand(double setupTime) {
-        return new String[]{this.absFFmpegPath, "-loglevel", "quiet", "-hwaccel", "auto", "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absVideoPath(), "-map", "0:v:0", "-an", "-sn", "-dn", "-threads", "0", "-vf", "scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear," + "fps=" + this.mediaArgs.fps() + "," + "format=rgba", "-f", "rawvideo", "-vcodec", "rawvideo", "-"};
+    protected @NotNull List<String> setCommand(double setupTime) {
+        List<String> command = Lists.newArrayList(this.absFFmpegPath, "-loglevel", "quiet");
+
+        if (System.getProperty(NarutoProperties.GPU_ACCEL) != null) {
+            command.add("-hwaccel");
+            command.add("auto");
+        }
+
+        command.addAll(List.of(
+                "-probesize", "32",
+                "-analyzeduration", "0",
+                "-fflags", "nobuffer",
+                "-flags", "low_delay",
+                "-ss", String.valueOf(setupTime),
+                "-i", this.mediaArgs.absVideoPath(),
+                "-map", "0:v:0",
+                "-an", "-sn", "-dn",
+                "-threads", "0",
+                "-vf", "scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear,format=rgba",
+                "-f", "rawvideo",
+                "-vcodec", "rawvideo",
+                "-"
+        ));
+        return command;
     }
 
     @Override
