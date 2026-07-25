@@ -12,6 +12,7 @@
 
   "box.narutotv.video": "视频",
   "box.narutotv.audio": "音频",
+  "box.narutotv.volume": "音量",
   "box.narutotv.ticks": "淡出前刻数",
 
   "tooltip.narutotv.random": "从尚未播放的来源中随机选取一个。",
@@ -21,5 +22,12 @@
   "tooltip.narutotv.swap.compat": "不建议在性能模式下使用光影，否则视频可能无法正常渲染。",
 
   "mode.narutotv.compatibility": "当前：兼容模式",
-  "mode.narutotv.performance": "当前：性能模式"
+  "mode.narutotv.performance": "当前：性能模式",
+
+  "message.narutotv.corner.first": "第一个底角已确认：[%s]。",
+  "message.narutotv.corner.second": "第二个底角已确认：[%s]。开始构建屏幕……",
+
+  "message.narutotv.corner.fail": "使用[%s]和[%s]两底角构建屏幕时发生意外！查看最新日志获取详细信息。",
+  "message.narutotv.corner.none": "未能根据底角[%s]和[%s]找到完整的矩形方块屏幕。请检查你的建筑。",
+  "message.narutotv.corner.success": "成功基于底角[%s]和[%s]构建出矩形方块屏幕！"
 }

@@ -5,6 +5,7 @@ import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.ByteBufferRenderer;
 import me.kall.narutotv.base.renderer.gl.GuiGLEngine;
 import me.kall.narutotv.impl.NarutoProperties;
+import me.kall.narutotv.impl.config.NarutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
 import net.minecraft.client.gui.screens.LoadingOverlay;
@@ -69,6 +70,11 @@ public class GuiBufferRenderer extends ByteBufferRenderer {
             return false;
         }
         return minecraft.isRunning();
+    }
+
+    @Override
+    public float initVolume() {
+        return NarutoConfig.Client.volume();
     }
 
     @Override

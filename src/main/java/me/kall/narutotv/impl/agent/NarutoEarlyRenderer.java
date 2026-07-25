@@ -70,6 +70,11 @@ public class NarutoEarlyRenderer extends ByteBufferRenderer {
     }
 
     @Override
+    public float initVolume() {
+        return 1.0F;
+    }
+
+    @Override
     public @NotNull MediaArgs initMediaArgs() {
         MediaArgs mediaArgs;
         String initial = System.getProperty(NarutoProperties.INITIAL_MEDIA);

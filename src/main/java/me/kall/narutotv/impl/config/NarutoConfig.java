@@ -55,6 +55,7 @@ public class NarutoConfig {
         private static final ForgeConfigSpec.BooleanValue MUTE_MUSIC;
         private static final ForgeConfigSpec.BooleanValue FADABLE;
         private static final ForgeConfigSpec.IntValue TICKS_BEFORE_FADE;
+        private static final ForgeConfigSpec.DoubleValue VOLUME;
 
         static {
             ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -62,6 +63,7 @@ public class NarutoConfig {
             MUTE_MUSIC = builder.comment("Whether to mute the vanilla game music (SoundSource.MUSIC) while NarutoTV video playback is active.").define("muteMusic", true);
             FADABLE = builder.comment("Whether to gradually fade all the gui elements except the playing video").define("fadable", true);
             TICKS_BEFORE_FADE = builder.comment("Tick count before all the gui elements get faded. 20 ticks = 1 second").defineInRange("ticksBeforeFade", 200, 0, Integer.MAX_VALUE);
+            VOLUME = builder.comment("The audio volume of screen backgrounds in no-world client gui overlays.").defineInRange("audioVolume", 1.0, 0.0, 1.0);
             builder.pop();
             CONFIG = builder.build();
         }
@@ -82,19 +84,35 @@ public class NarutoConfig {
             return MUTE_MUSIC.get();
         }
 
+        public static float volume() {
+            return VOLUME.get().floatValue();
+        }
+
         public static void fadable(boolean fadable) {
+            if (FADABLE.get() == fadable) return;
             FADABLE.set(fadable);
             CONFIG.save();
         }
 
         public static void ticksBeforeFade(int ticksBeforeFade) {
+            if (TICKS_BEFORE_FADE.get() == ticksBeforeFade) return;
             TICKS_BEFORE_FADE.set(ticksBeforeFade);
             CONFIG.save();
         }
 
         public static void muteMusic(boolean muteMusic) {
+            if (MUTE_MUSIC.get() == muteMusic) return;
             MUTE_MUSIC.set(muteMusic);
             CONFIG.save();
+        }
+
+        public static boolean volume(double volume) {
+            if (VOLUME.get() == volume) return false;
+
+            VOLUME.set(volume);
+            CONFIG.save();
+
+            return true;
         }
     }
 }

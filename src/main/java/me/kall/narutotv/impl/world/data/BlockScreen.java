@@ -28,17 +28,16 @@ public class BlockScreen {
 
     public String video = "", audio = "";
 
+    public float volume = 1.0F;
+
     private LongSet areaInvolved, borderInvolved;
 
-    public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio) {
-        this(corners, dimension, localSound);
-        this.video = video;
-        this.audio = audio;
-    }
-
-    public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound) {
+    public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio, float volume) {
         this(BlockPos.of(corners[0]), BlockPos.of(corners[1]), BlockPos.of(corners[2]), BlockPos.of(corners[3]), dimension);
         this.localSound = localSound;
+        this.video = video;
+        this.audio = audio;
+        this.volume = volume;
     }
 
     public BlockScreen(@NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2, @NotNull BlockPos topCorner1, @NotNull BlockPos topCorner2, ResourceLocation dimension) {
@@ -129,6 +128,12 @@ public class BlockScreen {
     }
 
     public static @NotNull LongList getLine(@NotNull BlockPos from, @NotNull BlockPos to) {
+        int diffAxes = 0;
+        if (from.getX() != to.getX()) diffAxes++;
+        if (from.getY() != to.getY()) diffAxes++;
+        if (from.getZ() != to.getZ()) diffAxes++;
+        if (diffAxes > 1) throw new IllegalArgumentException("Line must be axis-aligned. from: [" + from.toShortString() + "], to: [" + to.toShortString() + "]");
+
         LongList line = new LongArrayList(Math.max(Math.abs(to.getX() - from.getX()), Math.max(Math.abs(to.getY() - from.getY()), Math.abs(to.getZ() - from.getZ()))) + 1);
 
         int deltaX = Integer.compare(to.getX(), from.getX());

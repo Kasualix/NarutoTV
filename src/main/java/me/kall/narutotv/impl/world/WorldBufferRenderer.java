@@ -8,18 +8,18 @@ import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import me.kall.narutotv.impl.world.ext.InWorld;
-import me.kall.narutotv.impl.world.sound.LocalSoundCtrl;
+import me.kall.narutotv.impl.world.sound.LocalSoundDelegate;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     private final BlockScreen screen;
-
-    private @Nullable LocalSoundCtrl localSoundCtrl;
+    private final LocalSoundDelegate soundDelegate;
 
     public WorldBufferRenderer(BlockScreen screen) {
         this.screen = screen;
+        this.soundDelegate = new LocalSoundDelegate(screen, this::life, super::getVolume, super::setVolume, super::initAudio, super::pauseAudio, super::resumeAudio);
     }
 
     @Override
@@ -98,43 +98,36 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     @Override
     public synchronized void shutdown() {
         super.shutdown();
+        this.soundDelegate.shutdown();
+    }
 
-        if (this.localSoundCtrl != null) {
-            this.localSoundCtrl.off.run();
-            this.localSoundCtrl = null;
-        }
+    @Override
+    public float initVolume() {
+        return this.screen().volume;
+    }
+
+    @Override
+    public float getVolume() {
+        return this.soundDelegate.getVolume();
+    }
+
+    @Override
+    public void setVolume(float volume) {
+        this.soundDelegate.setVolume(volume);
     }
 
     @Override
     public @Nullable AudioProducer initAudio(double seekTo) {
-        if (this.screen.hasLocalSound()) {
-            this.localSoundCtrl = new LocalSoundCtrl(this.screen);
-            this.localSoundCtrl.on.accept(0D);
-            return null;
-        } else {
-            return super.initAudio(seekTo);
-        }
+        return this.soundDelegate.initAudio(seekTo);
     }
 
     @Override
     public Runnable pauseAudio() {
-        if (this.localSoundCtrl != null) {
-            return this.localSoundCtrl.off;
-        } else {
-            return super.pauseAudio();
-        }
+        return this.soundDelegate.pauseAudio();
     }
 
     @Override
     public Runnable resumeAudio() {
-        LocalSoundCtrl localSoundCtrl = this.localSoundCtrl;
-        if (this.localSoundCtrl != null) {
-            return () -> {
-                var life = this.life();
-                if (life != null) localSoundCtrl.on.accept((double) life.sinceSetup() / 1_000_000_000D);
-            };
-        } else {
-            return super.resumeAudio();
-        }
+        return this.soundDelegate.resumeAudio();
     }
 }

@@ -1,10 +1,9 @@
 package me.kall.narutotv.impl.world.network.packet;
 
 import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.data.BlockScreens;
+import me.kall.narutotv.impl.world.network.impl.Server;
 import me.kall.narutotv.impl.world.network.packet.base.ScreenPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,9 +24,7 @@ public class ScreenUpdatePacket extends ScreenPacket {
         context.setPacketHandled(true);
         context.enqueueWork(() -> {
             try {
-                ServerPlayer player = context.getSender();
-                if (player == null) return;
-                BlockScreens.get(player.serverLevel()).update(this.blockScreen);
+                Server.updateScreen(this.blockScreen, context);
             } catch (Throwable throwable) {
                 LOGGER.error("Error handling ScreenUpdatePacket", throwable);
             }

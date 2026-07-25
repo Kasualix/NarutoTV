@@ -15,25 +15,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static me.kall.narutotv.impl.screen.NarutoGuiScreen.*;
-
-public class NarutoWorldScreen extends Screen {
+public class NarutoWorldScreen extends AbstractNarutoScreen {
     static final Component LOCAL_SOUND = Component.translatable("checkbox.narutotv.local_sound");
 
     static final Component CLEAN = Component.translatable("button.narutotv.clean");
-
     static final Component CLEAN_TOOLTIP = Component.translatable("tooltip.narutotv.clean");
 
     static final Component SWAP_TOOLTIP_UNIVERSAL = Component.translatable("tooltip.narutotv.swap.universal");
@@ -41,112 +36,68 @@ public class NarutoWorldScreen extends Screen {
 
     final BlockScreen blockScreen;
 
-    EditBox videoBox, audioBox;
-
     Checkbox localSoundCheck;
 
-    Button randomButton, swapButton, cleanButton, yesButton, noButton;
-
-    int currentY;
-
-    Screen lastScreen;
+    Button cleanButton;
 
     final AtomicBoolean doing = new AtomicBoolean();
 
-    public NarutoWorldScreen(Screen lastScreen, BlockScreen blockScreen) {
-        super(SCREEN);
+    public NarutoWorldScreen(@Nullable Screen lastScreen, BlockScreen blockScreen) {
+        super(NarutoGuiScreen.SCREEN, lastScreen);
         this.blockScreen = blockScreen;
-        this.lastScreen = lastScreen;
     }
 
     @Override
-    protected void init() {
+    protected void initWidgets() {
         int centerX = this.width / 2;
 
-        int boxWidth = 200;
-        int boxHeight = 20;
-        int boxSpacing = 18;
+        this.videoBox = this.initEditBox(centerX, VIDEO, Paths.absolute(this.blockScreen.video));
+        this.audioBox = this.initEditBox(centerX, AUDIO, Paths.absolute(this.blockScreen.audio));
+        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(this.blockScreen.volume));
+        this.volumeBox.setFilter(NUMERIC);
 
-        int buttonWidth = 80;
-        int buttonHeight = 20;
-        int buttonSpacing = 5;
+        this.initCheckboxes(centerX);
 
-        int checkboxHeight = 20;
-        int checkboxSpacing = 5;
-
-        this.currentY = 25;
-
-        this.editBoxes(centerX, boxWidth, boxHeight, boxSpacing);
-        this.checkboxes(centerX, buttonWidth, checkboxHeight, checkboxSpacing);
-        this.buttons(centerX, buttonWidth, buttonHeight, buttonSpacing);
+        this.initRandomButton(centerX);
+        this.initSwapButton(centerX, ClientRenderers::swap);
+        this.initCleanButton(centerX);
+        this.initConfirmButtons(centerX);
     }
 
-    void editBoxes(int centerX, int boxWidth, int boxHeight, int boxSpacing) {
-        this.videoBox = new EditBox(this.font, centerX - boxWidth / 2, this.currentY, boxWidth, boxHeight, VIDEO);
-        this.videoBox.setMaxLength(Integer.MAX_VALUE);
-        this.videoBox.setValue(Paths.absolute(this.blockScreen.video));
-        this.addRenderableWidget(this.videoBox);
-        this.currentY += boxHeight + boxSpacing;
-
-        this.audioBox = new EditBox(this.font, centerX - boxWidth / 2, this.currentY, boxWidth, boxHeight, AUDIO);
-        this.audioBox.setMaxLength(Integer.MAX_VALUE);
-        this.audioBox.setValue(Paths.absolute(this.blockScreen.audio));
-        this.addRenderableWidget(this.audioBox);
-        this.currentY += boxHeight + boxSpacing;
-    }
-
-    void checkboxes(int centerX, int buttonWidth, int checkboxHeight, int checkboxSpacing) {
+    void initCheckboxes(int centerX) {
         int localSoundWidth = this.font.width(LOCAL_SOUND) + 24;
 
-        this.localSoundCheck = new Checkbox(centerX - buttonWidth - 5, this.currentY, localSoundWidth, checkboxHeight, LOCAL_SOUND, this.blockScreen.hasLocalSound());
+        this.localSoundCheck = new Checkbox(centerX - BUTTON_WIDTH - 5, this.currentY, localSoundWidth, BUTTON_HEIGHT, LOCAL_SOUND, this.blockScreen.hasLocalSound());
         this.addRenderableWidget(this.localSoundCheck);
 
-        this.currentY += checkboxHeight + checkboxSpacing;
+        this.currentY += BUTTON_HEIGHT + 5;
     }
 
-    void buttons(int centerX, int buttonWidth, int buttonHeight, int buttonSpacing) {
-        this.randomButton = Button.builder(RANDOM, button -> this.onRandom())
-                .bounds(centerX - buttonWidth - 5, this.currentY, buttonWidth * 2 + 10, buttonHeight)
-                .build();
-        this.addRenderableWidget(this.randomButton);
-        this.currentY += buttonHeight + buttonSpacing;
-
-        this.swapButton = Button.builder(SWAP, button -> ClientRenderers.swap())
-                .bounds(centerX - buttonWidth - 5, this.currentY, buttonWidth * 2 + 10, buttonHeight)
-                .build();
-        this.addRenderableWidget(this.swapButton);
-        this.currentY += buttonHeight + buttonSpacing;
-
+    void initCleanButton(int centerX) {
         this.cleanButton = Button.builder(CLEAN, button -> NarutoPackets.INSTANCE.sendToServer(new ScreenCleanPacket(this.blockScreen)))
-                .bounds(centerX - buttonWidth - 5, this.currentY, buttonWidth * 2 + 10, buttonHeight)
+                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH * 2 + 10, BUTTON_HEIGHT)
                 .build();
         this.addRenderableWidget(this.cleanButton);
-        this.currentY += buttonHeight + buttonSpacing;
-
-        this.yesButton = Button.builder(Component.translatable("gui.yes"), button -> this.onDone())
-                .bounds(centerX - buttonWidth - 5, this.currentY, buttonWidth, buttonHeight)
-                .build();
-        this.addRenderableWidget(this.yesButton);
-
-        this.noButton = Button.builder(Component.translatable("gui.no"), button -> this.onClose())
-                .bounds(centerX + 5, this.currentY, buttonWidth, buttonHeight)
-                .build();
-        this.addRenderableWidget(this.noButton);
+        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
     }
 
-    void onRandom() {
+    @Override
+    protected void onRandom() {
         Sources.noLineCut();
         MediaArgs mediaArgs = Sources.get();
         this.videoBox.setValue(mediaArgs.absVideoPath());
         this.audioBox.setValue(mediaArgs.absAudioPath());
     }
 
-    void onDone() {
+    @Override
+    protected void onDone() {
         if (this.doing.get()) return;
         this.doing.set(true);
         String absVideoBox = this.videoBox.getValue();
         String absAudioBox = this.audioBox.getValue();
         boolean localSoundCheck = this.localSoundCheck.selected();
+
+        float newVolume = Float.parseFloat(this.volumeBox.getValue().trim());
 
         AbstractRenderer<?> renderer = ClientRenderers.get(this.blockScreen);
         assert renderer != null;
@@ -158,9 +109,20 @@ public class NarutoWorldScreen extends Screen {
         String audioNow = mediaArgs.absAudioPath();
 
         boolean sourceChanged = !absVideoBox.equals(videoNow) || !absAudioBox.equals(audioNow);
-        boolean soundChanged = localSoundCheck != this.blockScreen.hasLocalSound();
+        boolean volumeChanged = newVolume != renderer.getVolume();
+        boolean localSoundChanged = localSoundCheck != this.blockScreen.hasLocalSound();
+        boolean soundChanged = localSoundChanged || volumeChanged;
 
         if (!soundChanged && !sourceChanged) {
+            this.onClose();
+            return;
+        }
+
+        if (volumeChanged && !sourceChanged && !localSoundChanged) {
+            this.blockScreen.volume = newVolume;
+            renderer.setVolume(newVolume);
+            NarutoPackets.INSTANCE.sendToServer(new ScreenUpdatePacket(this.blockScreen));
+            this.doing.set(false);
             this.onClose();
             return;
         }
@@ -175,9 +137,9 @@ public class NarutoWorldScreen extends Screen {
                     }
 
                     if (localSoundCheck) {
-                        AudioZipGenerator.get(converted).generate((id) -> this.applyDone(absVideoBox, absAudioBox, id));
+                        AudioZipGenerator.get(converted).generate((id) -> this.applyDone(absVideoBox, absAudioBox, id, newVolume, renderer));
                     } else {
-                        this.applyDone(absVideoBox, absAudioBox, BlockScreen.NO_LOCAL_SOUND);
+                        this.applyDone(absVideoBox, absAudioBox, BlockScreen.NO_LOCAL_SOUND, newVolume, renderer);
                     }
                 }, this.minecraft);
     }
@@ -186,10 +148,11 @@ public class NarutoWorldScreen extends Screen {
         return localSound ? AppInstances.ffmpeg().convertAudio(absAudioPath) : CompletableFuture.completedFuture(absAudioPath);
     }
 
-    private void applyDone(String absVideo, String absAudio, ResourceLocation localSound) {
+    private void applyDone(String absVideo, String absAudio, ResourceLocation localSound, float newVolume, @NotNull AbstractRenderer<?> renderer) {
         this.blockScreen.video = Paths.relative(absVideo);
         this.blockScreen.audio = Paths.relative(absAudio);
         this.blockScreen.localSound = localSound;
+        this.blockScreen.volume = newVolume;
 
         NarutoPackets.INSTANCE.sendToServer(new ScreenUpdatePacket(this.blockScreen));
 
@@ -209,41 +172,14 @@ public class NarutoWorldScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        this.videoBox.tick();
-        this.audioBox.tick();
+    protected void onSwapNote(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, SWAP_TOOLTIP_UNIVERSAL, SWAP_TOOLTIP_COMPAT, ClientRenderers.isImageRenderer() ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
     }
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-
-        int centerX = this.width / 2;
-
-        guiGraphics.drawCenteredString(this.font, VIDEO, centerX, this.videoBox.getY() - 12, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, AUDIO, centerX, this.audioBox.getY() - 12, 0xFFFFFF);
-
-        if (this.randomButton.isHovered()) guiGraphics.renderTooltip(this.font, RANDOM_TOOLTIP, mouseX, mouseY);
-        if (this.swapButton.isHovered()) guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, SWAP_TOOLTIP_UNIVERSAL, SWAP_TOOLTIP_COMPAT, ClientRenderers.isImageRenderer() ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
         if (this.cleanButton.isHovered()) guiGraphics.renderTooltip(this.font, CLEAN_TOOLTIP, mouseX, mouseY);
-
-        long window = this.getMinecraft().getWindow().getWindow();
-
-        boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-        boolean mouseRight = GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_RIGHT) == GLFW.GLFW_PRESS;
-
-        if (shift && mouseRight) {
-            if (this.videoBox.isFocused()) this.videoBox.setValue("");
-            if (this.audioBox.isFocused()) this.audioBox.setValue("");
-        }
-    }
-
-    @Override
-    public void onClose() {
-        Minecraft.getInstance().setScreen(this.lastScreen);
-        super.onClose();
     }
 
     @Override

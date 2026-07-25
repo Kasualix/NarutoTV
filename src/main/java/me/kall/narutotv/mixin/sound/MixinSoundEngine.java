@@ -21,11 +21,15 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class MixinSoundEngine {
     @WrapMethod(method = "reload")
     private void reloadGuiSound(@NotNull Operation<Void> original) {
-        Minecraft.getInstance().execute(NarutoGuiCenter.getActive().pauseAudio());
-        ClientRenderers.forEach(renderer -> renderer.pauseAudio().run());
+        Minecraft.getInstance().execute(() -> {
+            NarutoGuiCenter.getActive().pauseAudio().run();
+            ClientRenderers.forEach(renderer -> renderer.pauseAudio().run());
+        });
         original.call();
-        ClientRenderers.forEach(renderer -> renderer.resumeAudio().run());
-        Minecraft.getInstance().execute(NarutoGuiCenter.getActive().resumeAudio());
+        Minecraft.getInstance().execute(() -> {
+            ClientRenderers.forEach(renderer -> renderer.resumeAudio().run());
+            NarutoGuiCenter.getActive().resumeAudio().run();
+        });
     }
 
     @Dynamic

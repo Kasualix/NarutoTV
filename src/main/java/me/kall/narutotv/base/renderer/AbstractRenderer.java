@@ -18,15 +18,6 @@ public abstract class AbstractRenderer<T> {
 
     public final AtomicReference<AbstractFrameProducer<T>> video = new AtomicReference<>();
 
-    public abstract boolean isRunnable();
-
-    public abstract @NotNull AbstractFrameProducer<T> initVideo();
-    public abstract @NotNull MediaArgs initMediaArgs();
-
-    public abstract void update(T frame);
-
-    public abstract void onSetup(double seekTo);
-
     public @Nullable MediaArgs mediaArgs() {
         return this.mediaArgs.get();
     }
@@ -50,6 +41,15 @@ public abstract class AbstractRenderer<T> {
     }
 
     //----我----是----华----丽----的----分----割----线----
+
+    public abstract @NotNull AbstractFrameProducer<T> initVideo();
+    public abstract @NotNull MediaArgs initMediaArgs();
+
+    public abstract void onSetup(double seekTo);
+
+    public abstract boolean isRunnable();
+
+    public abstract void update(T frame);
 
     public synchronized void setup(double seekTo) {
         if (this.isRunnable()) {
@@ -82,6 +82,7 @@ public abstract class AbstractRenderer<T> {
         this.pauseAudio();
     }
 
+    @SuppressWarnings("unused")
     public synchronized void resume() {
         LifetimeController life = this.life();
         if (life != null) life.resume();
@@ -95,25 +96,50 @@ public abstract class AbstractRenderer<T> {
         if (video != null) video.shutdown();
     }
 
+    public synchronized void restart() {
+        this.restart(0D);
+    }
+
+    public synchronized void restart(double seekTo) {
+        MediaArgs mediaArgs = this.mediaArgs();
+        if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
+        this.shutdown();
+        this.setup(seekTo);
+    }
+
     //----我----是----华----丽----的----分----割----线----
 
-    public @Nullable AudioProducer initAudio(double seekTo) {
-        var mediaArgs = this.mediaArgs();
-        if (mediaArgs == null) return null;
-        var audio = AudioProducer.create(mediaArgs, 1.0F, AppPaths.absFFmpegPath());
-        audio.setup(seekTo);
-        return audio;
-    }
+    public abstract float initVolume();
 
     public @Nullable LifetimeController initLife(double seekTo) {
         MediaArgs mediaArgs = this.mediaArgs();
         if (mediaArgs == null) return null;
         return LifetimeController.create(System.nanoTime(), mediaArgs.fps(), mediaArgs.duration())
-                .setEndRestartFunc(this::restart)
-                .setSynchronizeFunc(this::restart)
-                .setPauseFunc(this.pauseAudio())
-                .setResumeFunc(this.resumeAudio())
+                .setEndRestartFunc(() -> this::restart)
+                .setSynchronizeFunc(() -> this::restart)
+                .setPauseFunc(this::pauseAudio)
+                .setResumeFunc(this::resumeAudio)
                 .seekTo(seekTo);
+    }
+
+    public @Nullable AudioProducer initAudio(double seekTo) {
+        var mediaArgs = this.mediaArgs();
+        if (mediaArgs == null) return null;
+        var audio = AudioProducer.create(mediaArgs, this.initVolume(), AppPaths.absFFmpegPath());
+        audio.setup(seekTo);
+        return audio;
+    }
+
+    public float getVolume() {
+        AudioProducer audio = this.audio();
+        if (audio == null) return 1.0F;
+        return audio.getVolume();
+    }
+
+    public void setVolume(float volume) {
+        AudioProducer audio = this.audio();
+        if (audio == null) return;
+        audio.setVolume(volume);
     }
 
     public Runnable pauseAudio() {
@@ -131,16 +157,5 @@ public abstract class AbstractRenderer<T> {
                 audio.setup((double) life.sinceSetup() / 1_000_000_000D);
             }
         };
-    }
-
-    public synchronized void restart() {
-        this.restart(0D);
-    }
-
-    public synchronized void restart(double seekTo) {
-        MediaArgs mediaArgs = this.mediaArgs();
-        if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
-        this.shutdown();
-        this.setup(seekTo);
     }
 }

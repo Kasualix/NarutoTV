@@ -33,7 +33,7 @@ public abstract class AbstractProducer {
         this.setCanceled(false);
 
         ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
-            Thread thread = new Thread(task, this.getClass().getSimpleName());
+            Thread thread = new Thread(task, this.getClass().getSimpleName() + "_" + System.nanoTime());
             thread.setDaemon(true);
             thread.setPriority(Thread.MAX_PRIORITY);
             return thread;

@@ -1,9 +1,8 @@
 package me.kall.narutotv.impl.world.network.packet;
 
-import me.kall.narutotv.impl.screen.NarutoWorldScreen;
 import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.network.impl.Client;
 import me.kall.narutotv.impl.world.network.packet.base.ScreenPacket;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +22,12 @@ public class ScreenGuiPacket extends ScreenPacket {
     public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.setPacketHandled(true);
-        context.enqueueWork(() -> Minecraft.getInstance().setScreen(new NarutoWorldScreen(Minecraft.getInstance().screen, this.blockScreen)));
+        context.enqueueWork(() -> {
+            try {
+                Client.setScreen(this.blockScreen);
+            } catch (Throwable throwable) {
+                LOGGER.error("Error handling ScreenGuiPacket.", throwable);
+            }
+        });
     }
 }

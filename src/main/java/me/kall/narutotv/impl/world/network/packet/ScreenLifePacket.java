@@ -1,11 +1,7 @@
 package me.kall.narutotv.impl.world.network.packet;
 
-import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.base.data.Paths;
-import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
-import me.kall.narutotv.impl.world.network.NarutoPackets;
+import me.kall.narutotv.impl.world.network.impl.Client;
 import me.kall.narutotv.impl.world.network.packet.base.ScreenPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
@@ -27,20 +23,7 @@ public class ScreenLifePacket extends ScreenPacket {
         context.setPacketHandled(true);
         context.enqueueWork(() -> {
             try {
-                ClientRenderers.add(this.blockScreen).ifPresent(AbstractRenderer::shutdown);
-
-                AbstractRenderer<?> renderer = ClientRenderers.get(this.blockScreen);
-
-                assert renderer != null;
-                renderer.setup(0D);
-
-                MediaArgs mediaArgs = renderer.mediaArgs();
-                assert mediaArgs != null;
-
-                this.blockScreen.video = Paths.relative(mediaArgs.absVideoPath());
-                this.blockScreen.audio = Paths.relative(mediaArgs.absAudioPath());
-
-                NarutoPackets.INSTANCE.sendToServer(new ScreenUpdatePacket(this.blockScreen));
+                Client.addScreen(this.blockScreen);
             } catch (Throwable throwable) {
                 LOGGER.error("Error handing ScreenLifePacket", throwable);
             }

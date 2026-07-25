@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.DoubleConsumer;
+import java.util.function.Supplier;
 
 public final class LifetimeController {
     private final AtomicLong setupTime;
@@ -19,9 +20,9 @@ public final class LifetimeController {
 
     private final AtomicBoolean lagSpike = new AtomicBoolean();
 
-    private @Nullable Runnable endRestartFunc, pauseFunc, resumeFunc;
+    private @Nullable Supplier<Runnable> endRestartFunc, pauseFunc, resumeFunc;
 
-    private @Nullable DoubleConsumer synchronizeFunc;
+    private @Nullable Supplier<DoubleConsumer> synchronizeFunc;
 
     private final double fps;
     private final long duration;
@@ -37,22 +38,22 @@ public final class LifetimeController {
         return new LifetimeController(setupTime, fps, duration);
     }
 
-    public LifetimeController setEndRestartFunc(@NotNull Runnable endRestartFunc) {
+    public LifetimeController setEndRestartFunc(@NotNull Supplier<Runnable> endRestartFunc) {
         this.endRestartFunc = endRestartFunc;
         return this;
     }
 
-    public LifetimeController setSynchronizeFunc(@NotNull DoubleConsumer synchronizeFunc) {
+    public LifetimeController setSynchronizeFunc(@NotNull Supplier<DoubleConsumer> synchronizeFunc) {
         this.synchronizeFunc = synchronizeFunc;
         return this;
     }
 
-    public LifetimeController setPauseFunc(@NotNull Runnable pauseFunc) {
+    public LifetimeController setPauseFunc(@NotNull Supplier<Runnable> pauseFunc) {
         this.pauseFunc = pauseFunc;
         return this;
     }
 
-    public LifetimeController setResumeFunc(@NotNull Runnable resumeFunc) {
+    public LifetimeController setResumeFunc(@NotNull Supplier<Runnable> resumeFunc) {
         this.resumeFunc = resumeFunc;
         return this;
     }
@@ -73,7 +74,7 @@ public final class LifetimeController {
         if (!this.paused()) {
             this.paused.set(true);
             this.pausedAt.set(System.nanoTime());
-            if (this.pauseFunc != null) this.pauseFunc.run();
+            if (this.pauseFunc != null) this.pauseFunc.get().run();
         }
     }
 
@@ -81,7 +82,7 @@ public final class LifetimeController {
         if (this.paused()) {
             this.paused.set(false);
             this.setupTime.addAndGet(System.nanoTime() - this.pausedAt.get());
-            if (this.resumeFunc != null) this.resumeFunc.run();
+            if (this.resumeFunc != null) this.resumeFunc.get().run();
         }
     }
 
@@ -116,7 +117,7 @@ public final class LifetimeController {
         if (this.paused()) return;
 
         if (this.endRestartFunc != null && this.sinceSetup() >= this.duration) {
-            this.endRestartFunc.run();
+            this.endRestartFunc.get().run();
         }
 
         if (this.synchronizeFunc != null && this.lagSpike.compareAndSet(true, false)) {
@@ -128,7 +129,7 @@ public final class LifetimeController {
 
             long now = System.nanoTime();
             if (now - last > 2_000_000_000L) {
-                this.synchronizeFunc.accept((double) this.sinceSetup() / 1_000_000_000.0);
+                this.synchronizeFunc.get().accept((double) this.sinceSetup() / 1_000_000_000.0);
                 System.err.println("Lag spike is detected. Restarting.");
                 this.lastLagSpike.set(now);
             }

@@ -1,6 +1,7 @@
 package me.kall.narutotv.impl.qol;
 
 import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.app.util.LifetimeController;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.NarutoProperties;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
@@ -30,8 +31,14 @@ public class GpuAccel {
                 System.setProperty(NarutoProperties.GPU_ACCEL, "");
             }
 
-            ClientRenderers.forEach(AbstractRenderer::restart);
-            NarutoGuiCenter.getActive().restart();
+            ClientRenderers.forEach(renderer -> {
+                LifetimeController life = renderer.life();
+                if (life != null) renderer.restart(life.sinceSetup() / 1_000_000_000.0D);
+            });
+
+            AbstractRenderer<?> renderer = NarutoGuiCenter.getActive();
+            LifetimeController life = renderer.life();
+            if (life != null) renderer.restart(life.sinceSetup() / 1_000_000_000.0D);
         }
     }
 }

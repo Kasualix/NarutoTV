@@ -35,6 +35,8 @@ import java.util.function.Consumer;
 public class ClientRenderers {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> RENDERERS = new Object2ObjectOpenHashMap<>();
 
+    private static boolean tickConsumed = false;
+
     public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, double centerX, double centerY, double centerZ) {
         validateThread();
         Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
@@ -98,20 +100,21 @@ public class ClientRenderers {
     }
 
     public static void swap() {
-        Minecraft.getInstance().execute(() -> {
-            forEach(AbstractRenderer::shutdown);
-            boolean isImageRenderer = isImageRenderer();
-            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
-                inDimension.replaceAll((pos, renderer) -> {
-                    BlockScreen screen = ((InWorld)renderer).screen();
-                    return isImageRenderer ? new WorldBufferRenderer(screen) : new WorldImageRenderer(screen);
-                });
+        boolean targetIsBuffer = isImageRenderer();
+
+        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
+            for (Object2ObjectMap.Entry<Vec3, AbstractRenderer<?>> entry : inDimension.object2ObjectEntrySet()) {
+                AbstractRenderer<?> oldRenderer = entry.getValue();
+                BlockScreen screen = ((InWorld) oldRenderer).screen();
+                oldRenderer.shutdown();
+                entry.setValue(targetIsBuffer ? new WorldBufferRenderer(screen) : new WorldImageRenderer(screen));
             }
-            forEach(renderer -> {
-                BlockScreen screen = ((InWorld)renderer).screen();
-                if (!screen.video.isBlank() && !screen.audio.isBlank()) Sources.cutInLine(Paths.absolute(screen.video), Paths.absolute(screen.audio));
-                renderer.setup(0D);
-            });
+        }
+
+        forEach(renderer -> {
+            BlockScreen screen = ((InWorld) renderer).screen();
+            if (!screen.video.isBlank() && !screen.audio.isBlank()) Sources.cutInLine(Paths.absolute(screen.video), Paths.absolute(screen.audio));
+            renderer.setup(0D);
         });
     }
 
@@ -121,13 +124,11 @@ public class ClientRenderers {
     }
 
     public static void forEach(@NotNull Consumer<AbstractRenderer<?>> action) {
-        Minecraft.getInstance().execute(() -> {
-            for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
-                for (AbstractRenderer<?> renderer : inDimension.values()) {
-                    action.accept(renderer);
-                }
+        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
+            for (AbstractRenderer<?> renderer : inDimension.values()) {
+                action.accept(renderer);
             }
-        });
+        }
     }
 
     @SubscribeEvent
@@ -143,13 +144,13 @@ public class ClientRenderers {
         if (event.phase.equals(TickEvent.Phase.START)) {
             if (RENDERERS.isEmpty()) return;
             forEach(AbstractRenderer::render);
+            tickConsumed = false;
         }
     }
 
     @SubscribeEvent
     public static void renderLevel(@NotNull RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SOLID_BLOCKS) return;
-
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
         LocalPlayer player = minecraft.player;
@@ -161,15 +162,14 @@ public class ClientRenderers {
         Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
 
         if (inDimension == null || inDimension.isEmpty()) return;
+        if (tickConsumed) return;
+        tickConsumed = true;
 
         PoseStack poseStack = event.getPoseStack();
-        MultiBufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+        MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
         Vec3 camera = event.getCamera().getPosition();
 
         for (AbstractRenderer<?> renderer : inDimension.values()) {
-            BlockScreen screen = ((InWorld)renderer).screen();
-            if (screen.tooFar(player)) continue;
-
             poseStack.pushPose();
             poseStack.translate(-camera.x, - camera.y, - camera.z);
 

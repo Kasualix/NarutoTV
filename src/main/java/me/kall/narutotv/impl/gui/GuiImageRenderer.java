@@ -7,6 +7,7 @@ import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.NativeImageRenderer;
 import me.kall.narutotv.fade.FadeApi;
 import me.kall.narutotv.impl.NarutoProperties;
+import me.kall.narutotv.impl.config.NarutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
@@ -61,5 +62,10 @@ public class GuiImageRenderer extends NativeImageRenderer {
         int height = guiGraphics.guiHeight();
 
         guiGraphics.blit(this.textureLocation, 0, 0, 0, 0, width, height, width, height);
+    }
+
+    @Override
+    public float initVolume() {
+        return NarutoConfig.Client.volume();
     }
 }

@@ -19,7 +19,7 @@ public abstract class ScreenPacket {
     }
 
     public ScreenPacket(@NotNull FriendlyByteBuf buffer) {
-        this(new BlockScreen(buffer.readLongArray(), buffer.readResourceLocation(), buffer.readResourceLocation(), buffer.readUtf(), buffer.readUtf()));
+        this(new BlockScreen(buffer.readLongArray(), buffer.readResourceLocation(), buffer.readResourceLocation(), buffer.readUtf(), buffer.readUtf(), buffer.readFloat()));
     }
 
     public void encode(@NotNull FriendlyByteBuf buffer) {
@@ -28,6 +28,7 @@ public abstract class ScreenPacket {
         buffer.writeResourceLocation(this.blockScreen.localSound);
         buffer.writeUtf(this.blockScreen.video);
         buffer.writeUtf(this.blockScreen.audio);
+        buffer.writeFloat(this.blockScreen.volume);
     }
 
     public abstract void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier);

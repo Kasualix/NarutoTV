@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class AudioProducer extends AbstractProducer {
     private final AtomicDouble volume;
-    private final AtomicBoolean volumeInit = new AtomicBoolean(true);
+    private final AtomicBoolean volumeChanged = new AtomicBoolean(true);
 
     private final MediaArgs mediaArgs;
     private final String absFFmpegPath;
@@ -34,9 +34,15 @@ public final class AudioProducer extends AbstractProducer {
         return new AudioProducer(mediaArgs, volume, absFFmpegPath);
     }
 
-    //TODO: setVolume
     public float getVolume() {
         return this.volume.floatValue();
+    }
+
+    public void setVolume(float volume) {
+        if (this.getVolume() != volume) {
+            this.volume.set(volume);
+            this.volumeChanged.set(true);
+        }
     }
 
     @Override
@@ -71,7 +77,7 @@ public final class AudioProducer extends AbstractProducer {
 
                 AL11.alSourceQueueBuffers(source, buffer);
 
-                if (this.volumeInit.compareAndSet(true, false)) AL11.alSourcef(source, AL11.AL_GAIN, getVolume());
+                if (this.volumeChanged.compareAndSet(true, false)) AL11.alSourcef(source, AL11.AL_GAIN, this.getVolume());
 
                 if (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
 
@@ -83,6 +89,7 @@ public final class AudioProducer extends AbstractProducer {
                 if (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
                 while (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) == AL11.AL_PLAYING) {
                     if (this.isCanceled()) break;
+                    if (this.volumeChanged.compareAndSet(true, false)) AL11.alSourcef(source, AL11.AL_GAIN, this.getVolume());
                     int processed = AL11.alGetSourcei(source, AL11.AL_BUFFERS_PROCESSED);
                     while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
                 }

@@ -1,8 +1,7 @@
 package me.kall.narutotv.impl.world.network.packet;
 
-import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.network.impl.Client;
 import me.kall.narutotv.impl.world.network.packet.base.ScreenPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
@@ -25,7 +24,7 @@ public class ScreenDeathPacket extends ScreenPacket {
         context.setPacketHandled(true);
         context.enqueueWork(() -> {
             try {
-                ClientRenderers.remove(this.blockScreen).ifPresent(AbstractRenderer::shutdown);
+                Client.removeScreen(this.blockScreen);
             } catch (Throwable throwable) {
                 LOGGER.error("Error handing ScreenDeathPacket", throwable);
             }

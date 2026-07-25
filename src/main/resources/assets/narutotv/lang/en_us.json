@@ -12,6 +12,7 @@
 
   "box.narutotv.video": "Video",
   "box.narutotv.audio": "Audio",
+  "box.narutotv.volume": "Volume",
   "box.narutotv.ticks": "Ticks Before Fade",
 
   "tooltip.narutotv.random": "Randomly select one from sources that are not played yet.",
@@ -21,5 +22,12 @@
   "tooltip.narutotv.swap.compat": "Using shaders under performance mode is not suggested as your videos may not be rendered properly.",
 
   "mode.narutotv.compatibility": "Current: Compatibility Mode",
-  "mode.narutotv.performance": "Current: Performance Mode"
+  "mode.narutotv.performance": "Current: Performance Mode",
+
+  "message.narutotv.corner.first": "First bottom corner is confirmed: [%s].",
+  "message.narutotv.corner.second": "Second bottom corner is confirmed: [%s]. Start to build screen...",
+
+  "message.narutotv.corner.fail": "Exception occurs when building screen with bottom corners [%s] and [%s]! See latest.log for details.",
+  "message.narutotv.corner.none": "Failed to find complete rectangle block screen for bottom corners [%s] and [%s]. Check what you build.",
+  "message.narutotv.corner.success": "Rectangle block screen for bottom corners [%s] and [%s] is built successfully!"
 }

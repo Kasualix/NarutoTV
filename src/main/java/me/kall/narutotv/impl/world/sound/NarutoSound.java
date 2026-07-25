@@ -10,7 +10,7 @@ public class NarutoSound extends SimpleSoundInstance {
     public final double seekTo;
 
     public NarutoSound(@NotNull BlockScreen screen, double seekTo) {
-        super(screen.localSound, SoundSource.MUSIC, 1.0F, 1.0F, RandomSource.create(), false, 0, Attenuation.LINEAR, screen.centerX, screen.centerY, screen.centerZ, false);
+        super(screen.localSound, SoundSource.MUSIC, screen.volume, 1.0F, RandomSource.create(), false, 0, Attenuation.LINEAR, screen.centerX, screen.centerY, screen.centerZ, false);
         this.seekTo = seekTo;
     }
 }
