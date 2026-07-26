@@ -21,7 +21,7 @@ public class Server {
         areaInvolved.removeIf(borderInvolved::contains);
 
         ScreenLevel.setCleaning(level, true);
-        areaInvolved.forEach(position -> level.removeBlock(BlockPos.of(position), false));
+        areaInvolved.forEach(position -> level.destroyBlock(BlockPos.of(position), true, player));
         ScreenLevel.setCleaning(level, false);
     }
 

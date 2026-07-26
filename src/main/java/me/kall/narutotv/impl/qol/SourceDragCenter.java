@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWDropCallback;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SourceDragCenter extends GLFWDropCallback {
     private static @Nullable GLFWDropCallback last;
 

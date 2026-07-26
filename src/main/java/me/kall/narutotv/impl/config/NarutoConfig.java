@@ -56,6 +56,7 @@ public class NarutoConfig {
         private static final ForgeConfigSpec.BooleanValue FADABLE;
         private static final ForgeConfigSpec.IntValue TICKS_BEFORE_FADE;
         private static final ForgeConfigSpec.DoubleValue VOLUME;
+        private static final ForgeConfigSpec.ConfigValue<? extends String> TELE_CONTROL;
 
         static {
             ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -64,6 +65,7 @@ public class NarutoConfig {
             FADABLE = builder.comment("Whether to gradually fade all the gui elements except the playing video").define("fadable", true);
             TICKS_BEFORE_FADE = builder.comment("Tick count before all the gui elements get faded. 20 ticks = 1 second").defineInRange("ticksBeforeFade", 200, 0, Integer.MAX_VALUE);
             VOLUME = builder.comment("The audio volume of screen backgrounds in no-world client gui overlays.").defineInRange("audioVolume", 1.0, 0.0, 1.0);
+            TELE_CONTROL = builder.comment("The item that serves as the remote controller of the block screen you are seeing.").define("teleControl", "minecraft:stick");
             builder.pop();
             CONFIG = builder.build();
         }
@@ -86,6 +88,11 @@ public class NarutoConfig {
 
         public static float volume() {
             return VOLUME.get().floatValue();
+        }
+
+        @Contract(" -> new")
+        public static @NotNull ResourceLocation teleControl() {
+            return ResourceLocation.parse(TELE_CONTROL.get());
         }
 
         public static void fadable(boolean fadable) {

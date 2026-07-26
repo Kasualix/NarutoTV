@@ -4,9 +4,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.util.WorldMath;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
+import me.kall.narutotv.impl.world.util.NarutoMath;
+import net.minecraft.client.Camera;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
@@ -18,36 +17,19 @@ import java.nio.FloatBuffer;
 import static org.lwjgl.opengl.GL30C.*;
 
 public class WorldGLEngine extends AbstractGLEngine {
-    private final Vec3[] corners = new Vec3[4];
-
-    private final WorldMath.Bounds bounds;
-    private final Vec3 normal;
-    private final Vec3 center;
-
     private int mvpUniformLocation;
 
+    private final BlockScreen screen;
+
     private final ThreadLocal<PoseStack> poseStack = new ThreadLocal<>();
-    private final ThreadLocal<Vec3> camera = new ThreadLocal<>();
+    private final ThreadLocal<Camera> camera = new ThreadLocal<>();
 
     public WorldGLEngine(String fragmentSource, String vertexSource, @NotNull BlockScreen screen, MediaArgs mediaArgs) {
         super(fragmentSource, vertexSource, mediaArgs);
-
-        BlockPos leftBottom = screen.leftBottom;
-        BlockPos rightBottom = screen.rightBottom;
-        BlockPos leftTop = screen.leftTop;
-        BlockPos rightTop = screen.rightTop;
-
-        this.corners[0] = new Vec3(leftBottom.getX(), leftBottom.getY(), leftBottom.getZ());
-        this.corners[1] = new Vec3(rightBottom.getX(), rightBottom.getY(), rightBottom.getZ());
-        this.corners[2] = new Vec3(leftTop.getX(), leftTop.getY(), leftTop.getZ());
-        this.corners[3] = new Vec3(rightTop.getX(), rightTop.getY(), rightTop.getZ());
-
-        this.bounds = WorldMath.computeBounds(this.corners);
-        this.normal = WorldMath.computeNormal(this.corners);
-        this.center = WorldMath.computeCenter(this.corners);
+        this.screen = screen;
     }
 
-    public void capture(PoseStack poseStack, Vec3 camera) {
+    public void capture(PoseStack poseStack, Camera camera) {
         this.poseStack.set(poseStack);
         this.camera.set(camera);
     }
@@ -83,54 +65,84 @@ public class WorldGLEngine extends AbstractGLEngine {
         glBindVertexArray(0);
     }
 
-    @Contract(" -> new")
-    private float @NotNull [] computeVertexData() {
-        WorldMath.QuadData quad = WorldMath.computeQuad(this.corners, this.bounds, this.normal, this.center, this.camera.get(), this.width, this.height);
-        return quad.toVertexArray();
+    public synchronized void render() {
+        PoseStack poseStack = this.poseStack.get();
+        Camera camera = this.camera.get();
+        if (this.textures == null || this.program == 0 || this.vertexArray == 0 || camera == null || poseStack == null) return;
+
+        float[] vertexData = initVertexData(NarutoMath.computeCoords(this.screen, camera));
+
+        int prevProgram = glGetInteger(GL_CURRENT_PROGRAM);
+        int prevVao = glGetInteger(GL_VERTEX_ARRAY_BINDING);
+        int prevActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE);
+        boolean wasBlend = glIsEnabled(GL_BLEND);
+        boolean wasDepthTest = glIsEnabled(GL_DEPTH_TEST);
+        boolean wasDepthMask = glGetBoolean(GL_DEPTH_WRITEMASK);
+        int depthFunc = glGetInteger(GL_DEPTH_FUNC);
+        boolean wasCullFace = glIsEnabled(GL_CULL_FACE);
+
+        glActiveTexture(GL_TEXTURE0); int prevTex0 = glGetInteger(GL_TEXTURE_BINDING_2D);
+        glActiveTexture(GL_TEXTURE1); int prevTex1 = glGetInteger(GL_TEXTURE_BINDING_2D);
+        glActiveTexture(GL_TEXTURE2); int prevTex2 = glGetInteger(GL_TEXTURE_BINDING_2D);
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(true);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_CULL_FACE);
+
+        glUseProgram(this.program);
+
+        Matrix4f mvp = new Matrix4f(RenderSystem.getProjectionMatrix()).mul(poseStack.last().pose());
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer matrixBuffer = stack.mallocFloat(16);
+            mvp.get(matrixBuffer);
+            glUniformMatrix4fv(this.mvpUniformLocation, false, matrixBuffer);
+        }
+
+        glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, this.textures[0]);
+        glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, this.textures[1]);
+        glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, this.textures[2]);
+
+        glBindVertexArray(this.vertexArray);
+        glBindBuffer(GL_ARRAY_BUFFER, this.buffer);
+
+        FloatBuffer vertexBuffer = MemoryUtil.memAllocFloat(vertexData.length);
+        try {
+            vertexBuffer.put(vertexData).flip();
+            glBufferSubData(GL_ARRAY_BUFFER, 0L, vertexBuffer);
+        } finally {
+            MemoryUtil.memFree(vertexBuffer);
+        }
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, prevTex0);
+        glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, prevTex1);
+        glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, prevTex2);
+
+        glBindVertexArray(prevVao);
+        glUseProgram(prevProgram);
+        glActiveTexture(prevActiveTexture);
+        if (wasBlend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
+        if (!wasDepthTest) glDisable(GL_DEPTH_TEST);
+        glDepthMask(wasDepthMask);
+        glDepthFunc(depthFunc);
+        if (wasCullFace) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
     }
 
-    @Override
-    public synchronized void render() {
-        if (this.textures == null || this.program == 0 || this.vertexArray == 0 || this.normal == null || this.camera.get() == null || this.poseStack.get() == null) return;
+    @Contract("_ -> new")
+    private static float @NotNull [] initVertexData(NarutoMath.@NotNull Coords coords) {
+        double offsetX = coords.normalX() * 0.1, offsetY = coords.normalY() * 0.1, offsetZ = coords.normalZ() * 0.1;
 
-        float[] vertexData = this.computeVertexData();
-
-        glBindBuffer(GL_ARRAY_BUFFER, this.buffer);
-        FloatBuffer floatBuffer = MemoryUtil.memAllocFloat(vertexData.length);
-        try {
-            floatBuffer.put(vertexData).flip();
-            glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STREAM_DRAW);
-        } finally {
-            MemoryUtil.memFree(floatBuffer);
-        }
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer mvpBuffer = new Matrix4f(RenderSystem.getProjectionMatrix()).mul(this.poseStack.get().last().pose()).get(stack.mallocFloat(16));
-
-            int prevProgram = glGetInteger(GL_CURRENT_PROGRAM);
-            int prevVao = glGetInteger(GL_VERTEX_ARRAY_BINDING);
-            int prevActiveTexture = glGetInteger(GL_ACTIVE_TEXTURE);
-            boolean wasCullFace = glIsEnabled(GL_CULL_FACE);
-
-            glUseProgram(this.program);
-            if (this.mvpUniformLocation != -1) glUniformMatrix4fv(this.mvpUniformLocation, false, mvpBuffer);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textures[0]);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, textures[1]);
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, textures[2]);
-
-            glDisable(GL_CULL_FACE);
-
-            glBindVertexArray(this.vertexArray);
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-            if (wasCullFace) glEnable(GL_CULL_FACE);
-            glBindVertexArray(prevVao);
-            glUseProgram(prevProgram);
-            glActiveTexture(prevActiveTexture);
-        }
+        return new float[]{
+                (float) (coords.bottomFromX() + offsetX), (float) (coords.bottomFromY() + offsetY), (float) (coords.bottomFromZ() + offsetZ), coords.u0(), coords.v0(),
+                (float) (coords.bottomToX() + offsetX), (float) (coords.bottomToY() + offsetY), (float) (coords.bottomToZ() + offsetZ), coords.u1(), coords.v1(),
+                (float) (coords.topFromX() + offsetX), (float) (coords.topFromY() + offsetY), (float) (coords.topFromZ() + offsetZ), coords.u3(), coords.v3(),
+                (float) (coords.topToX() + offsetX), (float) (coords.topToY() + offsetY), (float) (coords.topToZ() + offsetZ), coords.u2(), coords.v2(),
+        };
     }
 }

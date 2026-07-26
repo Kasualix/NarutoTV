@@ -1,8 +1,7 @@
 package me.kall.narutotv.impl.world.data.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.*;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.base.data.Paths;
 import me.kall.narutotv.base.data.Sources;
@@ -13,6 +12,7 @@ import me.kall.narutotv.impl.world.WorldBufferRenderer;
 import me.kall.narutotv.impl.world.WorldImageRenderer;
 import me.kall.narutotv.impl.world.data.BlockScreen;
 import me.kall.narutotv.impl.world.ext.InWorld;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -36,6 +36,10 @@ public class ClientRenderers {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> RENDERERS = new Object2ObjectOpenHashMap<>();
 
     private static boolean tickConsumed = false;
+
+    public static @NotNull ObjectCollection<AbstractRenderer<?>> getIn(ResourceLocation dimension) {
+        return RENDERERS.getOrDefault(dimension, Object2ObjectMaps.emptyMap()).values();
+    }
 
     public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, double centerX, double centerY, double centerZ) {
         validateThread();
@@ -167,11 +171,12 @@ public class ClientRenderers {
 
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
-        Vec3 camera = event.getCamera().getPosition();
+        Camera camera = event.getCamera();
+        Vec3 cameraPos = camera.getPosition();
 
         for (AbstractRenderer<?> renderer : inDimension.values()) {
             poseStack.pushPose();
-            poseStack.translate(-camera.x, - camera.y, - camera.z);
+            poseStack.translate(-cameraPos.x, - cameraPos.y, - cameraPos.z);
 
             if (renderer instanceof WorldBufferRenderer bufferRenderer) {
                 AbstractGLEngine engine = bufferRenderer.engine();
