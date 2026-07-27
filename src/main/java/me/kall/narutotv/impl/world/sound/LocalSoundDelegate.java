@@ -4,14 +4,14 @@ import it.unimi.dsi.fastutil.doubles.Double2ObjectFunction;
 import it.unimi.dsi.fastutil.floats.FloatConsumer;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.app.util.LifetimeController;
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.data.Wall;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public final class LocalSoundDelegate {
-    private final BlockScreen screen;
+    private final Wall wall;
     private final Supplier<LifetimeController> lifeSupplier;
     private final DoubleSupplier superGetVolume;
     private final FloatConsumer superSetVolume;
@@ -21,8 +21,8 @@ public final class LocalSoundDelegate {
 
     private @Nullable LocalSoundCtrl localSoundCtrl;
 
-    public LocalSoundDelegate(BlockScreen screen, Supplier<LifetimeController> lifeSupplier, DoubleSupplier superGetVolume, FloatConsumer superSetVolume, Double2ObjectFunction<AudioProducer> superInitAudio, Supplier<Runnable> superPauseAudio, Supplier<Runnable> superResumeAudio) {
-        this.screen = screen;
+    public LocalSoundDelegate(Wall wall, Supplier<LifetimeController> lifeSupplier, DoubleSupplier superGetVolume, FloatConsumer superSetVolume, Double2ObjectFunction<AudioProducer> superInitAudio, Supplier<Runnable> superPauseAudio, Supplier<Runnable> superResumeAudio) {
+        this.wall = wall;
         this.lifeSupplier = lifeSupplier;
         this.superGetVolume = superGetVolume;
         this.superSetVolume = superSetVolume;
@@ -32,23 +32,23 @@ public final class LocalSoundDelegate {
     }
 
     public float getVolume() {
-        return this.localSoundCtrl != null ? this.screen.volume : (float) this.superGetVolume.getAsDouble();
+        return this.localSoundCtrl != null ? this.wall.volume : (float) this.superGetVolume.getAsDouble();
     }
 
     public void setVolume(float volume) {
         var life = this.lifeSupplier.get();
         if (this.localSoundCtrl != null && life != null) {
-            this.screen.volume = volume;
-            this.localSoundCtrl.setVolume(this.screen);
-            this.localSoundCtrl.on().accept((double) life.sinceSetup() / 1_000_000_000D);
+            this.wall.volume = volume;
+            this.localSoundCtrl.setVolume(this.wall);
+            this.localSoundCtrl.on().accept(life.sinceSetupSec());
         } else {
             this.superSetVolume.accept(volume);
         }
     }
 
     public @Nullable AudioProducer initAudio(double seekTo) {
-        if (this.screen.hasLocalSound()) {
-            this.localSoundCtrl = new LocalSoundCtrl(this.screen);
+        if (this.wall.hasLocalSound()) {
+            this.localSoundCtrl = new LocalSoundCtrl(this.wall);
             this.localSoundCtrl.on().accept(0D);
             return null;
         } else {
@@ -65,7 +65,7 @@ public final class LocalSoundDelegate {
         if (ctrl != null) {
             return () -> {
                 var life = this.lifeSupplier.get();
-                if (life != null) ctrl.on().accept((double) life.sinceSetup() / 1_000_000_000D);
+                if (life != null) ctrl.on().accept(life.sinceSetupSec());
             };
         } else {
             return this.superResumeAudio.get();

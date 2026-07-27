@@ -8,9 +8,10 @@
     "defaultRequire": 1
   },
   "client": [
+    "cape.AbstractClientPlayerMixin",
     "context.MixinGameRenderer",
-    "context.MixinResourceLoadStateTracker",
     "context.MixinMinecraft",
+    "context.MixinResourceLoadStateTracker",
     "context.NativeImageAccessor",
     "fade.MixinFont",
     "fade.MixinGuiGraphics",

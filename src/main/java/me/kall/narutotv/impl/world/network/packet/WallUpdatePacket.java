@@ -1,20 +1,20 @@
 package me.kall.narutotv.impl.world.network.packet;
 
-import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.network.impl.Client;
-import me.kall.narutotv.impl.world.network.packet.base.ScreenPacket;
+import me.kall.narutotv.impl.world.data.Wall;
+import me.kall.narutotv.impl.world.network.impl.Server;
+import me.kall.narutotv.impl.world.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class ScreenDeathPacket extends ScreenPacket {
-    public ScreenDeathPacket(BlockScreen blockScreen) {
-        super(blockScreen);
+public class WallUpdatePacket extends WallPacket {
+    public WallUpdatePacket(Wall wall) {
+        super(wall);
     }
 
-    public ScreenDeathPacket(@NotNull FriendlyByteBuf buffer) {
+    public WallUpdatePacket(@NotNull FriendlyByteBuf buffer) {
         super(buffer);
     }
 
@@ -24,9 +24,9 @@ public class ScreenDeathPacket extends ScreenPacket {
         context.setPacketHandled(true);
         context.enqueueWork(() -> {
             try {
-                Client.removeScreen(this.blockScreen);
+                Server.updateWall(this.wall, context);
             } catch (Throwable throwable) {
-                LOGGER.error("Error handing ScreenDeathPacket", throwable);
+                LOGGER.error("Error handling ScreenUpdatePacket", throwable);
             }
         });
     }

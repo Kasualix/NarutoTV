@@ -33,12 +33,12 @@ public class GpuAccel {
 
             ClientRenderers.forEach(renderer -> {
                 LifetimeController life = renderer.life();
-                if (life != null) renderer.restart(life.sinceSetup() / 1_000_000_000.0D);
+                if (life != null) renderer.restart(life.sinceSetupSec());
             });
 
             AbstractRenderer<?> renderer = NarutoGuiCenter.getActive();
             LifetimeController life = renderer.life();
-            if (life != null) renderer.restart(life.sinceSetup() / 1_000_000_000.0D);
+            if (life != null) renderer.restart(life.sinceSetupSec());
         }
     }
 }

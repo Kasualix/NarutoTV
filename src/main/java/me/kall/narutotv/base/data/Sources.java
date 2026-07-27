@@ -72,7 +72,7 @@ public class Sources {
     private static void scan() {
         SOURCES.clear();
 
-        try (Stream<Path> sourcesStream = Files.list(Paths.SOURCES)) {
+        try (Stream<Path> sourcesStream = Files.list(NarutoPaths.SOURCES)) {
             Spliterator<Path> sourcesDirectories = sourcesStream.filter(Files::isDirectory).spliterator();
             while (sourcesDirectories.tryAdvance(subDirectory -> {
                 if (Files.exists(subDirectory.resolve(VIDEO_DOWNLOADING_FILE)) || Files.exists(subDirectory.resolve(AUDIO_DOWNLOADING_FILE))) return;

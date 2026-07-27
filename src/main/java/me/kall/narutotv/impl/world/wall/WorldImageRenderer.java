@@ -1,4 +1,4 @@
-package me.kall.narutotv.impl.world;
+package me.kall.narutotv.impl.world.wall;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -7,7 +7,7 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.NativeImageRenderer;
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.ext.InWorld;
 import me.kall.narutotv.impl.world.sound.LocalSoundDelegate;
 import me.kall.narutotv.impl.world.util.NarutoMath;
@@ -16,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -24,17 +25,33 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
-    private final BlockScreen screen;
+    private final Wall wall;
     private final LocalSoundDelegate soundDelegate;
 
-    public WorldImageRenderer(@NotNull BlockScreen screen) {
-        this.screen = screen;
-        this.soundDelegate = new LocalSoundDelegate(screen, this::life, super::getVolume, super::setVolume, super::initAudio, super::pauseAudio, super::resumeAudio);
+    private final ThreadLocal<PoseStack> poseStack = new ThreadLocal<>();
+    private final ThreadLocal<MultiBufferSource.BufferSource> bufferSource = new ThreadLocal<>();
+    private final ThreadLocal<Camera> camera = new ThreadLocal<>();
+
+    public WorldImageRenderer(@NotNull Wall wall) {
+        this.wall = wall;
+        this.soundDelegate = new LocalSoundDelegate(wall, this::life, super::getVolume, super::setVolume, super::initAudio, super::pauseAudio, super::resumeAudio);
+    }
+
+    public void capture(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, Camera camera) {
+        this.poseStack.set(poseStack);
+        this.bufferSource.set(bufferSource);
+        this.camera.set(camera);
+    }
+
+    public void deprecate() {
+        this.poseStack.remove();
+        this.bufferSource.remove();
+        this.camera.remove();
     }
 
     @Override
     protected @NotNull ResourceLocation setLocation() {
-        return ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "screen_" + this.screen.id);
+        return ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "screen_" + this.wall.id);
     }
 
     @Override
@@ -47,15 +64,25 @@ public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
         return true;
     }
 
-    public void render(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, Camera camera) {
-        if (this.textureLocation == null || this.dynamicTexture == null) return;
+    @Override
+    public synchronized void render() {
+        PoseStack poseStack = this.poseStack.get();
+        MultiBufferSource.BufferSource bufferSource = this.bufferSource.get();
+        Camera camera = this.camera.get();
+        if (poseStack == null || bufferSource == null || camera == null) return;
+
+        DynamicTexture dynamicTexture = this.narutoTexture.dynamicTexture;
+        ResourceLocation textureLocation = this.narutoTexture.textureLocation;
+
+        if (textureLocation == null || dynamicTexture == null) return;
+        super.render();
 
         Matrix4f pose = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
-        RenderType renderType = RenderType.entityTranslucent(this.textureLocation);
+        RenderType renderType = RenderType.entityTranslucent(textureLocation);
         VertexConsumer consumer = bufferSource.getBuffer(renderType);
 
-        NarutoMath.Coords coords = NarutoMath.computeCoords(this.screen, camera);
+        NarutoMath.Coords coords = NarutoMath.computeCoords(this.wall, camera);
 
         vertex(consumer, pose, normal, coords.bottomFromX(), coords.bottomFromY(), coords.bottomFromZ(), coords.u0(), coords.v0(), coords.normalX(), coords.normalY(), coords.normalZ());
         vertex(consumer, pose, normal, coords.bottomToX(), coords.bottomToY(), coords.bottomToZ(), coords.u1(), coords.v1(), coords.normalX(), coords.normalY(), coords.normalZ());
@@ -79,8 +106,8 @@ public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
     }
 
     @Override
-    public BlockScreen screen() {
-        return this.screen;
+    public Wall wall() {
+        return this.wall;
     }
 
     @Override
@@ -91,7 +118,7 @@ public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
 
     @Override
     public float initVolume() {
-        return this.screen().volume;
+        return this.wall().volume;
     }
 
     @Override

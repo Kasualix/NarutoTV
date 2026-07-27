@@ -78,7 +78,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         Frame<T> frame = this.frames.poll();
         if (frame == null) return null;
 
-        long expected = (long) ((double) life.sinceSetup() / 1_000_000_000L * this.mediaArgs.fps());
+        long expected = (long) (life.sinceSetupSec() * this.mediaArgs.fps());
 
         while (frame != null && frame.index() < expected) {
             this.recycleFrame(frame.data());

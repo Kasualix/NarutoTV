@@ -2,14 +2,14 @@ package me.kall.narutotv.impl.screen;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppInstances;
-import me.kall.narutotv.base.data.Paths;
+import me.kall.narutotv.base.data.NarutoPaths;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
-import me.kall.narutotv.impl.world.network.packet.ScreenCleanPacket;
-import me.kall.narutotv.impl.world.network.packet.ScreenUpdatePacket;
+import me.kall.narutotv.impl.world.network.packet.WallCleanPacket;
+import me.kall.narutotv.impl.world.network.packet.WallUpdatePacket;
 import me.kall.narutotv.impl.world.util.AudioZipGenerator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,7 +34,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     static final Component SWAP_TOOLTIP_UNIVERSAL = Component.translatable("tooltip.narutotv.swap.universal");
     static final Component SWAP_TOOLTIP_COMPAT = Component.translatable("tooltip.narutotv.swap.compat");
 
-    final BlockScreen blockScreen;
+    final Wall wall;
 
     Checkbox localSoundCheck;
 
@@ -42,18 +42,18 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
 
     final AtomicBoolean doing = new AtomicBoolean();
 
-    public NarutoWorldScreen(@Nullable Screen lastScreen, BlockScreen blockScreen) {
-        super(NarutoGuiScreen.SCREEN, lastScreen);
-        this.blockScreen = blockScreen;
+    public NarutoWorldScreen(@Nullable Screen lastScreen, Wall wall) {
+        super(AbstractNarutoScreen.SCREEN, lastScreen);
+        this.wall = wall;
     }
 
     @Override
     protected void initWidgets() {
         int centerX = this.width / 2;
 
-        this.videoBox = this.initEditBox(centerX, VIDEO, Paths.absolute(this.blockScreen.video));
-        this.audioBox = this.initEditBox(centerX, AUDIO, Paths.absolute(this.blockScreen.audio));
-        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(this.blockScreen.volume));
+        this.videoBox = this.initEditBox(centerX, VIDEO, NarutoPaths.absolute(this.wall.video));
+        this.audioBox = this.initEditBox(centerX, AUDIO, NarutoPaths.absolute(this.wall.audio));
+        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(this.wall.volume));
         this.volumeBox.setFilter(NUMERIC);
 
         this.initCheckboxes(centerX);
@@ -67,14 +67,14 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     void initCheckboxes(int centerX) {
         int localSoundWidth = this.font.width(LOCAL_SOUND) + 24;
 
-        this.localSoundCheck = new Checkbox(centerX - BUTTON_WIDTH - 5, this.currentY, localSoundWidth, BUTTON_HEIGHT, LOCAL_SOUND, this.blockScreen.hasLocalSound());
+        this.localSoundCheck = new Checkbox(centerX - BUTTON_WIDTH - 5, this.currentY, localSoundWidth, BUTTON_HEIGHT, LOCAL_SOUND, this.wall.hasLocalSound());
         this.addRenderableWidget(this.localSoundCheck);
 
         this.currentY += BUTTON_HEIGHT + 5;
     }
 
     void initCleanButton(int centerX) {
-        this.cleanButton = Button.builder(CLEAN, button -> NarutoPackets.INSTANCE.sendToServer(new ScreenCleanPacket(this.blockScreen)))
+        this.cleanButton = Button.builder(CLEAN, button -> NarutoPackets.INSTANCE.sendToServer(new WallCleanPacket(this.wall)))
                 .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH * 2 + 10, BUTTON_HEIGHT)
                 .build();
         this.addRenderableWidget(this.cleanButton);
@@ -99,7 +99,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
 
         float newVolume = Float.parseFloat(this.volumeBox.getValue().trim());
 
-        AbstractRenderer<?> renderer = ClientRenderers.get(this.blockScreen);
+        AbstractRenderer<?> renderer = ClientRenderers.get(this.wall);
         assert renderer != null;
 
         MediaArgs mediaArgs = renderer.mediaArgs();
@@ -110,7 +110,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
 
         boolean sourceChanged = !absVideoBox.equals(videoNow) || !absAudioBox.equals(audioNow);
         boolean volumeChanged = newVolume != renderer.getVolume();
-        boolean localSoundChanged = localSoundCheck != this.blockScreen.hasLocalSound();
+        boolean localSoundChanged = localSoundCheck != this.wall.hasLocalSound();
         boolean soundChanged = localSoundChanged || volumeChanged;
 
         if (!soundChanged && !sourceChanged) {
@@ -119,9 +119,9 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
         }
 
         if (volumeChanged && !sourceChanged && !localSoundChanged) {
-            this.blockScreen.volume = newVolume;
+            this.wall.volume = newVolume;
             renderer.setVolume(newVolume);
-            NarutoPackets.INSTANCE.sendToServer(new ScreenUpdatePacket(this.blockScreen));
+            NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
             this.doing.set(false);
             this.onClose();
             return;
@@ -139,7 +139,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
                     if (localSoundCheck) {
                         AudioZipGenerator.get(converted).generate((id) -> this.applyDone(absVideoBox, absAudioBox, id, newVolume, renderer));
                     } else {
-                        this.applyDone(absVideoBox, absAudioBox, BlockScreen.NO_LOCAL_SOUND, newVolume, renderer);
+                        this.applyDone(absVideoBox, absAudioBox, Wall.NO_LOCAL_SOUND, newVolume, renderer);
                     }
                 }, this.minecraft);
     }
@@ -149,16 +149,16 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     }
 
     private void applyDone(String absVideo, String absAudio, ResourceLocation localSound, float newVolume, @NotNull AbstractRenderer<?> renderer) {
-        this.blockScreen.video = Paths.relative(absVideo);
-        this.blockScreen.audio = Paths.relative(absAudio);
-        this.blockScreen.localSound = localSound;
-        this.blockScreen.volume = newVolume;
+        this.wall.video = NarutoPaths.relative(absVideo);
+        this.wall.audio = NarutoPaths.relative(absAudio);
+        this.wall.localSound = localSound;
+        this.wall.volume = newVolume;
 
-        NarutoPackets.INSTANCE.sendToServer(new ScreenUpdatePacket(this.blockScreen));
+        NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
 
         Sources.cutInLine(absVideo, absAudio);
 
-        ClientRenderers.add(this.blockScreen).ifPresent(AbstractRenderer::shutdown);
+        ClientRenderers.add(this.wall).ifPresent(AbstractRenderer::shutdown);
 
         this.doing.set(false);
         this.onClose();

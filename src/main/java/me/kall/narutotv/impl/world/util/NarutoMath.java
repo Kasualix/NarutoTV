@@ -1,6 +1,6 @@
 package me.kall.narutotv.impl.world.util;
 
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.data.Wall;
 import net.minecraft.client.Camera;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -23,18 +23,18 @@ public final class NarutoMath {
         return ((pointX - centerX) * upX + (pointY - centerY) * upY + (pointZ - centerZ) * upZ) >= 0 ? 0.0F : 1.0F;
     }
 
-    public static @NotNull NarutoMath.Coords computeCoords(@NotNull BlockScreen screen, @NotNull Camera camera) {
+    public static @NotNull NarutoMath.Coords computeCoords(@NotNull Wall wall, @NotNull Camera camera) {
         Vec3 camVec = camera.getPosition();
         Vector3f upVec = camera.getUpVector();
 
         double camX = camVec.x, camY = camVec.y, camZ = camVec.z;
 
-        BlockScreen.Sheet sheet = screen.toSheet();
+        Wall.Data data = wall.getData();
 
-        int minX = sheet.minX, minY = sheet.minY, minZ = sheet.minZ;
-        int maxX = sheet.maxX, maxY = sheet.maxY, maxZ = sheet.maxZ;
+        int minX = data.minX, minY = data.minY, minZ = data.minZ;
+        int maxX = data.maxX, maxY = data.maxY, maxZ = data.maxZ;
 
-        double[] corners = sheet.getCorners(camX, camY, camZ, upVec);
+        double[] corners = data.getCorners(camX, camY, camZ, upVec);
 
         double bottomFromX = corners[0], bottomFromY = corners[1], bottomFromZ = corners[2];
         double bottomToX = corners[3], bottomToY = corners[4], bottomToZ = corners[5];
@@ -42,7 +42,7 @@ public final class NarutoMath {
         double topToX = corners[9], topToY = corners[10], topToZ = corners[11];
 
         double normalX = 0, normalY = 0, normalZ = 0;
-        switch (sheet.axisThickness) {
+        switch (data.axisThickness) {
             case X -> normalX = Math.abs(camX - minX) < Math.abs(camX - maxX) ? -1 : 1;
             case Y -> normalY = Math.abs(camY - minY) < Math.abs(camY - maxY) ? -1 : 1;
             case Z -> normalZ = Math.abs(camZ - minZ) < Math.abs(camZ - maxZ) ? -1 : 1;
@@ -117,7 +117,7 @@ public final class NarutoMath {
             rightX = -preRightX; rightY = -preRightY; rightZ = -preRightZ;
         }
 
-        double centerX = sheet.centerX, centerY = sheet.centerY, centerZ = sheet.centerZ;
+        double centerX = data.centerX, centerY = data.centerY, centerZ = data.centerZ;
 
         float u0 = computeU(bottomFromX, bottomFromY, bottomFromZ, centerX, centerY, centerZ, rightX, rightY, rightZ);
         float v0 = computeV(bottomFromX, bottomFromY, bottomFromZ, centerX, centerY, centerZ, upX, upY, upZ);

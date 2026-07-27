@@ -36,7 +36,7 @@ public class FadeCenter {
     }
 
     public static int modifyAlpha(int color) {
-        if (!NarutoConfig.Client.fadable() || isFull()) return color;
+        if (!NarutoConfig.fadable() || isFull()) return color;
         if (isHidden()) return (color & 0x00FFFFFF);
         int alpha = (int)(fadeAlpha() * 255.0F) & 0xFF;
         return (color & 0x00FFFFFF) | (alpha << 24);
@@ -44,7 +44,7 @@ public class FadeCenter {
 
     @SubscribeEvent
     public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && NarutoConfig.Client.fadable()) {
+        if (event.phase == TickEvent.Phase.START && NarutoConfig.fadable()) {
             Minecraft minecraft = Minecraft.getInstance();
             MouseHandler mouseHandler = minecraft.mouseHandler;
             double x = mouseHandler.xpos();
@@ -57,7 +57,7 @@ public class FadeCenter {
                 stopTicks = 0;
             }
 
-            fadeAlpha = stopTicks >= NarutoConfig.Client.ticksBeforeFade() ? fadeAlpha - 1 : fadeAlpha + 5;
+            fadeAlpha = stopTicks >= NarutoConfig.ticksBeforeFade() ? fadeAlpha - 1 : fadeAlpha + 5;
             if (fadeAlpha < 0) fadeAlpha = 0;
             if (fadeAlpha > 100) fadeAlpha = 100;
         }

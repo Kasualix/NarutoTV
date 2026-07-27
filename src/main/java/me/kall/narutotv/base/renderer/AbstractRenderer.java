@@ -153,9 +153,7 @@ public abstract class AbstractRenderer<T> {
         return () -> {
             var audio = this.audio();
             var life = this.life();
-            if (audio != null && life != null) {
-                audio.setup((double) life.sinceSetup() / 1_000_000_000D);
-            }
+            if (audio != null && life != null) audio.setup(life.sinceSetupSec());
         };
     }
 }

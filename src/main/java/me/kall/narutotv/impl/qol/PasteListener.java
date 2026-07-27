@@ -3,10 +3,11 @@ package me.kall.narutotv.impl.qol;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.file.AppInstances;
-import me.kall.narutotv.base.data.Paths;
+import me.kall.narutotv.base.data.NarutoPaths;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
+import me.kall.narutotv.impl.screen.NameSetScreen;
 import me.kall.narutotv.impl.screen.NarutoGuiScreen;
 import me.kall.narutotv.impl.screen.NarutoWorldScreen;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
@@ -58,12 +59,12 @@ public final class PasteListener {
                 if (!url.startsWith("http") || DOWNLOADING.contains(url)) return;
 
                 DOWNLOADING.add(url);
-                AppInstances.ytDlp()
-                        .download(url, Paths.SOURCES.resolve(String.valueOf(System.currentTimeMillis())))
+                Minecraft.getInstance().setScreen(new NameSetScreen(name -> AppInstances.ytDlp()
+                        .download(url, NarutoPaths.SOURCES.resolve(name))
                         .whenCompleteAsync((downloaded, throwable) -> {
                             DOWNLOADING.remove(url);
                             if (throwable != null) throw new RuntimeException(throwable);
-                            if (downloaded == null) return;
+                            if (downloaded == null) throw new IllegalArgumentException("Failed to download video and audio from" + url + ". Read latest.log for details.");
                             Path absVideoPath = downloaded.absVideoPath();
                             Path absAudioPath = downloaded.absAudioPath();
 
@@ -84,7 +85,7 @@ public final class PasteListener {
                                 if (renderer != null && renderer.isRunning()) renderer.shutdown();
                                 NarutoWorldScreen.sync(videoStr, audioStr);
                             }
-                        }, minecraft);
+                        }, minecraft), Minecraft.getInstance().screen));
             } catch (IOException | UnsupportedFlavorException exception) {
                 LOGGER.error("Exception handling pasted url", exception);
             }

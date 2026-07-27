@@ -1,6 +1,6 @@
 package me.kall.narutotv.app.file;
 
-import me.kall.narutotv.base.data.Paths;
+import me.kall.narutotv.base.data.NarutoPaths;
 
 import java.nio.file.Path;
 
@@ -10,10 +10,10 @@ public class AppPaths {
     private static final String ABS_YTDLP_PATH = "app.ytdlp";
 
     static {
-        Path ffmpegBin = Paths.GAME.resolve("ffmpeg").resolve("bin");
+        Path ffmpegBin = NarutoPaths.GAME.resolve("ffmpeg").resolve("bin");
         AppPaths.setAbsFFmpegPath(ffmpegBin.resolve("ffmpeg.exe").toAbsolutePath().toString());
         AppPaths.setAbsFFprobePath(ffmpegBin.resolve("ffprobe.exe").toAbsolutePath().toString());
-        AppPaths.setAbsYtDlpPath(Paths.GAME.resolve("yt-dlp").resolve("yt-dlp.exe").toAbsolutePath().toString());
+        AppPaths.setAbsYtDlpPath(NarutoPaths.GAME.resolve("yt-dlp").resolve("yt-dlp.exe").toAbsolutePath().toString());
     }
 
     public static String absFFmpegPath() {

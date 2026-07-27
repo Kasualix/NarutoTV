@@ -1,25 +1,40 @@
-package me.kall.narutotv.impl.world;
+package me.kall.narutotv.impl.world.wall;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.ByteBufferRenderer;
 import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
 import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.ext.InWorld;
 import me.kall.narutotv.impl.world.sound.LocalSoundDelegate;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
-    private final BlockScreen screen;
+    private final Wall wall;
     private final LocalSoundDelegate soundDelegate;
 
-    public WorldBufferRenderer(BlockScreen screen) {
-        this.screen = screen;
-        this.soundDelegate = new LocalSoundDelegate(screen, this::life, super::getVolume, super::setVolume, super::initAudio, super::pauseAudio, super::resumeAudio);
+    private final ThreadLocal<PoseStack> poseStack = new ThreadLocal<>();
+    private final ThreadLocal<Camera> camera = new ThreadLocal<>();
+
+    public WorldBufferRenderer(Wall wall) {
+        this.wall = wall;
+        this.soundDelegate = new LocalSoundDelegate(wall, this::life, super::getVolume, super::setVolume, super::initAudio, super::pauseAudio, super::resumeAudio);
+    }
+
+    public void capture(PoseStack poseStack, Camera camera) {
+        this.poseStack.set(poseStack);
+        this.camera.set(camera);
+    }
+
+    public void deprecate() {
+        this.poseStack.remove();
+        this.camera.remove();
     }
 
     @Override
@@ -72,7 +87,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
                 }
                 """;
 
-        return new WorldGLEngine(fragmentSource, vertexSource, this.screen, this.mediaArgs());
+        return new WorldGLEngine(fragmentSource, vertexSource, this.wall, this.mediaArgs());
     }
 
     @Override
@@ -91,8 +106,14 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     }
 
     @Override
-    public BlockScreen screen() {
-        return this.screen;
+    public Wall wall() {
+        return this.wall;
+    }
+
+    public void render() {
+        super.render();
+        WorldGLEngine engine = this.engine();
+        if (engine != null) engine.render(this.poseStack.get(), this.camera.get());
     }
 
     @Override
@@ -103,7 +124,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
 
     @Override
     public float initVolume() {
-        return this.screen().volume;
+        return this.wall().volume;
     }
 
     @Override

@@ -61,11 +61,13 @@ public final class YtDlp {
             } catch (Throwable throwable) {
                 System.err.println("Exception storing download source. Video: " + videoUrl + ". Audio: " + audioUrl + ". Output directory: " + outputDirectory);
                 throwable.printStackTrace(System.err);
-                throw new RuntimeException(throwable);
+                return null;
             }
 
             Path absVideoPath = this.downloadVideo(videoUrl, outputDirectory, "video");
             Path absAudioPath = this.downloadAudio(audioUrl, outputDirectory, "audio");
+
+            if (absVideoPath == null || absAudioPath == null) return null;
 
             try {
                 Files.move(videoDownloading, outputDirectory.resolve(VIDEO_DOWNLOADED_FILE));
@@ -73,20 +75,20 @@ public final class YtDlp {
             } catch (Throwable throwable) {
                 System.err.println("Exception validating downloaded source url. Output directory: " + outputDirectory);
                 throwable.printStackTrace(System.err);
-                throw new RuntimeException(throwable);
+                return null;
             }
 
             return new Downloaded(absVideoPath, absAudioPath);
         }, DOWNLOADER);
     }
 
-    public @NotNull Path downloadVideo(String url, @NotNull Path outputDirectory, String outputName) {
-        Executable.runCommand(this.videoCommand(url, outputDirectory.resolve(outputName + ".%(ext)s").toString()), true);
+    public @Nullable Path downloadVideo(String url, @NotNull Path outputDirectory, String outputName) {
+        if (!Executable.runCommand(this.videoCommand(url, outputDirectory.resolve(outputName + ".%(ext)s").toString()), true)) return null;
         return outputDirectory.resolve(outputName + ".mp4");
     }
 
-    public @NotNull Path downloadAudio(String url, @NotNull Path outputDirectory, String outputName) {
-        Executable.runCommand(this.audioCommand(url, outputDirectory.resolve(outputName + ".%(ext)s").toString()), true);
+    public @Nullable Path downloadAudio(String url, @NotNull Path outputDirectory, String outputName) {
+        if (!Executable.runCommand(this.audioCommand(url, outputDirectory.resolve(outputName + ".%(ext)s").toString()), true)) return null;
         return outputDirectory.resolve(outputName + ".mp3");
     }
 

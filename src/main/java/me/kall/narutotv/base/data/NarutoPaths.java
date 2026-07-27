@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-public class Paths {
+public class NarutoPaths {
     public static final Path MODS, GAME, CONFIG, RESOURCEPACKS, SOURCES, COOKIES;
 
     static {

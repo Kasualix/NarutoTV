@@ -14,12 +14,16 @@
   "box.narutotv.audio": "Audio",
   "box.narutotv.volume": "Volume",
   "box.narutotv.ticks": "Ticks Before Fade",
+  "box.narutotv.name": "Set Name",
+
+  "note.narutotv.confirm": "Press Enter to confirm.",
 
   "tooltip.narutotv.random": "Randomly select one from sources that are not played yet.",
   "tooltip.narutotv.clean": "Destroy all the blocks except those on border for the current block screen.",
   "tooltip.narutotv.swap": "Swap between compatibility mode and performance mode.",
   "tooltip.narutotv.swap.universal": "Note that all the block screens in your world are affected by this option.",
   "tooltip.narutotv.swap.compat": "Using shaders under performance mode is not suggested as your videos may not be rendered properly.",
+  "tooltip.narutotv.type": "Only lowercase letters, digits, and _ - . /",
 
   "mode.narutotv.compatibility": "Current: Compatibility Mode",
   "mode.narutotv.performance": "Current: Performance Mode",

@@ -8,13 +8,13 @@ import me.kall.duplicationless.ext.RegistryEntry;
 import me.kall.duplicationless.util.Executor;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.impl.config.NarutoConfig;
-import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.data.BlockScreens;
+import me.kall.narutotv.impl.world.data.Wall;
+import me.kall.narutotv.impl.world.data.Walls;
 import me.kall.narutotv.impl.world.data.Displayers;
 import me.kall.narutotv.impl.world.ext.ScreenLevel;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
-import me.kall.narutotv.impl.world.network.packet.ScreenGuiPacket;
-import me.kall.narutotv.impl.world.network.packet.ScreenLifePacket;
+import me.kall.narutotv.impl.world.network.packet.WallGuiPacket;
+import me.kall.narutotv.impl.world.network.packet.WallLifePacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -33,10 +33,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
-public class ScreenEvents {
+public class WallEvents {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> BLOCK_CORNERS = new Object2ObjectOpenHashMap<>();
 
-    private static final Logger LOGGER = LogManager.getLogger(ScreenEvents.class);
+    private static final Logger LOGGER = LogManager.getLogger(WallEvents.class);
 
     @SubscribeEvent
     public static void removeScreen(@NotNull BlockChangeEvent event) {
@@ -46,7 +46,7 @@ public class ScreenEvents {
         if (Displayers.isDisplayer(event.oldState()) && !Displayers.isDisplayer(event.newState())) {
             Executor.run(() -> {
                 if (ScreenLevel.isCleaning(level)) return;
-                BlockScreens.get(level).remove(dimension, block);
+                Walls.get(level).remove(dimension, block);
             });
         }
     }
@@ -57,9 +57,9 @@ public class ScreenEvents {
         if (!(player.level() instanceof ServerLevel level)) return;
         if (!player.isShiftKeyDown()) return;
         if (!player.getMainHandItem().isEmpty()) return;
-        BlockScreen screen = BlockScreens.get(level).get(level.dimension().location(), event.getPos().asLong());
-        if (screen == null) return;
-        NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ScreenGuiPacket(screen));
+        Wall wall = Walls.get(level).get(level.dimension().location(), event.getPos().asLong());
+        if (wall == null) return;
+        NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallGuiPacket(wall));
     }
 
     @SubscribeEvent
@@ -67,7 +67,7 @@ public class ScreenEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!(player.level() instanceof ServerLevel level)) return;
         if (!player.isShiftKeyDown()) return;
-        if (!RegistryEntry.get(event.getItemStack()).equals(NarutoConfig.Server.builder())) return;
+        if (!RegistryEntry.get(event.getItemStack()).toString().equals(NarutoConfig.builder())) return;
 
         BlockPos pos = event.getPos();
 
@@ -81,29 +81,29 @@ public class ScreenEvents {
         if (perCreator.containsKey(uuid)) {
             BlockPos last = perCreator.get(uuid);
             perCreator.remove(uuid);
-            player.displayClientMessage(ScreenEvents.secCorner(pos), false);
+            player.displayClientMessage(WallEvents.secCorner(pos), false);
 
-            BlockScreen built;
+            Wall built;
 
             try {
                 built = build(level, last, pos);
             } catch (Exception exception) {
                 LOGGER.error("Exception building screen.", exception);
-                player.displayClientMessage(ScreenEvents.fail(last, pos), false);
+                player.displayClientMessage(WallEvents.fail(last, pos), false);
                 return;
             }
 
             if (built == null) {
-                player.displayClientMessage(ScreenEvents.none(last, pos), false);
+                player.displayClientMessage(WallEvents.none(last, pos), false);
                 return;
             }
 
-            player.displayClientMessage(ScreenEvents.success(last, pos), false);
-            BlockScreens.get(level).update(built);
-            NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new ScreenLifePacket(built));
+            player.displayClientMessage(WallEvents.success(last, pos), false);
+            Walls.get(level).update(built);
+            NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(built));
         } else {
             perCreator.put(uuid, pos);
-            player.displayClientMessage(ScreenEvents.firstCorner(pos), false);
+            player.displayClientMessage(WallEvents.firstCorner(pos), false);
         }
     }
 
@@ -128,8 +128,8 @@ public class ScreenEvents {
     }
 
     @Nullable
-    private static BlockScreen build(@NotNull ServerLevel level, @NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2) {
-        LongList bottomEdge = BlockScreen.getLine(bottomCorner1, bottomCorner2);
+    private static Wall build(@NotNull ServerLevel level, @NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2) {
+        LongList bottomEdge = Wall.getLine(bottomCorner1, bottomCorner2);
 
         for (long pos : bottomEdge) {
             if (Displayers.nonDisplayer(level, pos)) {
@@ -164,7 +164,7 @@ public class ScreenEvents {
                         BlockPos topCorner2 = bottomCorner2.offset(hx * length, hy * length, hz * length);
 
                         boolean leftOk = true;
-                        for (long pos : BlockScreen.getLine(bottomCorner1, topCorner1)) {
+                        for (long pos : Wall.getLine(bottomCorner1, topCorner1)) {
                             if (Displayers.nonDisplayer(level, pos)) {
                                 leftOk = false;
                                 break;
@@ -173,7 +173,7 @@ public class ScreenEvents {
                         if (!leftOk) break;
 
                         boolean rightOk = true;
-                        for (long pos : BlockScreen.getLine(bottomCorner2, topCorner2)) {
+                        for (long pos : Wall.getLine(bottomCorner2, topCorner2)) {
                             if (Displayers.nonDisplayer(level, pos)) {
                                 rightOk = false;
                                 break;
@@ -182,7 +182,7 @@ public class ScreenEvents {
                         if (!rightOk) break;
 
                         boolean topOk = true;
-                        for (long pos : BlockScreen.getLine(topCorner1, topCorner2)) {
+                        for (long pos : Wall.getLine(topCorner1, topCorner2)) {
                             if (Displayers.nonDisplayer(level, pos)) {
                                 topOk = false;
                                 break;
@@ -194,7 +194,7 @@ public class ScreenEvents {
                         bestTop2 = topCorner2;
                     }
 
-                    if (bestTop1 != null) return new BlockScreen(bottomCorner1, bottomCorner2, bestTop1, bestTop2, dimension);
+                    if (bestTop1 != null) return new Wall(bottomCorner1, bottomCorner2, bestTop1, bestTop2, dimension);
                 }
             }
         }

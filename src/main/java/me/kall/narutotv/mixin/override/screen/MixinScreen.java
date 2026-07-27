@@ -3,7 +3,7 @@ package me.kall.narutotv.mixin.override.screen;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import me.kall.narutotv.fade.FadeCenter;
-import me.kall.narutotv.override.CustomOverride;
+import me.kall.narutotv.impl.gui.OverrideCenter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Renderable;
@@ -29,8 +29,8 @@ public abstract class MixinScreen {
     @SuppressWarnings("UnstableApiUsage")
     @WrapMethod(method = "renderDirtBackground")
     private void skipRenderDirtBackground(GuiGraphics guiGraphics, Operation<Void> original) {
-        if (CustomOverride.getInstance().overridable()) {
-            CustomOverride.getInstance().override();
+        if (OverrideCenter.getInstance().overridable()) {
+            OverrideCenter.getInstance().override();
             MinecraftForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered((Screen) (Object) this, guiGraphics));
         } else {
             original.call(guiGraphics);

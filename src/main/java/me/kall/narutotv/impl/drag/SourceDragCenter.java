@@ -1,4 +1,4 @@
-package me.kall.narutotv.impl.qol;
+package me.kall.narutotv.impl.drag;
 
 import me.kall.narutotv.NarutoTV;
 import net.minecraft.client.Minecraft;

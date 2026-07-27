@@ -3,7 +3,7 @@ package me.kall.narutotv.mixin.override.overlay;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.platform.Window;
-import me.kall.narutotv.override.CustomOverride;
+import me.kall.narutotv.impl.gui.OverrideCenter;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,8 +33,8 @@ public abstract class MixinForgeLoadingOverlay {
 
     @WrapMethod(method = "render")
     private void renderOverride(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, Operation<Void> original) {
-        if (CustomOverride.getInstance().overridable()) {
-            CustomOverride.getInstance().override();
+        if (OverrideCenter.getInstance().overridable()) {
+            OverrideCenter.getInstance().override();
 
             Minecraft minecraft = this.minecraft;
             ReloadInstance reload = this.reload;

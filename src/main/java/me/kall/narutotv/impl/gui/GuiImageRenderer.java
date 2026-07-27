@@ -14,6 +14,7 @@ import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
 import net.minecraft.client.gui.screens.LoadingOverlay;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.WinScreen;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -49,23 +50,27 @@ public class GuiImageRenderer extends NativeImageRenderer {
     public void onSetup(double seekTo) {
         super.onSetup(seekTo);
 
-        FadeApi.getInstance().setUnfadable(this.textureLocation, true);
+        FadeApi.getInstance().setUnfadable(this.narutoTexture.textureLocation, true);
     }
 
     @Override
     public void render() {
         super.render();
         GuiGraphics guiGraphics = Graphics.get();
-        if (guiGraphics == null || this.textureLocation == null || this.dynamicTexture == null) return;
+
+        DynamicTexture dynamicTexture = this.narutoTexture.dynamicTexture;
+        ResourceLocation textureLocation = this.narutoTexture.textureLocation;
+
+        if (guiGraphics == null || textureLocation == null || dynamicTexture == null) return;
 
         int width = guiGraphics.guiWidth();
         int height = guiGraphics.guiHeight();
 
-        guiGraphics.blit(this.textureLocation, 0, 0, 0, 0, width, height, width, height);
+        guiGraphics.blit(textureLocation, 0, 0, 0, 0, width, height, width, height);
     }
 
     @Override
     public float initVolume() {
-        return NarutoConfig.Client.volume();
+        return NarutoConfig.volume();
     }
 }

@@ -21,33 +21,33 @@ public class NarutoAgent {
 
         instrumentation.addTransformer(new NarutoTransformer(), false);
         try {
-            instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(createBootstrapOnlyJar().toFile()));
+            instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(NarutoAgent.createBootstrapJar().toFile()));
         } catch (Exception exception) {
             exception.printStackTrace(System.err);
             throw new RuntimeException(exception);
         }
     }
 
-    private static @NotNull Path createBootstrapOnlyJar() {
+    private static @NotNull Path createBootstrapJar() {
         try {
             Path narutoBootstrap = NarutoRenderBridge.NARUTO_JAR.getParent().resolve("naruto-bootstrap.jar");
             if (narutoBootstrap.toFile().exists() && narutoBootstrap.toFile().delete()) System.out.println("Deleting existing naruto-bootstrap.jar for update");
             Files.createFile(narutoBootstrap);
 
             try (ZipFile source = new ZipFile(NarutoRenderBridge.NARUTO_JAR.toFile());
-                 ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(narutoBootstrap.toFile()))) {
+                 ZipOutputStream output = new ZipOutputStream(new FileOutputStream(narutoBootstrap.toFile()))) {
 
                 for (String entryName : BOOTSTRAP_ENTRIES) {
                     ZipEntry zipEntry = source.getEntry(entryName);
                     if (zipEntry == null) continue;
 
-                    zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                    output.putNextEntry(new ZipEntry(entryName));
 
                     try (InputStream inputStream = source.getInputStream(zipEntry)) {
-                        inputStream.transferTo(zipOutputStream);
+                        inputStream.transferTo(output);
                     }
 
-                    zipOutputStream.closeEntry();
+                    output.closeEntry();
                 }
             }
 

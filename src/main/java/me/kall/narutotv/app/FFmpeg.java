@@ -39,26 +39,25 @@ public final class FFmpeg {
 
     @Contract("_, _ -> new")
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public @NotNull MediaArgs read(@NotNull String absVideoPath, @NotNull String absAudioPath) {
+    public @NotNull MediaArgs read(@NotNull String absVideoPath, @Nullable String absAudioPath) {
         String videoJson = Executable.runCommand(new String[]{this.absFFprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absVideoPath}, false);
         if (videoJson == null) throw new RuntimeException("Error generating probe json for " + absVideoPath + ". Using " + this.absFFprobePath + ". Reading log for details.");
 
-        String audioJson = Executable.runCommand(new String[]{this.absFFprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absAudioPath}, false);
-        if (audioJson == null) throw new RuntimeException("Error generating probe json for " + absAudioPath + ". Using " + this.absFFprobePath + ". Reading log for details.");
+        String audioJson = absAudioPath != null ? Executable.runCommand(new String[]{this.absFFprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absAudioPath}, false) : null;
 
         try {
             Matcher videoMatcher = VIDEO_STREAM.matcher(videoJson);
-            Matcher audioMatcher = AUDIO_STREAM.matcher(audioJson);
+            Matcher audioMatcher = audioJson != null ? AUDIO_STREAM.matcher(audioJson) : null;
             if (!videoMatcher.find()) throw new RuntimeException("Error matching video block");
-            if (!audioMatcher.find()) throw new RuntimeException("Error matching audio block");
+            if (audioMatcher != null && !audioMatcher.find()) throw new RuntimeException("Error matching audio block");
             String videoBlock = videoMatcher.group();
-            String audioBlock = audioMatcher.group();
+            String audioBlock = audioMatcher != null ? audioMatcher.group() : null;
 
-            Matcher channelCountMatcher = CHANNEL_COUNT.matcher(audioBlock);
-            Matcher sampleRateMatcher = SAMPLE_RATE.matcher(audioBlock);
+            Matcher channelCountMatcher = audioBlock == null ? null : CHANNEL_COUNT.matcher(audioBlock);
+            Matcher sampleRateMatcher = audioBlock == null ? null : SAMPLE_RATE.matcher(audioBlock);
 
-            if (!channelCountMatcher.find()) throw new RuntimeException("Error matching channel count");
-            if (!sampleRateMatcher.find()) throw new RuntimeException("Error matching sample rate");
+            if (channelCountMatcher != null && !channelCountMatcher.find()) throw new RuntimeException("Error matching channel count");
+            if (sampleRateMatcher != null && !sampleRateMatcher.find()) throw new RuntimeException("Error matching sample rate");
 
             Matcher avgFpsMatcher = AVG_FPS.matcher(videoBlock);
             Matcher rFpsMatcher = R_FPS.matcher(videoBlock);
@@ -72,8 +71,8 @@ public final class FFmpeg {
             heightMatcher.find();
             durationMatcher.find();
 
-            int channelCount = Integer.parseInt(channelCountMatcher.group(1));
-            int sampleRate = Integer.parseInt(sampleRateMatcher.group(1));
+            int channelCount = channelCountMatcher == null ? 0 : Integer.parseInt(channelCountMatcher.group(1));
+            int sampleRate = sampleRateMatcher == null ? 0 : Integer.parseInt(sampleRateMatcher.group(1));
 
             double avgFps = Double.parseDouble(avgFpsMatcher.group(1)) / Double.parseDouble(avgFpsMatcher.group(2));
             double rFps = Double.parseDouble(rFpsMatcher.group(1)) / Double.parseDouble(rFpsMatcher.group(2));
@@ -118,8 +117,7 @@ public final class FFmpeg {
                 }
             }
 
-            Executable.runCommand(Lists.newArrayList(this.absFFmpegPath, "-i", absSource, "-vn", "-acodec", "libvorbis", "-ac", "1", "-q:a", "4", "-y", absOutputPath), false);
-            return absOutput.exists() ? absOutputPath : null;
+            return Executable.runCommand(Lists.newArrayList(this.absFFmpegPath, "-i", absSource, "-vn", "-acodec", "libvorbis", "-ac", "1", "-q:a", "4", "-y", absOutputPath), false) && absOutput.exists() ? absOutputPath : null;
         }, NarutoTV.io());
     }
 

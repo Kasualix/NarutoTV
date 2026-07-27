@@ -16,7 +16,7 @@ import org.joml.Vector3f;
 
 import java.util.Objects;
 
-public class BlockScreen {
+public class Wall {
     public static final ResourceLocation NO_LOCAL_SOUND = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "no");
 
     public final BlockPos leftBottom;
@@ -34,9 +34,9 @@ public class BlockScreen {
     public String video = "", audio = "";
 
     private LongSet areaInvolved, borderInvolved;
-    private Sheet sheet;
+    private Data data;
 
-    public BlockScreen(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio, float volume) {
+    public Wall(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio, float volume) {
         this(BlockPos.of(corners[0]), BlockPos.of(corners[1]), BlockPos.of(corners[2]), BlockPos.of(corners[3]), dimension);
         this.localSound = localSound;
         this.video = video;
@@ -44,7 +44,7 @@ public class BlockScreen {
         this.volume = volume;
     }
 
-    public BlockScreen(@NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2, @NotNull BlockPos topCorner1, @NotNull BlockPos topCorner2, ResourceLocation dimension) {
+    public Wall(@NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2, @NotNull BlockPos topCorner1, @NotNull BlockPos topCorner2, ResourceLocation dimension) {
         this.dimension = dimension;
 
         int dx = bottomCorner2.getX() - bottomCorner1.getX();
@@ -124,8 +124,8 @@ public class BlockScreen {
         return this.borderInvolved;
     }
 
-    public @NotNull BlockScreen.Sheet toSheet() {
-        if (this.sheet != null) return this.sheet;
+    public @NotNull Wall.Data getData() {
+        if (this.data != null) return this.data;
         int minX = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
         int minY = Integer.MAX_VALUE;
@@ -148,8 +148,8 @@ public class BlockScreen {
             if (z > maxZ) maxZ = z;
         }
 
-        this.sheet = new Sheet(minX, maxX + 1, minY, maxY + 1, minZ,  maxZ + 1);
-        return this.sheet;
+        this.data = new Data(minX, maxX + 1, minY, maxY + 1, minZ,  maxZ + 1);
+        return this.data;
     }
 
     public static @NotNull LongList getLine(@NotNull BlockPos from, @NotNull BlockPos to) {
@@ -178,7 +178,7 @@ public class BlockScreen {
 
     @Override
     public boolean equals(Object object) {
-        return object instanceof BlockScreen another && another.id.equals(this.id);
+        return object instanceof Wall another && another.id.equals(this.id);
     }
 
     @Override
@@ -186,14 +186,14 @@ public class BlockScreen {
         return this.id.hashCode();
     }
 
-    public static final class Sheet {
+    public static final class Data {
         public final int minX, maxX, minY, maxY, minZ, maxZ;
         public final long widthX, widthY, widthZ;
         public final double centerX, centerY, centerZ;
 
         public final Direction.Axis axisThickness;
 
-        public Sheet(int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
+        public Data(int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
             if (minX > maxX) throw new IllegalArgumentException("minX must be <= maxX");
             if (minY > maxY) throw new IllegalArgumentException("minY must be <= maxY");
             if (minZ > maxZ) throw new IllegalArgumentException("minZ must be <= maxZ");
@@ -357,7 +357,7 @@ public class BlockScreen {
 
         @Override
         public boolean equals(Object object) {
-            return object instanceof Sheet other && other.minX == this.minX && other.minY == this.minY && other.minZ == this.minZ && other.maxX == this.maxX && other.maxY == this.maxY && other.maxZ == this.maxZ;
+            return object instanceof Data other && other.minX == this.minX && other.minY == this.minY && other.minZ == this.minZ && other.maxX == this.maxX && other.maxY == this.maxY && other.maxZ == this.maxZ;
         }
     }
 }

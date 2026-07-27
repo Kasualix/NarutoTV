@@ -3,8 +3,8 @@ package me.kall.narutotv.impl.world.data;
 import it.unimi.dsi.fastutil.objects.*;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
-import me.kall.narutotv.impl.world.network.packet.ScreenDeathPacket;
-import me.kall.narutotv.impl.world.network.packet.ScreenSyncPacket;
+import me.kall.narutotv.impl.world.network.packet.WallDeathPacket;
+import me.kall.narutotv.impl.world.network.packet.WallSyncPacket;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
-public class BlockScreens extends SavedData {
+public class Walls extends SavedData {
     private static final String SCREENS_KEY = "Screens";
     private static final String DIMENSION_KEY = "Dimension";
     private static final String CORNERS_KEY = "Corners";
@@ -29,57 +29,57 @@ public class BlockScreens extends SavedData {
     private static final String AUDIO_KEY = "Audio";
     private static final String VOLUME_KEY = "Volume";
 
-    private final Object2ObjectOpenHashMap<ResourceLocation, ObjectOpenHashSet<BlockScreen>> data = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<ResourceLocation, ObjectOpenHashSet<Wall>> data = new Object2ObjectOpenHashMap<>();
 
-    public void update(@NotNull BlockScreen argSource) {
-        ObjectSet<BlockScreen> screens = this.data.computeIfAbsent(argSource.dimension, key -> new ObjectOpenHashSet<>());
+    public void update(@NotNull Wall argSource) {
+        ObjectSet<Wall> screens = this.data.computeIfAbsent(argSource.dimension, key -> new ObjectOpenHashSet<>());
         screens.remove(argSource);
         screens.add(argSource);
         this.setDirty();
     }
 
-    public @Nullable BlockScreen get(ResourceLocation dimension, long position) {
-        ObjectOpenHashSet<BlockScreen> screens = this.data.get(dimension);
-        if (screens == null || screens.isEmpty()) return null;
-        for (BlockScreen screen : screens) {
-            if (screen.areaInvolved().contains(position)) return screen;
+    public @Nullable Wall get(ResourceLocation dimension, long position) {
+        ObjectOpenHashSet<Wall> walls = this.data.get(dimension);
+        if (walls == null || walls.isEmpty()) return null;
+        for (Wall wall : walls) {
+            if (wall.areaInvolved().contains(position)) return wall;
         }
         return null;
     }
 
     public void remove(ResourceLocation dimension, long position) {
-        ObjectOpenHashSet<BlockScreen> screens = this.data.get(dimension);
+        ObjectOpenHashSet<Wall> screens = this.data.get(dimension);
         if (screens == null || screens.isEmpty()) return;
 
-        ObjectIterator<BlockScreen> iterator = screens.iterator();
+        ObjectIterator<Wall> iterator = screens.iterator();
 
         while (iterator.hasNext()) {
-            BlockScreen next = iterator.next();
+            Wall next = iterator.next();
             if (next.borderInvolved().contains(position)) {
                 iterator.remove();
                 this.setDirty();
-                NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new ScreenDeathPacket(next));
+                NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallDeathPacket(next));
             }
         }
     }
 
-    public ObjectCollection<ObjectOpenHashSet<BlockScreen>> values() {
+    public ObjectCollection<ObjectOpenHashSet<Wall>> values() {
         return this.data.values();
     }
 
     @Override
     public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag) {
         ListTag screensList = new ListTag();
-        for (Object2ObjectMap.Entry<ResourceLocation, ObjectOpenHashSet<BlockScreen>> entry : this.data.object2ObjectEntrySet()) {
+        for (Object2ObjectMap.Entry<ResourceLocation, ObjectOpenHashSet<Wall>> entry : this.data.object2ObjectEntrySet()) {
             ResourceLocation dimension = entry.getKey();
-            for (BlockScreen blockScreen : entry.getValue()) {
+            for (Wall wall : entry.getValue()) {
                 CompoundTag screenTag = new CompoundTag();
                 screenTag.putString(DIMENSION_KEY, dimension.toString());
-                screenTag.putLongArray(CORNERS_KEY, blockScreen.toLongArray());
-                screenTag.putString(LOCAL_SOUND_KEY, blockScreen.localSound.toString());
-                screenTag.putString(VIDEO_KEY, blockScreen.video);
-                screenTag.putString(AUDIO_KEY, blockScreen.audio);
-                screenTag.putFloat(VOLUME_KEY, blockScreen.volume);
+                screenTag.putLongArray(CORNERS_KEY, wall.toLongArray());
+                screenTag.putString(LOCAL_SOUND_KEY, wall.localSound.toString());
+                screenTag.putString(VIDEO_KEY, wall.video);
+                screenTag.putString(AUDIO_KEY, wall.audio);
+                screenTag.putFloat(VOLUME_KEY, wall.volume);
                 screensList.add(screenTag);
             }
         }
@@ -87,8 +87,8 @@ public class BlockScreens extends SavedData {
         return compoundTag;
     }
 
-    public static @NotNull BlockScreens load(@NotNull CompoundTag tag) {
-        BlockScreens blockScreens = new BlockScreens();
+    public static @NotNull Walls load(@NotNull CompoundTag tag) {
+        Walls walls = new Walls();
 
         ListTag screensList = tag.getList(SCREENS_KEY, Tag.TAG_COMPOUND);
         for (int index = 0; index < screensList.size(); index++) {
@@ -96,20 +96,20 @@ public class BlockScreens extends SavedData {
 
             ResourceLocation dimension = ResourceLocation.parse(screenTag.getString(DIMENSION_KEY));
 
-            blockScreens.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new BlockScreen(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY)), screenTag.getString(VIDEO_KEY), screenTag.getString(AUDIO_KEY), screenTag.getFloat(VOLUME_KEY)));
+            walls.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new Wall(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY)), screenTag.getString(VIDEO_KEY), screenTag.getString(AUDIO_KEY), screenTag.getFloat(VOLUME_KEY)));
         }
 
-        return blockScreens;
+        return walls;
     }
 
-    public static @NotNull BlockScreens get(@NotNull ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(BlockScreens::load, BlockScreens::new, "NarutoScreens");
+    public static @NotNull Walls get(@NotNull ServerLevel level) {
+        return level.getDataStorage().computeIfAbsent(Walls::load, Walls::new, "NarutoScreens");
     }
 
     @SubscribeEvent
     public static void syncScreens(PlayerEvent.@NotNull PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.level() instanceof ServerLevel level) {
-            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ScreenSyncPacket(BlockScreens.get(level).values()));
+            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallSyncPacket(Walls.get(level).values()));
         }
     }
 }

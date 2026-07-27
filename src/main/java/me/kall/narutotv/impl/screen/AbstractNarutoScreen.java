@@ -14,6 +14,8 @@ import org.lwjgl.glfw.GLFW;
 import java.util.function.Predicate;
 
 public abstract class AbstractNarutoScreen extends Screen {
+    static final Component SCREEN = Component.translatable("screen.narutotv.gui.title");
+
     protected static final Component RANDOM = Component.translatable("button.narutotv.random");
     protected static final Component SWAP = Component.translatable("button.narutotv.swap");
 
@@ -27,10 +29,10 @@ public abstract class AbstractNarutoScreen extends Screen {
     protected static final Component COMPATIBILITY = Component.translatable("mode.narutotv.compatibility").withStyle(ChatFormatting.GREEN);
     protected static final Component PERFORMANCE = Component.translatable("mode.narutotv.performance").withStyle(ChatFormatting.RED);
 
-    protected static final int BOX_WIDTH = 200, BOX_HEIGHT = 20, BOX_SPACING = 18;
+    static final int BOX_WIDTH = 200, BOX_HEIGHT = 20, BOX_SPACING = 18;
     protected static final int BUTTON_WIDTH = 80, BUTTON_HEIGHT = 20, BUTTON_SPACING = 5;
 
-    protected static final Predicate<String> NUMERIC = s -> s.matches("-?\\d*\\.?\\d*");
+    protected static final Predicate<String> NUMERIC = string -> string.matches("-?\\d*\\.?\\d*");
 
     protected final @Nullable Screen lastScreen;
 
@@ -45,7 +47,7 @@ public abstract class AbstractNarutoScreen extends Screen {
     }
 
     @Override
-    protected final void init() {
+    protected void init() {
         this.currentY = 25;
         this.initWidgets();
     }
@@ -98,10 +100,7 @@ public abstract class AbstractNarutoScreen extends Screen {
         super.tick();
         this.videoBox.tick();
         this.audioBox.tick();
-        this.onTickBox();
     }
-
-    protected void onTickBox() {}
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {

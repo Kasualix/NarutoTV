@@ -16,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class NarutoGuiScreen extends AbstractNarutoScreen {
-    static final Component SCREEN = Component.translatable("screen.narutotv.gui.title");
-
     static final Component FADABLE = Component.translatable("checkbox.narutotv.fadable");
     static final Component MUTE_MUSIC = Component.translatable("checkbox.narutotv.mute_music");
 
@@ -40,10 +38,12 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
     }
 
     public static void sync(String video, String audio) {
-        if (Minecraft.getInstance().screen instanceof NarutoGuiScreen screen) {
-            if (screen.videoBox != null) screen.videoBox.setValue(video);
-            if (screen.audioBox != null) screen.audioBox.setValue(audio);
-        }
+        Minecraft.getInstance().execute(() -> {
+            if (Minecraft.getInstance().screen instanceof NarutoGuiScreen screen) {
+                if (screen.videoBox != null) screen.videoBox.setValue(video);
+                if (screen.audioBox != null) screen.audioBox.setValue(audio);
+            }
+        });
     }
 
     @Override
@@ -52,8 +52,8 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
 
         this.videoBox = this.initEditBox(centerX, VIDEO, this.video);
         this.audioBox = this.initEditBox(centerX, AUDIO, this.audio);
-        this.ticksBox = this.initEditBox(centerX, TICKS, String.valueOf(NarutoConfig.Client.ticksBeforeFade()));
-        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(NarutoConfig.Client.volume()));
+        this.ticksBox = this.initEditBox(centerX, TICKS, String.valueOf(NarutoConfig.ticksBeforeFade()));
+        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(NarutoConfig.volume()));
         this.volumeBox.setFilter(NUMERIC);
 
         this.initCheckboxes(centerX);
@@ -66,20 +66,20 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
         int fadableWidth = this.font.width(FADABLE) + 24;
         int muteMusicWidth = this.font.width(MUTE_MUSIC) + 24;
 
-        this.fadableCheck = new Checkbox(centerX - BUTTON_WIDTH - 5, this.currentY, fadableWidth, BUTTON_HEIGHT, FADABLE, NarutoConfig.Client.fadable()) {
+        this.fadableCheck = new Checkbox(centerX - BUTTON_WIDTH - 5, this.currentY, fadableWidth, BUTTON_HEIGHT, FADABLE, NarutoConfig.fadable()) {
             @Override
             public void onPress() {
                 super.onPress();
-                NarutoConfig.Client.fadable(this.selected());
+                NarutoConfig.fadable(this.selected());
             }
         };
         this.addRenderableWidget(this.fadableCheck);
 
-        this.muteMusicCheck = new Checkbox(centerX + 5, this.currentY, muteMusicWidth, BUTTON_HEIGHT, MUTE_MUSIC, NarutoConfig.Client.muteMusic()) {
+        this.muteMusicCheck = new Checkbox(centerX + 5, this.currentY, muteMusicWidth, BUTTON_HEIGHT, MUTE_MUSIC, NarutoConfig.muteMusic()) {
             @Override
             public void onPress() {
                 super.onPress();
-                NarutoConfig.Client.muteMusic(this.selected());
+                NarutoConfig.muteMusic(this.selected());
             }
         };
         this.addRenderableWidget(this.muteMusicCheck);
@@ -112,10 +112,10 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
             this.audio = current.absAudioPath();
         }
 
-        NarutoConfig.Client.ticksBeforeFade(Integer.parseInt(this.ticksBox.getValue()));
+        NarutoConfig.ticksBeforeFade(Integer.parseInt(this.ticksBox.getValue()));
 
-        if (NarutoConfig.Client.volume(Double.parseDouble(this.volumeBox.getValue()))) {
-            NarutoGuiCenter.getActive().setVolume(NarutoConfig.Client.volume());
+        if (NarutoConfig.volume(Double.parseDouble(this.volumeBox.getValue()))) {
+            NarutoGuiCenter.getActive().setVolume(NarutoConfig.volume());
         }
 
         if (!videoBox.equals(this.video) || !audioBox.equals(this.audio)) {
@@ -127,7 +127,8 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
     }
 
     @Override
-    protected void onTickBox() {
+    public void tick() {
+        super.tick();
         this.ticksBox.tick();
     }
 

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Objects;
 
 public record MediaArgs(String absVideoPath, String absAudioPath, int channelCount, int sampleRate, int openALFormat, double fps, int width, int height, double duration) {
     @Override
@@ -19,6 +20,16 @@ public record MediaArgs(String absVideoPath, String absAudioPath, int channelCou
                 ",width:" + this.width() +
                 ",height:" + this.height() +
                 ",duration:" + this.duration();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return object instanceof MediaArgs other && other.absVideoPath.equals(this.absVideoPath) && other.absAudioPath.equals(this.absAudioPath) && other.channelCount == this.channelCount && this.sampleRate == other.sampleRate && other.openALFormat == this.openALFormat && other.fps == this.fps && other.width == this.width && other.height == this.height && other.duration == this.duration;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.absVideoPath, this.absAudioPath, this.channelCount, this.sampleRate, this.openALFormat, this.fps, this.width, this.height, this.duration);
     }
 
     public @NotNull String toReadableString() {

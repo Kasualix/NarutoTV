@@ -74,7 +74,7 @@ public class GuiBufferRenderer extends ByteBufferRenderer {
 
     @Override
     public float initVolume() {
-        return NarutoConfig.Client.volume();
+        return NarutoConfig.volume();
     }
 
     @Override

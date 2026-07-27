@@ -10,11 +10,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class Executable {
-    public static void runCommand(@NotNull List<String> command, boolean print) {
+    public static boolean runCommand(@NotNull List<String> command, boolean print) {
         String[] commandArray = command.toArray(String[]::new);
         if (Executable.runCommand(commandArray, print) == null) {
             System.err.println("Error executing command " + Arrays.toString(commandArray));
+            return false;
         }
+        return true;
     }
 
     public static @Nullable String runCommand(@NotNull String[] command, boolean print) {

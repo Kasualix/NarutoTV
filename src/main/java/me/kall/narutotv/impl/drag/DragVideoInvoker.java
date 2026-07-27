@@ -1,9 +1,10 @@
-package me.kall.narutotv.impl.qol;
+package me.kall.narutotv.impl.drag;
 
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.base.data.Paths;
+import me.kall.narutotv.base.data.NarutoPaths;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
+import me.kall.narutotv.impl.screen.NameSetScreen;
 import me.kall.narutotv.impl.screen.NarutoGuiScreen;
 import net.minecraft.client.Minecraft;
 import org.apache.commons.compress.utils.FileNameUtils;
@@ -25,26 +26,23 @@ public class DragVideoInvoker implements SourceDragCenter.Invoker {
     public void invoke(long window, int count, long names) {
         File source = Path.of(GLFWDropCallback.getName(names, 0)).toFile();
 
-        CompletableFuture.runAsync(() -> {
+        Minecraft.getInstance().setScreen(new NameSetScreen(name -> CompletableFuture.runAsync(() -> {
             try {
-                Path dir = Paths.SOURCES.resolve(String.valueOf(System.currentTimeMillis()));
+                Path dir = NarutoPaths.SOURCES.resolve(name);
                 Files.createDirectories(dir);
                 Path target = dir.resolve("video." + FileNameUtils.getExtension(source.getName()));
 
-                long start = System.nanoTime();
-                LOGGER.info("Start to copy {}. Target: {}", source, target);
                 FileUtils.copyFile(source, target.toFile());
-                LOGGER.info("Successfully copy {} to {}. Time cost: {} seconds.", source, target, (System.nanoTime() - start) / 1_000_000_000.0D);
                 Sources.cutInLine(target, null);
 
-                Minecraft.getInstance().execute(NarutoGuiCenter.getActive()::shutdown);
+                Minecraft.getInstance().execute(() -> NarutoGuiCenter.getActive().shutdown());
 
                 String targetStr = target.toString();
                 NarutoGuiScreen.sync(targetStr, targetStr);
             } catch (IOException exception) {
-                LOGGER.error("Exception dragging video {}", source.getName());
+                LOGGER.error("Exception dragging video {}.", source.getName());
                 LOGGER.error("Details: ", exception);
             }
-        }, NarutoTV.io());
+        }, NarutoTV.io()), Minecraft.getInstance().screen));
     }
 }

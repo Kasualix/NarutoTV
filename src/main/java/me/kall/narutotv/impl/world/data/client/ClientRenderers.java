@@ -1,17 +1,20 @@
 package me.kall.narutotv.impl.world.data.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.base.data.Paths;
+import me.kall.narutotv.app.data.MediaArgs;
+import me.kall.narutotv.app.util.LifetimeController;
 import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
-import me.kall.narutotv.base.renderer.gl.AbstractGLEngine;
-import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
-import me.kall.narutotv.impl.world.WorldBufferRenderer;
-import me.kall.narutotv.impl.world.WorldImageRenderer;
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.compat.CompatCenter;
+import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.ext.InWorld;
+import me.kall.narutotv.impl.world.wall.WorldBufferRenderer;
+import me.kall.narutotv.impl.world.wall.WorldImageRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -22,20 +25,18 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientRenderers {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> RENDERERS = new Object2ObjectOpenHashMap<>();
-
-    private static boolean tickConsumed = false;
 
     public static @NotNull ObjectCollection<AbstractRenderer<?>> getIn(ResourceLocation dimension) {
         return RENDERERS.getOrDefault(dimension, Object2ObjectMaps.emptyMap()).values();
@@ -48,8 +49,8 @@ public class ClientRenderers {
         return inDimension.get(new Vec3(centerX, centerY, centerZ));
     }
 
-    public static @Nullable AbstractRenderer<?> get(@NotNull BlockScreen blockScreen) {
-        return get(blockScreen.dimension, blockScreen.centerX, blockScreen.centerY, blockScreen.centerZ);
+    public static @Nullable AbstractRenderer<?> get(@NotNull Wall wall) {
+        return get(wall.dimension, wall.centerX, wall.centerY, wall.centerZ);
     }
 
     public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, long position) {
@@ -57,8 +58,8 @@ public class ClientRenderers {
         Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
         if (inDimension == null || inDimension.isEmpty()) return null;
         for (AbstractRenderer<?> renderer : inDimension.values()) {
-            BlockScreen screen = ((InWorld)renderer).screen();
-            if (screen.areaInvolved().contains(position)) {
+            Wall wall = ((InWorld)renderer).wall();
+            if (wall.areaInvolved().contains(position)) {
                 return renderer;
             }
         }
@@ -73,53 +74,64 @@ public class ClientRenderers {
     }
 
     public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull AbstractRenderer<?> renderer) {
-        BlockScreen screen = ((InWorld)renderer).screen();
-        return remove(screen.dimension, screen.centerX, screen.centerY, screen.centerZ);
+        Wall wall = ((InWorld)renderer).wall();
+        return remove(wall.dimension, wall.centerX, wall.centerY, wall.centerZ);
     }
 
-    public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull BlockScreen screen) {
-        return remove(screen.dimension, screen.centerX, screen.centerY, screen.centerZ);
+    public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull Wall wall) {
+        return remove(wall.dimension, wall.centerX, wall.centerY, wall.centerZ);
     }
 
     public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull AbstractRenderer<?> renderer) {
         validateThread();
-        BlockScreen screen = ((InWorld)renderer).screen();
-        return Optional.ofNullable(RENDERERS.computeIfAbsent(screen.dimension, key -> new Object2ObjectOpenHashMap<>()).put(new Vec3(screen.centerX, screen.centerY, screen.centerZ), renderer));
+        Wall wall = ((InWorld)renderer).wall();
+        return Optional.ofNullable(RENDERERS.computeIfAbsent(wall.dimension, key -> new Object2ObjectOpenHashMap<>()).put(new Vec3(wall.centerX, wall.centerY, wall.centerZ), renderer));
     }
 
-    public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull BlockScreen screen) {
+    public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull Wall wall) {
         if (isImageRenderer()) {
-            return add(new WorldImageRenderer(screen));
+            return add(new WorldImageRenderer(wall));
         } else {
-            return add(new WorldBufferRenderer(screen));
+            return add(new WorldBufferRenderer(wall));
         }
     }
 
     public static boolean isImageRenderer() {
-        if (RENDERERS.isEmpty()) return NarutoTV.shaderUsing();
+        if (RENDERERS.isEmpty()) return CompatCenter.shaderUsing();
         for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
             for (AbstractRenderer<?> renderer : inDimension.values()) return !(renderer instanceof WorldBufferRenderer);
         }
-        return NarutoTV.shaderUsing();
+        return CompatCenter.shaderUsing();
     }
 
     public static void swap() {
         boolean targetIsBuffer = isImageRenderer();
+        Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> swapped = new Object2ObjectOpenHashMap<>();
 
-        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
-            for (Object2ObjectMap.Entry<Vec3, AbstractRenderer<?>> entry : inDimension.object2ObjectEntrySet()) {
-                AbstractRenderer<?> oldRenderer = entry.getValue();
-                BlockScreen screen = ((InWorld) oldRenderer).screen();
-                oldRenderer.shutdown();
-                entry.setValue(targetIsBuffer ? new WorldBufferRenderer(screen) : new WorldImageRenderer(screen));
+        for (Map.Entry<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> dimEntry : RENDERERS.entrySet()) {
+            ResourceLocation dimension = dimEntry.getKey();
+            Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = dimEntry.getValue();
+            for (Map.Entry<Vec3, AbstractRenderer<?>> posEntry : inDimension.entrySet()) {
+                Vec3 center = posEntry.getKey();
+                AbstractRenderer<?> renderer = posEntry.getValue();
+
+                Wall wall = ((InWorld) renderer).wall();
+                LifetimeController life = renderer.life();
+
+                AbstractRenderer<?> newRenderer = targetIsBuffer ? new WorldBufferRenderer(wall) : new WorldImageRenderer(wall);
+
+                swapped.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>()).put(center, newRenderer);
+
+                MediaArgs mediaArgs = renderer.mediaArgs();
+                if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
+
+                renderer.shutdown();
+                newRenderer.setup(life != null ? life.sinceSetupSec() : 0D);
             }
         }
 
-        forEach(renderer -> {
-            BlockScreen screen = ((InWorld) renderer).screen();
-            if (!screen.video.isBlank() && !screen.audio.isBlank()) Sources.cutInLine(Paths.absolute(screen.video), Paths.absolute(screen.audio));
-            renderer.setup(0D);
-        });
+        RENDERERS.clear();
+        RENDERERS.putAll(swapped);
     }
 
     public static void compat() {
@@ -144,15 +156,6 @@ public class ClientRenderers {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull RenderTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.START)) {
-            if (RENDERERS.isEmpty()) return;
-            forEach(AbstractRenderer::render);
-            tickConsumed = false;
-        }
-    }
-
-    @SubscribeEvent
     public static void renderLevel(@NotNull RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         Minecraft minecraft = Minecraft.getInstance();
@@ -166,8 +169,6 @@ public class ClientRenderers {
         Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
 
         if (inDimension == null || inDimension.isEmpty()) return;
-        if (tickConsumed) return;
-        tickConsumed = true;
 
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
@@ -179,14 +180,13 @@ public class ClientRenderers {
             poseStack.translate(-cameraPos.x, - cameraPos.y, - cameraPos.z);
 
             if (renderer instanceof WorldBufferRenderer bufferRenderer) {
-                AbstractGLEngine engine = bufferRenderer.engine();
-                if (engine instanceof WorldGLEngine worldGLEngine) {
-                    worldGLEngine.capture(poseStack, camera);
-                    worldGLEngine.render();
-                    worldGLEngine.deprecate();
-                }
+                bufferRenderer.capture(poseStack, camera);
+                bufferRenderer.render();
+                bufferRenderer.deprecate();
             } else if (renderer instanceof WorldImageRenderer imageRenderer) {
-                imageRenderer.render(poseStack, bufferSource, camera);
+                imageRenderer.capture(poseStack, bufferSource, camera);
+                imageRenderer.render();
+                imageRenderer.deprecate();
             }
 
             poseStack.popPose();

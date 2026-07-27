@@ -1,8 +1,8 @@
 package me.kall.narutotv.impl.world.network.impl;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
-import me.kall.narutotv.impl.world.data.BlockScreen;
-import me.kall.narutotv.impl.world.data.BlockScreens;
+import me.kall.narutotv.impl.world.data.Wall;
+import me.kall.narutotv.impl.world.data.Walls;
 import me.kall.narutotv.impl.world.ext.ScreenLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -11,13 +11,13 @@ import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class Server {
-    public static void cleanScreen(BlockScreen blockScreen, NetworkEvent.@NotNull Context context) {
+    public static void cleanWall(Wall wall, NetworkEvent.@NotNull Context context) {
         ServerPlayer player = context.getSender();
         if (player == null) return;
         ServerLevel level = player.serverLevel();
 
-        LongSet areaInvolved = blockScreen.areaInvolved();
-        LongSet borderInvolved = blockScreen.borderInvolved();
+        LongSet areaInvolved = wall.areaInvolved();
+        LongSet borderInvolved = wall.borderInvolved();
         areaInvolved.removeIf(borderInvolved::contains);
 
         ScreenLevel.setCleaning(level, true);
@@ -25,9 +25,9 @@ public class Server {
         ScreenLevel.setCleaning(level, false);
     }
 
-    public static void updateScreen(BlockScreen blockScreen, NetworkEvent.@NotNull Context context) {
+    public static void updateWall(Wall wall, NetworkEvent.@NotNull Context context) {
         ServerPlayer player = context.getSender();
         if (player == null) return;
-        BlockScreens.get(player.serverLevel()).update(blockScreen);
+        Walls.get(player.serverLevel()).update(wall);
     }
 }

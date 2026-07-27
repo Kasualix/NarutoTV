@@ -1,32 +1,33 @@
 package me.kall.narutotv.impl.qol;
 
+import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
-import net.irisshaders.iris.api.v0.IrisApi;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 
+@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID, value = Dist.CLIENT)
 public class ShaderDetection {
-    public static void register(@NotNull IEventBus forgeBus) {
-        forgeBus.addListener(ShaderDetection::tickClient);
-    }
-
     private static boolean last;
     private static int interval;
 
-    private static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
-        if (!event.phase.equals(TickEvent.Phase.START)) return;
+    @SubscribeEvent
+    public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
+        if (CompatCenter.hasShaderMod() && event.phase.equals(TickEvent.Phase.START)) {
+            if (interval >= 0) {
+                interval--;
+                return;
+            }
 
-        if (interval >= 0) {
-            interval--;
-            return;
+            interval = 10;
+
+            boolean current = CompatCenter.shaderUsing();
+            if (current != last) ClientRenderers.compat();
+
+            last = current;
         }
-
-        interval = 10;
-
-        boolean current = IrisApi.getInstance().isShaderPackInUse();
-        if (current != last) ClientRenderers.compat();
-
-        last = current;
     }
 }

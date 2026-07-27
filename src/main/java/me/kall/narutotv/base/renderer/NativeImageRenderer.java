@@ -5,15 +5,14 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppPaths;
 import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.app.produce.video.ImageFrameProducer;
-import net.minecraft.client.Minecraft;
+import me.kall.narutotv.impl.world.data.client.NarutoTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> {
-    protected @Nullable ResourceLocation textureLocation;
-    protected @Nullable DynamicTexture dynamicTexture;
+    protected final NarutoTexture narutoTexture = new NarutoTexture();
 
     protected abstract @NotNull ResourceLocation setLocation();
 
@@ -24,9 +23,10 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
 
     @Override
     public void update(@Nullable NativeImage frame) {
-        if (frame == null || this.dynamicTexture == null) return;
-        this.dynamicTexture.setPixels(frame);
-        this.dynamicTexture.upload();
+        DynamicTexture dynamicTexture = this.narutoTexture.dynamicTexture;
+        if (frame == null || dynamicTexture == null) return;
+        dynamicTexture.setPixels(frame);
+        dynamicTexture.upload();
         frame.close();
     }
 
@@ -38,18 +38,14 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
         int width = mediaArgs.width();
         int height = mediaArgs.height();
 
-        this.dynamicTexture = new DynamicTexture(width, height, false);
-        this.textureLocation = this.setLocation();
-        Minecraft.getInstance().getTextureManager().register(this.textureLocation, this.dynamicTexture);
+        this.narutoTexture.dynamicTexture = new DynamicTexture(width, height, false);
+        this.narutoTexture.textureLocation = this.setLocation();
+        this.narutoTexture.register();
     }
 
     @Override
     public void shutdown() {
         super.shutdown();
-
-        if (this.dynamicTexture != null) {
-            this.dynamicTexture.close();
-            this.dynamicTexture = null;
-        }
+        this.narutoTexture.close();
     }
 }

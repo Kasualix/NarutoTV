@@ -94,6 +94,10 @@ public final class LifetimeController {
         return System.nanoTime() - this.setupTime.get();
     }
 
+    public double sinceSetupSec() {
+        return (double) this.sinceSetup() / 1_000_000_000.0D;
+    }
+
     public boolean checkUpdate() {
         if (this.paused()) return false;
         long now = System.nanoTime();
@@ -116,9 +120,7 @@ public final class LifetimeController {
     public void tick() {
         if (this.paused()) return;
 
-        if (this.endRestartFunc != null && this.sinceSetup() >= this.duration) {
-            this.endRestartFunc.get().run();
-        }
+        if (this.endRestartFunc != null && this.sinceSetup() >= this.duration) this.endRestartFunc.get().run();
 
         if (this.synchronizeFunc != null && this.lagSpike.compareAndSet(true, false)) {
             long last = this.lastLagSpike.get();
@@ -129,7 +131,7 @@ public final class LifetimeController {
 
             long now = System.nanoTime();
             if (now - last > 2_000_000_000L) {
-                this.synchronizeFunc.get().accept((double) this.sinceSetup() / 1_000_000_000.0);
+                this.synchronizeFunc.get().accept(this.sinceSetupSec());
                 System.err.println("Lag spike is detected. Restarting.");
                 this.lastLagSpike.set(now);
             }

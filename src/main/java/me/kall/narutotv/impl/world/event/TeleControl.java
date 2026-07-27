@@ -6,7 +6,7 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.config.NarutoConfig;
 import me.kall.narutotv.impl.screen.NarutoWorldScreen;
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.data.client.ClientRenderers;
 import me.kall.narutotv.impl.world.ext.InWorld;
 import net.minecraft.client.Minecraft;
@@ -29,7 +29,7 @@ public class TeleControl {
         ClientLevel level = minecraft.level;
         if (player == null || level == null) return;
 
-        if (!RegistryEntry.get(player.getMainHandItem()).equals(NarutoConfig.Client.teleControl())) return;
+        if (!RegistryEntry.get(player.getMainHandItem()).toString().equals(NarutoConfig.teleControl())) return;
         if (!player.isShiftKeyDown()) return;
 
         Vec3 eye = player.getEyePosition();
@@ -38,18 +38,18 @@ public class TeleControl {
         ObjectCollection<AbstractRenderer<?>> renderers = ClientRenderers.getIn(level.dimension().location());
         if (renderers.isEmpty()) return;
 
-        BlockScreen target = null;
+        Wall target = null;
         double minDist = Double.MAX_VALUE;
 
         for (AbstractRenderer<?> renderer : renderers) {
-            BlockScreen screen = ((InWorld)renderer).screen();
-            Vec3 intersection = getIntersection(eye, view, screen);
+            Wall wall = ((InWorld)renderer).wall();
+            Vec3 intersection = getIntersection(eye, view, wall);
             if (intersection == null) continue;
 
             double dist = eye.distanceToSqr(intersection);
             if (dist < minDist) {
                 minDist = dist;
-                target = screen;
+                target = wall;
             }
         }
 
@@ -57,18 +57,18 @@ public class TeleControl {
     }
 
     @Nullable
-    private static Vec3 getIntersection(@NotNull Vec3 origin, @NotNull Vec3 direction, @NotNull BlockScreen screen) {
-        double leftBottomX = screen.leftBottom.getX();
-        double leftBottomY = screen.leftBottom.getY();
-        double leftBottomZ = screen.leftBottom.getZ();
+    private static Vec3 getIntersection(@NotNull Vec3 origin, @NotNull Vec3 direction, @NotNull Wall wall) {
+        double leftBottomX = wall.leftBottom.getX();
+        double leftBottomY = wall.leftBottom.getY();
+        double leftBottomZ = wall.leftBottom.getZ();
 
-        double rightBottomX = screen.rightBottom.getX();
-        double rightBottomY = screen.rightBottom.getY();
-        double rightBottomZ = screen.rightBottom.getZ();
+        double rightBottomX = wall.rightBottom.getX();
+        double rightBottomY = wall.rightBottom.getY();
+        double rightBottomZ = wall.rightBottom.getZ();
 
-        double leftTopX = screen.leftTop.getX();
-        double leftTopY = screen.leftTop.getY();
-        double leftTopZ = screen.leftTop.getZ();
+        double leftTopX = wall.leftTop.getX();
+        double leftTopY = wall.leftTop.getY();
+        double leftTopZ = wall.leftTop.getZ();
 
         double originX = origin.x;
         double originY = origin.y;
@@ -100,10 +100,12 @@ public class TeleControl {
         double denominator = normalX * directionX + normalY * directionY + normalZ * directionZ;
         if (Math.abs(denominator) < 1e-8) return null;
 
-        double t = ((leftBottomX - originX) * normalX + (leftBottomY - originY) * normalY + (leftBottomZ - originZ) * normalZ) / denominator;
-        if (t < 0) return null;
+        double hitDist = ((leftBottomX - originX) * normalX + (leftBottomY - originY) * normalY + (leftBottomZ - originZ) * normalZ) / denominator;
+        if (hitDist < 0) return null;
 
-        Vec3 hit = new Vec3(originX + directionX * t, originY + directionY * t, originZ + directionZ * t);
+        double hitX = originX + directionX * hitDist;
+        double hitY = originY + directionY * hitDist;
+        double hitZ = originZ + directionZ * hitDist;
 
         double rightVecX = rightBottomX - leftBottomX;
         double rightVecY = rightBottomY - leftBottomY;
@@ -117,13 +119,13 @@ public class TeleControl {
 
         double upVecLength = upVecX * upVecX + upVecY * upVecY + upVecZ * upVecZ;
 
-        double toHitX = hit.x - leftBottomX;
-        double toHitY = hit.y - leftBottomY;
-        double toHitZ = hit.z - leftBottomZ;
+        double toHitX = hitX - leftBottomX;
+        double toHitY = hitY - leftBottomY;
+        double toHitZ = hitZ - leftBottomZ;
 
-        double a = (toHitX * rightVecX + toHitY * rightVecY + toHitZ * rightVecZ) / rightVecLength;
-        double b = (toHitX * upVecX + toHitY * upVecY + toHitZ * upVecZ) / upVecLength;
+        double localU = (toHitX * rightVecX + toHitY * rightVecY + toHitZ * rightVecZ) / rightVecLength;
+        double localV = (toHitX * upVecX + toHitY * upVecY + toHitZ * upVecZ) / upVecLength;
 
-        return a >= 0 && a <= 1 && b >= 0 && b <= 1 ? hit : null;
+        return localU >= 0 && localU <= 1 && localV >= 0 && localV <= 1 ? new Vec3(hitX, hitY, hitZ) : null;
     }
 }

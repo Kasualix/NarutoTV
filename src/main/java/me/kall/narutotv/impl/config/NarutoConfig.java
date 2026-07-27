@@ -1,125 +1,88 @@
 package me.kall.narutotv.impl.config;
 
-import com.google.common.base.Predicates;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.impl.config.base.JsonConfig;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Set;
 
 public class NarutoConfig {
-    private static final Logger LOGGER = LogManager.getLogger(NarutoConfig.class);
+    private static final JsonConfig CONFIG = JsonConfig.create(NarutoTV.MOD_ID, "1")
+            .put("displayers", Lists.newArrayList("minecraft:glass"))
+            .put("screenBuilder", "minecraft:stick")
+            .put("muteMusic", true)
+            .put("fadable", true)
+            .put("ticksBeforeFade", 100)
+            .put("audioVolume", 1.0F)
+            .put("teleControlItem", "minecraft:stick")
+            .initialize();
 
-    public static final class Server {
-        private static final ForgeConfigSpec CONFIG;
-        private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DISPLAYERS;
-        private static final ForgeConfigSpec.ConfigValue<? extends String> SCREEN_BUILDER;
+    private static final Set<String> displayers = CONFIG.getSet("displayers", String.class);
+    private static final String builder = CONFIG.getString("screenBuilder");
 
-        static {
-            ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
-            builder.push("NarutoTV");
-            DISPLAYERS = builder.defineList("displayers", Lists.newArrayList("minecraft:glass"), Predicates.alwaysTrue());
-            SCREEN_BUILDER = builder.define("screenBuilder", "minecraft:stick");
-            builder.pop();
-            CONFIG = builder.build();
-        }
+    private static boolean muteMusic = CONFIG.getBoolean("muteMusic");
+    private static boolean fadable = CONFIG.getBoolean("fadable");
+    private static int ticksBeforeFade = CONFIG.getInt("ticksBeforeFade");
+    private static float volume = CONFIG.getFloat("audioVolume");
 
-        private static final Supplier<Set<ResourceLocation>> DISPLAYERS_CACHE = Suppliers.memoize(() -> DISPLAYERS.get().stream().map(ResourceLocation::parse).collect(ObjectOpenHashSet::new, ObjectOpenHashSet::add, ObjectOpenHashSet::addAll));
+    private static final String teleControl = CONFIG.getString("teleControlItem");
 
-        public static void register(@NotNull ModLoadingContext context) {
-            context.registerConfig(ModConfig.Type.SERVER, CONFIG);
-        }
-
-        public static Set<ResourceLocation> displayers() {
-            return DISPLAYERS_CACHE.get();
-        }
-
-        @Contract(" -> new")
-        public static @NotNull ResourceLocation builder() {
-            return ResourceLocation.parse(SCREEN_BUILDER.get());
-        }
+    public static Set<String> displayers() {
+        return displayers;
     }
 
-    public static final class Client {
-        private static final ForgeConfigSpec CONFIG;
-        private static final ForgeConfigSpec.BooleanValue MUTE_MUSIC;
-        private static final ForgeConfigSpec.BooleanValue FADABLE;
-        private static final ForgeConfigSpec.IntValue TICKS_BEFORE_FADE;
-        private static final ForgeConfigSpec.DoubleValue VOLUME;
-        private static final ForgeConfigSpec.ConfigValue<? extends String> TELE_CONTROL;
+    @Contract(" -> new")
+    public static @NotNull String builder() {
+        return builder;
+    }
 
-        static {
-            ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
-            builder.push("NarutoTV");
-            MUTE_MUSIC = builder.comment("Whether to mute the vanilla game music (SoundSource.MUSIC) while NarutoTV video playback is active.").define("muteMusic", true);
-            FADABLE = builder.comment("Whether to gradually fade all the gui elements except the playing video").define("fadable", true);
-            TICKS_BEFORE_FADE = builder.comment("Tick count before all the gui elements get faded. 20 ticks = 1 second").defineInRange("ticksBeforeFade", 200, 0, Integer.MAX_VALUE);
-            VOLUME = builder.comment("The audio volume of screen backgrounds in no-world client gui overlays.").defineInRange("audioVolume", 1.0, 0.0, 1.0);
-            TELE_CONTROL = builder.comment("The item that serves as the remote controller of the block screen you are seeing.").define("teleControl", "minecraft:stick");
-            builder.pop();
-            CONFIG = builder.build();
-        }
+    public static boolean fadable() {
+        return fadable;
+    }
 
-        public static void register(@NotNull ModLoadingContext context) {
-            context.registerConfig(ModConfig.Type.CLIENT, CONFIG);
-        }
+    public static int ticksBeforeFade() {
+        return ticksBeforeFade;
+    }
 
-        public static boolean fadable() {
-            return FADABLE.get();
-        }
+    public static boolean muteMusic() {
+        return muteMusic;
+    }
 
-        public static int ticksBeforeFade() {
-            return TICKS_BEFORE_FADE.get();
-        }
+    public static float volume() {
+        return volume;
+    }
 
-        public static boolean muteMusic() {
-            return MUTE_MUSIC.get();
-        }
+    @Contract(" -> new")
+    public static @NotNull String teleControl() {
+        return teleControl;
+    }
 
-        public static float volume() {
-            return VOLUME.get().floatValue();
-        }
+    public static void fadable(boolean fadable) {
+        if (NarutoConfig.fadable == fadable) return;
+        NarutoConfig.fadable = fadable;
+        CONFIG.put("fadable", fadable).saveToFile();
+    }
 
-        @Contract(" -> new")
-        public static @NotNull ResourceLocation teleControl() {
-            return ResourceLocation.parse(TELE_CONTROL.get());
-        }
+    public static void ticksBeforeFade(int ticksBeforeFade) {
+        if (NarutoConfig.ticksBeforeFade == ticksBeforeFade) return;
+        NarutoConfig.ticksBeforeFade = ticksBeforeFade;
+        CONFIG.put("ticksBeforeFade", ticksBeforeFade).saveToFile();
+    }
 
-        public static void fadable(boolean fadable) {
-            if (FADABLE.get() == fadable) return;
-            FADABLE.set(fadable);
-            CONFIG.save();
-        }
+    public static void muteMusic(boolean muteMusic) {
+        if (NarutoConfig.muteMusic == muteMusic) return;
+        NarutoConfig.muteMusic = muteMusic;
+        CONFIG.put("muteMusic", muteMusic).saveToFile();
+    }
 
-        public static void ticksBeforeFade(int ticksBeforeFade) {
-            if (TICKS_BEFORE_FADE.get() == ticksBeforeFade) return;
-            TICKS_BEFORE_FADE.set(ticksBeforeFade);
-            CONFIG.save();
-        }
+    public static boolean volume(double volume) {
+        if (NarutoConfig.volume == volume) return false;
 
-        public static void muteMusic(boolean muteMusic) {
-            if (MUTE_MUSIC.get() == muteMusic) return;
-            MUTE_MUSIC.set(muteMusic);
-            CONFIG.save();
-        }
+        NarutoConfig.volume = (float) volume;
+        CONFIG.put("audioVolume", volume).saveToFile();
 
-        public static boolean volume(double volume) {
-            if (VOLUME.get() == volume) return false;
-
-            VOLUME.set(volume);
-            CONFIG.save();
-
-            return true;
-        }
+        return true;
     }
 }

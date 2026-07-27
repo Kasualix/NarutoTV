@@ -3,7 +3,7 @@ package me.kall.narutotv.base.renderer.gl;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.impl.world.data.BlockScreen;
+import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.util.NarutoMath;
 import net.minecraft.client.Camera;
 import org.jetbrains.annotations.Contract;
@@ -19,24 +19,14 @@ import static org.lwjgl.opengl.GL30C.*;
 public class WorldGLEngine extends AbstractGLEngine {
     private int mvpUniformLocation;
 
-    private final BlockScreen screen;
+    private final Wall wall;
 
     private final ThreadLocal<PoseStack> poseStack = new ThreadLocal<>();
     private final ThreadLocal<Camera> camera = new ThreadLocal<>();
 
-    public WorldGLEngine(String fragmentSource, String vertexSource, @NotNull BlockScreen screen, MediaArgs mediaArgs) {
+    public WorldGLEngine(String fragmentSource, String vertexSource, @NotNull Wall wall, MediaArgs mediaArgs) {
         super(fragmentSource, vertexSource, mediaArgs);
-        this.screen = screen;
-    }
-
-    public void capture(PoseStack poseStack, Camera camera) {
-        this.poseStack.set(poseStack);
-        this.camera.set(camera);
-    }
-
-    public void deprecate() {
-        this.poseStack.remove();
-        this.camera.remove();
+        this.wall = wall;
     }
 
     @Override
@@ -65,12 +55,12 @@ public class WorldGLEngine extends AbstractGLEngine {
         glBindVertexArray(0);
     }
 
-    public synchronized void render() {
-        PoseStack poseStack = this.poseStack.get();
-        Camera camera = this.camera.get();
+    @Override public void render() {}
+
+    public synchronized void render(PoseStack poseStack, Camera camera) {
         if (this.textures == null || this.program == 0 || this.vertexArray == 0 || camera == null || poseStack == null) return;
 
-        float[] vertexData = initVertexData(NarutoMath.computeCoords(this.screen, camera));
+        float[] vertexData = prepare(NarutoMath.computeCoords(this.wall, camera));
 
         int prevProgram = glGetInteger(GL_CURRENT_PROGRAM);
         int prevVao = glGetInteger(GL_VERTEX_ARRAY_BINDING);
@@ -135,7 +125,7 @@ public class WorldGLEngine extends AbstractGLEngine {
     }
 
     @Contract("_ -> new")
-    private static float @NotNull [] initVertexData(NarutoMath.@NotNull Coords coords) {
+    private static float @NotNull [] prepare(NarutoMath.@NotNull Coords coords) {
         double offsetX = coords.normalX() * 0.1, offsetY = coords.normalY() * 0.1, offsetZ = coords.normalZ() * 0.1;
 
         return new float[]{
