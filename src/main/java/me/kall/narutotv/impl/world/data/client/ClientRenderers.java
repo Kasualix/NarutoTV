@@ -43,7 +43,6 @@ public class ClientRenderers {
     }
 
     public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, double centerX, double centerY, double centerZ) {
-        validateThread();
         Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
         if (inDimension == null || inDimension.isEmpty()) return null;
         return inDimension.get(new Vec3(centerX, centerY, centerZ));
@@ -54,7 +53,6 @@ public class ClientRenderers {
     }
 
     public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, long position) {
-        validateThread();
         Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
         if (inDimension == null || inDimension.isEmpty()) return null;
         for (AbstractRenderer<?> renderer : inDimension.values()) {
@@ -67,7 +65,6 @@ public class ClientRenderers {
     }
 
     public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull ResourceLocation dimension, double centerX, double centerY, double centerZ) {
-        validateThread();
         Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
         if (inDimension == null || inDimension.isEmpty()) return Optional.empty();
         return Optional.ofNullable(inDimension.remove(new Vec3(centerX, centerY, centerZ)));
@@ -83,7 +80,6 @@ public class ClientRenderers {
     }
 
     public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull AbstractRenderer<?> renderer) {
-        validateThread();
         Wall wall = ((InWorld)renderer).wall();
         return Optional.ofNullable(RENDERERS.computeIfAbsent(wall.dimension, key -> new Object2ObjectOpenHashMap<>()).put(new Vec3(wall.centerX, wall.centerY, wall.centerZ), renderer));
     }
@@ -191,9 +187,5 @@ public class ClientRenderers {
 
             poseStack.popPose();
         }
-    }
-
-    private static void validateThread() {
-        if (!Minecraft.getInstance().isSameThread()) throw new UnsupportedOperationException("Invalid thread: " + Thread.currentThread().getName());
     }
 }
