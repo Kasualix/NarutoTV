@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
+import me.kall.narutotv.impl.config.NarutoConfig;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +38,16 @@ public final class FFmpeg {
         return new FFmpeg(absFFmpegPath, absFFprobePath);
     }
 
+    public @NotNull MediaArgs read(@NotNull String absVideoPath, @Nullable String absAudioPath) {
+        System.out.println("Start to probe " + absVideoPath + (absAudioPath != null ? " | " + absAudioPath : "") + " ...");
+        MediaArgs mediaArgs = this.probe(absVideoPath, absAudioPath);
+        System.out.println("MediaArgs initialized: " + mediaArgs.toReadableString());
+        return mediaArgs;
+    }
+
     @Contract("_, _ -> new")
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public @NotNull MediaArgs read(@NotNull String absVideoPath, @Nullable String absAudioPath) {
+    private @NotNull MediaArgs probe(@NotNull String absVideoPath, @Nullable String absAudioPath) {
         String videoJson = Executable.runCommand(new String[]{this.absFFprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absVideoPath}, false);
         if (videoJson == null) throw new RuntimeException("Error generating probe json for " + absVideoPath + ". Using " + this.absFFprobePath + ". Reading log for details.");
 
@@ -80,7 +88,7 @@ public final class FFmpeg {
             int width = Integer.parseInt(widthMatcher.group(1));
             int height = Integer.parseInt(heightMatcher.group(1));
 
-            double scale = Math.min(1.0, Math.min((double) 1920 / width, (double) 1080 / height));
+            double scale = Math.min(1.0, Math.min((double) NarutoConfig.maxWidth() / width, (double) NarutoConfig.maxHeight() / height));
 
             width = ((int) (width * scale)) & ~1;
             height = ((int) (height * scale)) & ~1;

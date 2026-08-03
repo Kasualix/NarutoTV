@@ -1,7 +1,7 @@
 package me.kall.narutotv.mixin.sound;
 
 import me.kall.narutotv.app.util.LifetimeController;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.data.client.ClientWalls;
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,12 +17,12 @@ public abstract class MixinMinecraft {
     @Inject(method = "runTick", at = @At("TAIL"))
     private void checkPause(CallbackInfo ci) {
         if (this.isPaused()) {
-            ClientRenderers.forEach(renderer -> {
+            ClientWalls.forEach(renderer -> {
                 LifetimeController life = renderer.life();
                 if (life != null) life.pause();
             });
         } else {
-            ClientRenderers.forEach(renderer -> {
+            ClientWalls.forEach(renderer -> {
                 LifetimeController life = renderer.life();
                 if (life != null) life.resume();
             });

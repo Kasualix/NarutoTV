@@ -35,53 +35,38 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
-public class ClientRenderers {
-    private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> RENDERERS = new Object2ObjectOpenHashMap<>();
+public class ClientWalls {
+    private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Wall, AbstractRenderer<?>>> DATA = new Object2ObjectOpenHashMap<>();
 
     public static @NotNull ObjectCollection<AbstractRenderer<?>> getIn(ResourceLocation dimension) {
-        return RENDERERS.getOrDefault(dimension, Object2ObjectMaps.emptyMap()).values();
-    }
-
-    public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, double centerX, double centerY, double centerZ) {
-        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
-        if (inDimension == null || inDimension.isEmpty()) return null;
-        return inDimension.get(new Vec3(centerX, centerY, centerZ));
+        return DATA.getOrDefault(dimension, Object2ObjectMaps.emptyMap()).values();
     }
 
     public static @Nullable AbstractRenderer<?> get(@NotNull Wall wall) {
-        return get(wall.dimension, wall.centerX, wall.centerY, wall.centerZ);
+        Object2ObjectMap<Wall, AbstractRenderer<?>> inDimension = DATA.get(wall.dimension);
+        if (inDimension == null) return null;
+        return inDimension.get(wall);
     }
 
     public static @Nullable AbstractRenderer<?> get(ResourceLocation dimension, long position) {
-        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
+        Object2ObjectMap<Wall, AbstractRenderer<?>> inDimension = DATA.get(dimension);
         if (inDimension == null || inDimension.isEmpty()) return null;
-        for (AbstractRenderer<?> renderer : inDimension.values()) {
-            Wall wall = ((InWorld)renderer).wall();
-            if (wall.areaInvolved().contains(position)) {
-                return renderer;
+        for (Map.Entry<Wall, AbstractRenderer<?>> entry : inDimension.entrySet()) {
+            if (entry.getKey().areaInvolved().contains(position)) {
+                return entry.getValue();
             }
         }
         return null;
     }
 
-    public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull ResourceLocation dimension, double centerX, double centerY, double centerZ) {
-        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
-        if (inDimension == null || inDimension.isEmpty()) return Optional.empty();
-        return Optional.ofNullable(inDimension.remove(new Vec3(centerX, centerY, centerZ)));
-    }
-
-    public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull AbstractRenderer<?> renderer) {
-        Wall wall = ((InWorld)renderer).wall();
-        return remove(wall.dimension, wall.centerX, wall.centerY, wall.centerZ);
-    }
-
     public static @NotNull Optional<AbstractRenderer<?>> remove(@NotNull Wall wall) {
-        return remove(wall.dimension, wall.centerX, wall.centerY, wall.centerZ);
+        Object2ObjectMap<Wall, AbstractRenderer<?>> inDimension = DATA.get(wall.dimension);
+        return Optional.ofNullable(inDimension.remove(wall));
     }
 
     public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull AbstractRenderer<?> renderer) {
         Wall wall = ((InWorld)renderer).wall();
-        return Optional.ofNullable(RENDERERS.computeIfAbsent(wall.dimension, key -> new Object2ObjectOpenHashMap<>()).put(new Vec3(wall.centerX, wall.centerY, wall.centerZ), renderer));
+        return Optional.ofNullable(DATA.computeIfAbsent(wall.dimension, key -> new Object2ObjectOpenHashMap<>()).put(wall, renderer));
     }
 
     public static @NotNull Optional<AbstractRenderer<?>> add(@NotNull Wall wall) {
@@ -93,8 +78,8 @@ public class ClientRenderers {
     }
 
     public static boolean isImageRenderer() {
-        if (RENDERERS.isEmpty()) return CompatCenter.shaderUsing();
-        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
+        if (DATA.isEmpty()) return CompatCenter.shaderUsing();
+        for (Object2ObjectMap<Wall, AbstractRenderer<?>> inDimension : DATA.values()) {
             for (AbstractRenderer<?> renderer : inDimension.values()) return !(renderer instanceof WorldBufferRenderer);
         }
         return CompatCenter.shaderUsing();
@@ -102,32 +87,31 @@ public class ClientRenderers {
 
     public static void swap() {
         boolean targetIsBuffer = isImageRenderer();
-        Object2ObjectMap<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> swapped = new Object2ObjectOpenHashMap<>();
+        Object2ObjectMap<ResourceLocation, Object2ObjectMap<Wall, AbstractRenderer<?>>> swapped = new Object2ObjectOpenHashMap<>();
 
-        for (Map.Entry<ResourceLocation, Object2ObjectMap<Vec3, AbstractRenderer<?>>> dimEntry : RENDERERS.entrySet()) {
+        for (Map.Entry<ResourceLocation, Object2ObjectMap<Wall, AbstractRenderer<?>>> dimEntry : DATA.entrySet()) {
             ResourceLocation dimension = dimEntry.getKey();
-            Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = dimEntry.getValue();
-            for (Map.Entry<Vec3, AbstractRenderer<?>> posEntry : inDimension.entrySet()) {
-                Vec3 center = posEntry.getKey();
-                AbstractRenderer<?> renderer = posEntry.getValue();
+            Object2ObjectMap<Wall, AbstractRenderer<?>> inDimension = dimEntry.getValue();
+            for (Map.Entry<Wall, AbstractRenderer<?>> posEntry : inDimension.entrySet()) {
+                Wall wall = posEntry.getKey();
+                AbstractRenderer<?> outdated = posEntry.getValue();
 
-                Wall wall = ((InWorld) renderer).wall();
-                LifetimeController life = renderer.life();
+                LifetimeController life = outdated.life();
 
-                AbstractRenderer<?> newRenderer = targetIsBuffer ? new WorldBufferRenderer(wall) : new WorldImageRenderer(wall);
+                AbstractRenderer<?> latest = targetIsBuffer ? new WorldBufferRenderer(wall) : new WorldImageRenderer(wall);
 
-                swapped.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>()).put(center, newRenderer);
+                swapped.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>()).put(wall, latest);
 
-                MediaArgs mediaArgs = renderer.mediaArgs();
+                MediaArgs mediaArgs = outdated.mediaArgs();
                 if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
 
-                renderer.shutdown();
-                newRenderer.setup(life != null ? life.sinceSetupSec() : 0D);
+                latest.setup(life != null ? life.sinceSetupSec() : 0D);
+                outdated.shutdown();
             }
         }
 
-        RENDERERS.clear();
-        RENDERERS.putAll(swapped);
+        DATA.clear();
+        DATA.putAll(swapped);
     }
 
     public static void compat() {
@@ -136,19 +120,13 @@ public class ClientRenderers {
     }
 
     public static void forEach(@NotNull Consumer<AbstractRenderer<?>> action) {
-        for (Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension : RENDERERS.values()) {
-            for (AbstractRenderer<?> renderer : inDimension.values()) {
-                action.accept(renderer);
-            }
-        }
+        DATA.values().forEach(inDimension -> inDimension.values().forEach(action));
     }
 
     @SubscribeEvent
     public static void logOutClean(ClientPlayerNetworkEvent.LoggingOut event) {
-        Minecraft.getInstance().execute(() -> {
-            forEach(AbstractRenderer::shutdown);
-            RENDERERS.clear();
-        });
+        forEach(AbstractRenderer::shutdown);
+        DATA.clear();
     }
 
     @SubscribeEvent
@@ -162,7 +140,7 @@ public class ClientRenderers {
         if (player == null) return;
 
         ResourceLocation dimension = level.dimension().location();
-        Object2ObjectMap<Vec3, AbstractRenderer<?>> inDimension = RENDERERS.get(dimension);
+        Object2ObjectMap<Wall, AbstractRenderer<?>> inDimension = DATA.get(dimension);
 
         if (inDimension == null || inDimension.isEmpty()) return;
 
@@ -183,6 +161,9 @@ public class ClientRenderers {
                 imageRenderer.capture(poseStack, bufferSource, camera);
                 imageRenderer.render();
                 imageRenderer.deprecate();
+            } else {
+                poseStack.popPose();
+                throw new IllegalArgumentException("Unsupported renderer type: " + renderer.getClass().getSimpleName());
             }
 
             poseStack.popPose();

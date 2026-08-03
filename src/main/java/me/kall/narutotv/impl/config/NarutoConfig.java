@@ -17,6 +17,8 @@ public class NarutoConfig {
             .put("ticksBeforeFade", 100)
             .put("audioVolume", 1.0F)
             .put("teleControlItem", "minecraft:stick")
+            .put("maxVideoWidth", 1920)
+            .put("maxVideoHeight", 1080)
             .initialize();
 
     private static final Set<String> displayers = CONFIG.getSet("displayers", String.class);
@@ -26,6 +28,8 @@ public class NarutoConfig {
     private static boolean fadable = CONFIG.getBoolean("fadable");
     private static int ticksBeforeFade = CONFIG.getInt("ticksBeforeFade");
     private static float volume = CONFIG.getFloat("audioVolume");
+    private static int maxWidth = CONFIG.getInt("maxVideoWidth");
+    private static int maxHeight = CONFIG.getInt("maxVideoHeight");
 
     private static final String teleControl = CONFIG.getString("teleControlItem");
 
@@ -59,6 +63,14 @@ public class NarutoConfig {
         return teleControl;
     }
 
+    public static int maxWidth() {
+        return maxWidth;
+    }
+
+    public static int maxHeight() {
+        return maxHeight;
+    }
+
     public static void fadable(boolean fadable) {
         if (NarutoConfig.fadable == fadable) return;
         NarutoConfig.fadable = fadable;
@@ -84,5 +96,19 @@ public class NarutoConfig {
         CONFIG.put("audioVolume", volume).saveToFile();
 
         return true;
+    }
+
+    public static void maxWidth(int maxWidth) {
+        if (NarutoConfig.maxWidth == maxWidth) return;
+
+        NarutoConfig.maxWidth = maxWidth;
+        CONFIG.put("maxVideoWidth", maxWidth).saveToFile();
+    }
+
+    public static void maxHeight(int maxHeight) {
+        if (NarutoConfig.maxHeight == maxHeight) return;
+
+        NarutoConfig.maxHeight = maxHeight;
+        CONFIG.put("maxVideoHeight", maxHeight).saveToFile();
     }
 }

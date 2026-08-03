@@ -10,7 +10,7 @@ import me.kall.narutotv.impl.gui.NarutoGuiCenter;
 import me.kall.narutotv.impl.screen.NameSetScreen;
 import me.kall.narutotv.impl.screen.NarutoGuiScreen;
 import me.kall.narutotv.impl.screen.NarutoWorldScreen;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.data.client.ClientWalls;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.phys.BlockHitResult;
@@ -81,7 +81,7 @@ public final class PasteListener {
                             ClientLevel level = minecraft.level;
 
                             if (minecraft.hitResult instanceof BlockHitResult target && target.getType().equals(HitResult.Type.BLOCK) && level != null) {
-                                AbstractRenderer<?> renderer = ClientRenderers.get(level.dimension().location(), target.getBlockPos().asLong());
+                                AbstractRenderer<?> renderer = ClientWalls.get(level.dimension().location(), target.getBlockPos().asLong());
                                 if (renderer != null && renderer.isRunning()) renderer.shutdown();
                                 NarutoWorldScreen.sync(videoStr, audioStr);
                             }

@@ -7,7 +7,7 @@ import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.config.NarutoConfig;
 import me.kall.narutotv.impl.screen.NarutoWorldScreen;
 import me.kall.narutotv.impl.world.data.Wall;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.data.client.ClientWalls;
 import me.kall.narutotv.impl.world.ext.InWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -35,7 +35,7 @@ public class TeleControl {
         Vec3 eye = player.getEyePosition();
         Vec3 view = player.getViewVector(minecraft.getPartialTick());
 
-        ObjectCollection<AbstractRenderer<?>> renderers = ClientRenderers.getIn(level.dimension().location());
+        ObjectCollection<AbstractRenderer<?>> renderers = ClientWalls.getIn(level.dimension().location());
         if (renderers.isEmpty()) return;
 
         Wall target = null;

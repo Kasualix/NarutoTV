@@ -9,26 +9,48 @@ import me.kall.narutotv.base.data.Sources;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.screen.NarutoWorldScreen;
 import me.kall.narutotv.impl.world.data.Wall;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.data.client.ClientVideoCapes;
+import me.kall.narutotv.impl.world.data.client.ClientWalls;
+import me.kall.narutotv.impl.world.ext.InWorld;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
-import me.kall.narutotv.impl.world.network.packet.WallUpdatePacket;
+import me.kall.narutotv.impl.world.network.packet.wall.WallUpdatePacket;
 import me.kall.narutotv.impl.world.util.AudioZipGenerator;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
 public class Client {
     public static void removeWall(Wall wall) {
-        ClientRenderers.remove(wall).ifPresent(AbstractRenderer::shutdown);
+        ClientWalls.remove(wall).ifPresent(AbstractRenderer::shutdown);
     }
 
     public static void configureWall(Wall wall) {
         Minecraft.getInstance().setScreen(new NarutoWorldScreen(Minecraft.getInstance().screen, wall));
     }
 
-    public static void addWall(Wall wall) {
-        ClientRenderers.add(wall).ifPresent(AbstractRenderer::shutdown);
+    public static void updateWall(Wall wall) {
+        AbstractRenderer<?> current = ClientWalls.get(wall);
+        if (current == null) return;
+        Wall existing = ((InWorld)current).wall();
+        if (Objects.equals(existing.video, wall.video) && Objects.equals(existing.audio, wall.audio) && existing.localSound.equals(wall.localSound) && wall.volume != existing.volume) {
+            current.setVolume(wall.volume);
+            existing.volume = wall.volume;
+        } else {
+            Sources.cutInLine(NarutoPaths.absolute(wall.video), NarutoPaths.absolute(wall.audio));
+            ClientWalls.add(wall).ifPresent(AbstractRenderer::shutdown);
+            AbstractRenderer<?> updated = ClientWalls.get(wall);
+            assert updated != null;
+            updated.setup(0D);
+        }
+    }
 
-        AbstractRenderer<?> renderer = ClientRenderers.get(wall);
+    public static void addWall(Wall wall) {
+        ClientWalls.add(wall).ifPresent(AbstractRenderer::shutdown);
+
+        AbstractRenderer<?> renderer = ClientWalls.get(wall);
 
         assert renderer != null;
         renderer.setup(0D);
@@ -45,9 +67,9 @@ public class Client {
     public static void syncWalls(@NotNull ObjectCollection<ObjectOpenHashSet<Wall>> walls) {
         walls.forEach(set -> set.forEach(wall -> {
             Runnable validation = () -> {
-                ClientRenderers.add(wall).ifPresent(AbstractRenderer::shutdown);
+                ClientWalls.add(wall).ifPresent(AbstractRenderer::shutdown);
 
-                AbstractRenderer<?> renderer = ClientRenderers.get(wall);
+                AbstractRenderer<?> renderer = ClientWalls.get(wall);
                 assert renderer != null;
 
                 Sources.cutInLine(NarutoPaths.absolute(wall.video), NarutoPaths.absolute(wall.audio));
@@ -68,5 +90,11 @@ public class Client {
                 validation.run();
             }
         }));
+    }
+
+    public static void syncCapes(@NotNull List<UUID> players, @NotNull List<String> capes) {
+        for (int index = 0; index < players.size(); index++) {
+            ClientVideoCapes.register(players.get(index), NarutoPaths.absolute(capes.get(index)));
+        }
     }
 }

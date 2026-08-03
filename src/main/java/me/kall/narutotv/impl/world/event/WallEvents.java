@@ -13,14 +13,15 @@ import me.kall.narutotv.impl.world.data.Walls;
 import me.kall.narutotv.impl.world.data.Displayers;
 import me.kall.narutotv.impl.world.ext.ScreenLevel;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
-import me.kall.narutotv.impl.world.network.packet.WallGuiPacket;
-import me.kall.narutotv.impl.world.network.packet.WallLifePacket;
+import me.kall.narutotv.impl.world.network.packet.wall.WallGuiPacket;
+import me.kall.narutotv.impl.world.network.packet.wall.WallLifePacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -36,7 +37,17 @@ import java.util.UUID;
 public class WallEvents {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> BLOCK_CORNERS = new Object2ObjectOpenHashMap<>();
 
+    private static int interval = 0;
+
     private static final Logger LOGGER = LogManager.getLogger(WallEvents.class);
+
+    @SubscribeEvent
+    public static void tickServer(TickEvent.@NotNull ServerTickEvent event) {
+        if (event.phase.equals(TickEvent.Phase.END)) {
+            if (interval == 0) return;
+            interval--;
+        }
+    }
 
     @SubscribeEvent
     public static void removeScreen(@NotNull BlockChangeEvent event) {
@@ -66,8 +77,11 @@ public class WallEvents {
     public static void buildScreen(PlayerInteractEvent.@NotNull RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!(player.level() instanceof ServerLevel level)) return;
+        if (interval != 0) return;
         if (!player.isShiftKeyDown()) return;
         if (!RegistryEntry.get(event.getItemStack()).toString().equals(NarutoConfig.builder())) return;
+
+        interval = 10;
 
         BlockPos pos = event.getPos();
 

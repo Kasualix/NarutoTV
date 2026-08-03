@@ -108,9 +108,7 @@ public class Sources {
 
         @NotNull
         MediaArgs toMediaArgs() {
-            MediaArgs mediaArgs = AppInstances.ffmpeg().read(this.video, this.audio);
-            System.out.println("MediaArgs initialized: " + mediaArgs.toReadableString());
-            return mediaArgs;
+            return AppInstances.ffmpeg().read(this.video, this.audio);
         }
 
         @Override

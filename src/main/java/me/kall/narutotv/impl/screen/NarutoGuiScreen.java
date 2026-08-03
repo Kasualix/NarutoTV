@@ -26,24 +26,21 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
     Checkbox fadableCheck, muteMusicCheck;
 
     String video, audio;
+    int videoWidth, videoHeight;
 
     public NarutoGuiScreen(@Nullable Screen lastScreen, @NotNull MediaArgs mediaArgs) {
-        this(lastScreen, mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
-    }
-
-    public NarutoGuiScreen(@Nullable Screen lastScreen, String video, String audio) {
         super(SCREEN, lastScreen);
-        this.video = video;
-        this.audio = audio;
+        this.video = mediaArgs.absVideoPath();
+        this.audio = mediaArgs.absAudioPath();
+        this.videoWidth = mediaArgs.width();
+        this.videoHeight = mediaArgs.height();
     }
 
     public static void sync(String video, String audio) {
-        Minecraft.getInstance().execute(() -> {
-            if (Minecraft.getInstance().screen instanceof NarutoGuiScreen screen) {
-                if (screen.videoBox != null) screen.videoBox.setValue(video);
-                if (screen.audioBox != null) screen.audioBox.setValue(audio);
-            }
-        });
+        if (Minecraft.getInstance().screen instanceof NarutoGuiScreen screen) {
+            if (screen.videoBox != null) screen.videoBox.setValue(video);
+            if (screen.audioBox != null) screen.audioBox.setValue(audio);
+        }
     }
 
     @Override
@@ -55,6 +52,8 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
         this.ticksBox = this.initEditBox(centerX, TICKS, String.valueOf(NarutoConfig.ticksBeforeFade()));
         this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(NarutoConfig.volume()));
         this.volumeBox.setFilter(NUMERIC);
+
+        this.initMaxSizeBoxes(centerX);
 
         this.initCheckboxes(centerX);
         this.initRandomButton(centerX);
@@ -105,20 +104,25 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
     protected void onDone() {
         String videoBox = this.videoBox.getValue();
         String audioBox = this.audioBox.getValue();
+        int maxWidthBox = Integer.parseInt(this.maxWidthBox.getValue());
+        int maxHeightBox = Integer.parseInt(this.maxHeightBox.getValue());
 
         MediaArgs current = NarutoGuiCenter.getActive().mediaArgs();
         if (current != null) {
             this.video = current.absVideoPath();
             this.audio = current.absAudioPath();
+            this.videoWidth = current.width();
+            this.videoHeight = current.height();
         }
 
         NarutoConfig.ticksBeforeFade(Integer.parseInt(this.ticksBox.getValue()));
 
-        if (NarutoConfig.volume(Double.parseDouble(this.volumeBox.getValue()))) {
-            NarutoGuiCenter.getActive().setVolume(NarutoConfig.volume());
-        }
+        NarutoConfig.maxWidth(maxWidthBox);
+        NarutoConfig.maxHeight(maxHeightBox);
 
-        if (!videoBox.equals(this.video) || !audioBox.equals(this.audio)) {
+        if (NarutoConfig.volume(Double.parseDouble(this.volumeBox.getValue()))) NarutoGuiCenter.getActive().setVolume(NarutoConfig.volume());
+
+        if (!videoBox.equals(this.video) || !audioBox.equals(this.audio) || maxWidthBox != this.videoWidth || maxHeightBox != this.videoHeight) {
             Sources.cutInLine(videoBox, audioBox);
             NarutoGuiCenter.getActive().shutdown();
         }

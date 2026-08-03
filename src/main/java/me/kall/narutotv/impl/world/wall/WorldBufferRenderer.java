@@ -10,10 +10,13 @@ import me.kall.narutotv.base.renderer.gl.WorldGLEngine;
 import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.ext.InWorld;
 import me.kall.narutotv.impl.world.sound.LocalSoundDelegate;
+import me.kall.narutotv.impl.world.util.NarutoLight;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.ByteBuffer;
 
 public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     private final Wall wall;
@@ -108,6 +111,14 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     @Override
     public Wall wall() {
         return this.wall;
+    }
+
+    @Override
+    public synchronized void update(@Nullable ByteBuffer frame) {
+        MediaArgs mediaArgs = this.mediaArgs();
+        if (frame != null && mediaArgs != null) this.updateLightLevel(NarutoLight.forBuffer(frame, mediaArgs.width(), mediaArgs.height()));
+
+        super.update(frame);
     }
 
     public void render() {

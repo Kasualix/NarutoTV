@@ -1,17 +1,13 @@
-package me.kall.narutotv.impl.world.network.packet.base;
+package me.kall.narutotv.impl.world.network.packet.wall.base;
 
 import me.kall.narutotv.impl.world.data.Wall;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
 public abstract class WallPacket {
-    public static final Logger LOGGER = LogManager.getLogger(WallPacket.class);
-
     protected final Wall wall;
 
     public WallPacket(Wall wall) {

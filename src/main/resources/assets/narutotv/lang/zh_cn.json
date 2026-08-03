@@ -16,6 +16,9 @@
   "box.narutotv.ticks": "淡出前刻数",
   "box.narutotv.name": "命名",
 
+  "box.narutotv.max_width": "限宽",
+  "box.narutotv.max_height": "限高",
+
   "tooltip.narutotv.random": "从尚未播放的来源中随机选取一个。",
   "tooltip.narutotv.clean": "除了边框上的，清除当前方块屏幕中的所有方块。",
   "tooltip.narutotv.swap": "在兼容模式和性能模式之间切换。",

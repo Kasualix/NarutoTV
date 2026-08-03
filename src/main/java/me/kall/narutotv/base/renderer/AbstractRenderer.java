@@ -1,20 +1,27 @@
 package me.kall.narutotv.base.renderer;
 
+import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppPaths;
 import me.kall.narutotv.app.produce.audio.AudioProducer;
 import me.kall.narutotv.app.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.app.util.LifetimeController;
 import me.kall.narutotv.base.data.Sources;
+import me.kall.narutotv.impl.world.ext.InWorld;
+import me.kall.narutotv.impl.world.util.NarutoLight;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractRenderer<T> {
     private final AtomicReference<MediaArgs> mediaArgs = new AtomicReference<>();
     private final AtomicBoolean running = new AtomicBoolean();
+    private final AtomicInteger lightLevel = new AtomicInteger();
+    private final AtomicReference<CompletableFuture<MediaArgs>> prefetched = new AtomicReference<>();
 
     public final AtomicReference<AbstractFrameProducer<T>> video = new AtomicReference<>();
 
@@ -53,7 +60,8 @@ public abstract class AbstractRenderer<T> {
 
     public synchronized void setup(double seekTo) {
         if (this.isRunnable()) {
-            this.mediaArgs.set(this.initMediaArgs());
+            CompletableFuture<MediaArgs> ready = this.prefetched.getAndSet(null);
+            this.mediaArgs.set(ready != null ? ready.join() : this.initMediaArgs());
 
             var video = this.initVideo().setAudioCreation(this::initAudio).setLifeCreation(this::initLife);
             this.video.set(video);
@@ -72,8 +80,20 @@ public abstract class AbstractRenderer<T> {
         var life = this.life();
         if (life != null) life.tick();
 
+        life = this.life();
+        if (life != null) this.prefetch(life);
+
         var video = this.video();
         if (video != null && life != null && life.checkUpdate()) this.update(video.fetch());
+    }
+
+    private void prefetch(@NotNull LifetimeController life) {
+        if (this.prefetched.get() != null) return;
+        if (life.remainingSec() <= 1.0D) {
+            MediaArgs mediaArgs = this.mediaArgs();
+            if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
+            this.prefetched.set(CompletableFuture.supplyAsync(this::initMediaArgs, NarutoTV.io()));
+        }
     }
 
     public synchronized void pause() {
@@ -101,8 +121,10 @@ public abstract class AbstractRenderer<T> {
     }
 
     public synchronized void restart(double seekTo) {
-        MediaArgs mediaArgs = this.mediaArgs();
-        if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
+        if (this.prefetched.get() == null) {
+            MediaArgs mediaArgs = this.mediaArgs();
+            if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
+        }
         this.shutdown();
         this.setup(seekTo);
     }
@@ -155,5 +177,18 @@ public abstract class AbstractRenderer<T> {
             var life = this.life();
             if (audio != null && life != null) audio.setup(life.sinceSetupSec());
         };
+    }
+
+    public int getLightLevel() {
+        return this.lightLevel.get();
+    }
+
+    public void updateLightLevel(int newLevel) {
+        if (this.lightLevel.get() != newLevel) {
+            this.lightLevel.set(newLevel);
+            if (this instanceof InWorld inWorld) {
+                NarutoLight.checkLight(inWorld.wall());
+            }
+        }
     }
 }

@@ -72,7 +72,8 @@ public class Wall {
         this.id = String.valueOf(this.leftBottom.getX()) + this.leftBottom.getY() + this.leftBottom.getZ() +
                 this.rightBottom.getX() + this.rightBottom.getY() + this.rightBottom.getZ() +
                 this.leftTop.getX() + this.leftTop.getY() + this.leftTop.getZ() +
-                this.rightBottom.getX() + this.rightBottom.getY() + this.rightBottom.getZ() + this.dimension.getNamespace() + "_" + this.dimension.getPath();
+                this.rightTop.getX() + this.rightTop.getY() + this.rightTop.getZ() +
+                this.dimension.getNamespace() + "_" + this.dimension.getPath();
     }
 
     public boolean hasLocalSound() {
@@ -235,7 +236,8 @@ public class Wall {
             return axisThickness;
         }
 
-        public double[] getCorners(double camX, double camY, double camZ, Vector3f upVec) {
+        @Contract("_, _, _, _ -> new")
+        public double @NotNull [] getCorners(double camX, double camY, double camZ, Vector3f upVec) {
             double faceX = 0, faceY = 0, faceZ = 0;
             long maxLen = 0;
 

@@ -1,10 +1,10 @@
-package me.kall.narutotv.impl.world.network.packet;
+package me.kall.narutotv.impl.world.network.packet.wall;
 
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import me.kall.narutotv.impl.world.data.Wall;
+import me.kall.narutotv.impl.world.network.NarutoPackets;
 import me.kall.narutotv.impl.world.network.impl.Client;
-import me.kall.narutotv.impl.world.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
@@ -60,7 +60,7 @@ public class WallSyncPacket {
             try {
                 Client.syncWalls(this.walls);
             } catch (Throwable throwable) {
-                WallPacket.LOGGER.error("Error handing ScreenSyncPacket", throwable);
+                NarutoPackets.LOGGER.error("Error handing ScreenSyncPacket", throwable);
             }
         });
     }

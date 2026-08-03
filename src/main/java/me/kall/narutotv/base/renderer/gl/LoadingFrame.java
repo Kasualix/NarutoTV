@@ -18,6 +18,8 @@ public final class LoadingFrame {
 
         ByteBuffer generated = this.toYuv420(this.genImage(width, height));
 
+        if (this.buffer != null) this.buffer.clear();
+
         this.buffer = generated;
         this.width = width;
         this.height = height;

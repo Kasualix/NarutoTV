@@ -23,6 +23,8 @@ public final class AudioProducer extends AbstractProducer {
     private final MediaArgs mediaArgs;
     private final String absFFmpegPath;
 
+    private final AtomicBoolean prepared = new AtomicBoolean();
+
     private AudioProducer(MediaArgs mediaArgs, float volume, String absFFmpegPath) {
         this.volume = new AtomicDouble(volume);
         this.mediaArgs = mediaArgs;
@@ -32,6 +34,10 @@ public final class AudioProducer extends AbstractProducer {
     @Contract("_, _, _ -> new")
     public static @NotNull AudioProducer create(MediaArgs mediaArgs, float volume, String absFFmpegPath) {
         return new AudioProducer(mediaArgs, volume, absFFmpegPath);
+    }
+
+    public boolean prepared() {
+        return this.prepared.get();
     }
 
     public float getVolume() {
@@ -65,34 +71,27 @@ public final class AudioProducer extends AbstractProducer {
             source = AL11.alGenSources();
 
             byte[] bufferArray = new byte[8192];
-            int read;
 
-            while (!this.isCanceled() && (read = input.read(bufferArray)) != -1) {
-                ByteBuffer data = MemoryUtil.memAlloc(read);
-                data.put(bufferArray, 0, read).flip();
+            while (!this.isCanceled()) {
+                int read = input.read(bufferArray);
+                if (read != -1) {
+                    ByteBuffer data = MemoryUtil.memAlloc(read);
+                    data.put(bufferArray, 0, read).flip();
+                    this.prepared.set(true);
 
-                int buffer = AL11.alGenBuffers();
-                AL11.alBufferData(buffer, mediaArgs.openALFormat(), data, mediaArgs.sampleRate());
-                MemoryUtil.memFree(data);
-
-                AL11.alSourceQueueBuffers(source, buffer);
+                    int buffer = AL11.alGenBuffers();
+                    AL11.alBufferData(buffer, mediaArgs.openALFormat(), data, mediaArgs.sampleRate());
+                    MemoryUtil.memFree(data);
+                    AL11.alSourceQueueBuffers(source, buffer);
+                }
 
                 if (this.volumeChanged.compareAndSet(true, false)) AL11.alSourcef(source, AL11.AL_GAIN, this.getVolume());
 
-                if (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
-
                 int processed = AL11.alGetSourcei(source, AL11.AL_BUFFERS_PROCESSED);
                 while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
-            }
 
-            if (!this.isCanceled()) {
-                if (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
-                while (AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) == AL11.AL_PLAYING) {
-                    if (this.isCanceled()) break;
-                    if (this.volumeChanged.compareAndSet(true, false)) AL11.alSourcef(source, AL11.AL_GAIN, this.getVolume());
-                    int processed = AL11.alGetSourcei(source, AL11.AL_BUFFERS_PROCESSED);
-                    while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
-                }
+                int queued = AL11.alGetSourcei(source, AL11.AL_BUFFERS_QUEUED);
+                if (queued > 0 && AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
             }
         } finally {
             if (source != 0) {

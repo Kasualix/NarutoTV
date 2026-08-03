@@ -29,7 +29,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     private final AtomicLong frameIndex = new AtomicLong(), setupTime = new AtomicLong();
     private final AtomicReference<T> lastFrame = new AtomicReference<>();
 
-    private final AtomicBoolean fetchable = new AtomicBoolean();
+    private final AtomicBoolean prepared = new AtomicBoolean();
 
     private final TimeCostDebugger frameReading;
 
@@ -67,7 +67,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     }
 
     public @Nullable T fetch() {
-        if (!this.fetchable.get()) return null;
+        if (!this.prepared.get()) return null;
 
         T lastFrame = this.lastFrame.getAndSet(null);
         if (lastFrame != null) this.recycleFrame(lastFrame);
@@ -114,14 +114,14 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
             this.onFrameCreated(frame.flip(), this.frameIndex.incrementAndGet());
 
-            if (this.frames.remainingCapacity() == 0 && !this.fetchable.get()) {
+            if (this.frames.remainingCapacity() == 0 && !this.prepared.get()) {
                 Double2ObjectFunction<LifetimeController> lifeCreation = this.lifeCreation.getAndSet(null);
                 Double2ObjectFunction<AudioProducer> audioCreation = this.audioCreation.getAndSet(null);
                 if (lifeCreation != null && audioCreation != null) {
                     double setupTime = Double.longBitsToDouble(this.setupTime.get());
                     this.audio.set(audioCreation.apply(setupTime));
                     this.life.set(lifeCreation.apply(setupTime));
-                    this.fetchable.set(true);
+                    this.prepared.set(true);
                 }
             }
         }
@@ -137,7 +137,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         T lastFetched = this.lastFrame.getAndSet(null);
         if (lastFetched != null) this.recycleFrame(lastFetched);
 
-        this.fetchable.set(false);
+        this.prepared.set(false);
         this.life.set(null);
 
         this.frameReading.reset();

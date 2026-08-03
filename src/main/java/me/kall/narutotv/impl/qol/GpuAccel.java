@@ -5,7 +5,7 @@ import me.kall.narutotv.app.util.LifetimeController;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.impl.NarutoProperties;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.data.client.ClientWalls;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -31,7 +31,7 @@ public class GpuAccel {
                 System.setProperty(NarutoProperties.GPU_ACCEL, "");
             }
 
-            ClientRenderers.forEach(renderer -> {
+            ClientWalls.forEach(renderer -> {
                 LifetimeController life = renderer.life();
                 if (life != null) renderer.restart(life.sinceSetupSec());
             });

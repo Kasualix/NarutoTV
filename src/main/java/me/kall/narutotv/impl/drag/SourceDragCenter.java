@@ -6,6 +6,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWDropCallback;
@@ -14,7 +16,7 @@ import org.lwjgl.glfw.GLFWDropCallback;
 public class SourceDragCenter extends GLFWDropCallback {
     private static @Nullable GLFWDropCallback last;
 
-    private final Invoker[] invokers = new Invoker[]{new DragVideoInvoker()};
+    private final Invoker[] invokers = new Invoker[]{new CustomCapeInvoker(), new DragVideoInvoker()};
 
     @SubscribeEvent
     public static void setup(FMLClientSetupEvent event) {
@@ -24,10 +26,14 @@ public class SourceDragCenter extends GLFWDropCallback {
     @Override
     public void invoke(long window, int count, long names) {
         if (last != null) last.invoke(window, count, names);
-        for (Invoker invoker : this.invokers) invoker.invoke(window, count, names);
+        for (Invoker invoker : this.invokers) {
+            if (invoker.invoke(window, count, names)) return;
+        }
     }
 
     public interface Invoker {
-        void invoke(long window, int count, long names);
+        Logger LOGGER = LogManager.getLogger(Invoker.class);
+
+        boolean invoke(long window, int count, long names);
     }
 }

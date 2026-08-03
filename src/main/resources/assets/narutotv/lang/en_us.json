@@ -16,6 +16,9 @@
   "box.narutotv.ticks": "Ticks Before Fade",
   "box.narutotv.name": "Set Name",
 
+  "box.narutotv.max_width": "Width Limit",
+  "box.narutotv.max_height": "Height Limit",
+
   "note.narutotv.confirm": "Press Enter to confirm.",
 
   "tooltip.narutotv.random": "Randomly select one from sources that are not played yet.",

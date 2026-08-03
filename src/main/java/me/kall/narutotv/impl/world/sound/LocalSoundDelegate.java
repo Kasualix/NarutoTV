@@ -49,7 +49,7 @@ public final class LocalSoundDelegate {
     public @Nullable AudioProducer initAudio(double seekTo) {
         if (this.wall.hasLocalSound()) {
             this.localSoundCtrl = new LocalSoundCtrl(this.wall);
-            this.localSoundCtrl.on().accept(0D);
+            this.localSoundCtrl.on().accept(seekTo);
             return null;
         } else {
             return this.superInitAudio.apply(seekTo);

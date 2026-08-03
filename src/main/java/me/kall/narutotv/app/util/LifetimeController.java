@@ -98,6 +98,10 @@ public final class LifetimeController {
         return (double) this.sinceSetup() / 1_000_000_000.0D;
     }
 
+    public double remainingSec() {
+        return (double) (this.duration - this.sinceSetup()) / 1_000_000_000.0D;
+    }
+
     public boolean checkUpdate() {
         if (this.paused()) return false;
         long now = System.nanoTime();
@@ -108,8 +112,7 @@ public final class LifetimeController {
             return true;
         }
 
-        double elapsed = (double) (now - last) * this.fps;
-        if (elapsed >= 1_000_000_000.0) {
+        if (((double) (now - last) * this.fps) >= 1_000_000_000.0D) {
             this.lastFetch.set(now);
             return true;
         }

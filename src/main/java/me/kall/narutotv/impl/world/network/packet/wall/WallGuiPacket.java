@@ -1,20 +1,21 @@
-package me.kall.narutotv.impl.world.network.packet;
+package me.kall.narutotv.impl.world.network.packet.wall;
 
 import me.kall.narutotv.impl.world.data.Wall;
-import me.kall.narutotv.impl.world.network.impl.Server;
-import me.kall.narutotv.impl.world.network.packet.base.WallPacket;
+import me.kall.narutotv.impl.world.network.NarutoPackets;
+import me.kall.narutotv.impl.world.network.impl.Client;
+import me.kall.narutotv.impl.world.network.packet.wall.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class WallUpdatePacket extends WallPacket {
-    public WallUpdatePacket(Wall wall) {
+public class WallGuiPacket extends WallPacket {
+    public WallGuiPacket(Wall wall) {
         super(wall);
     }
 
-    public WallUpdatePacket(@NotNull FriendlyByteBuf buffer) {
+    public WallGuiPacket(@NotNull FriendlyByteBuf buffer) {
         super(buffer);
     }
 
@@ -24,9 +25,9 @@ public class WallUpdatePacket extends WallPacket {
         context.setPacketHandled(true);
         context.enqueueWork(() -> {
             try {
-                Server.updateWall(this.wall, context);
+                Client.configureWall(this.wall);
             } catch (Throwable throwable) {
-                LOGGER.error("Error handling ScreenUpdatePacket", throwable);
+                NarutoPackets.LOGGER.error("Error handling ScreenGuiPacket.", throwable);
             }
         });
     }

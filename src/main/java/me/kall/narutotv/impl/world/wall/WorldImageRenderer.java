@@ -1,5 +1,6 @@
 package me.kall.narutotv.impl.world.wall;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.kall.narutotv.NarutoTV;
@@ -10,6 +11,7 @@ import me.kall.narutotv.base.renderer.NativeImageRenderer;
 import me.kall.narutotv.impl.world.data.Wall;
 import me.kall.narutotv.impl.world.ext.InWorld;
 import me.kall.narutotv.impl.world.sound.LocalSoundDelegate;
+import me.kall.narutotv.impl.world.util.NarutoLight;
 import me.kall.narutotv.impl.world.util.NarutoMath;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -62,6 +64,12 @@ public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void update(@Nullable NativeImage frame) {
+        if (frame != null) this.updateLightLevel(NarutoLight.forImage(frame));
+        super.update(frame);
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.audio.Channel;
 import me.kall.narutotv.impl.gui.NarutoGuiCenter;
-import me.kall.narutotv.impl.world.data.client.ClientRenderers;
+import me.kall.narutotv.impl.world.data.client.ClientWalls;
 import me.kall.narutotv.impl.world.sound.NarutoSound;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -23,11 +23,11 @@ public abstract class MixinSoundEngine {
     private void reloadGuiSound(@NotNull Operation<Void> original) {
         Minecraft.getInstance().execute(() -> {
             NarutoGuiCenter.getActive().pauseAudio().run();
-            ClientRenderers.forEach(renderer -> renderer.pauseAudio().run());
+            ClientWalls.forEach(renderer -> renderer.pauseAudio().run());
         });
         original.call();
         Minecraft.getInstance().execute(() -> {
-            ClientRenderers.forEach(renderer -> renderer.resumeAudio().run());
+            ClientWalls.forEach(renderer -> renderer.resumeAudio().run());
             NarutoGuiCenter.getActive().resumeAudio().run();
         });
     }

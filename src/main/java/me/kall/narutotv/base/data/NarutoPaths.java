@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 
 public class NarutoPaths {
-    public static final Path MODS, GAME, CONFIG, RESOURCEPACKS, SOURCES, COOKIES;
+    public static final Path MODS, GAME, CONFIG, RESOURCEPACKS, SOURCES, COOKIES, CAPES;
 
     static {
         GAME = Path.of(System.getProperty("user.dir"));
@@ -14,6 +14,7 @@ public class NarutoPaths {
         COOKIES = CONFIG.resolve("narutotv-cookies");
         MODS = GAME.resolve("mods");
         RESOURCEPACKS = GAME.resolve("resourcepacks");
+        CAPES = CONFIG.resolve("narutotv-capes");
     }
 
     public static @NotNull String absolute(@NotNull String relativePath) {

@@ -1,5 +1,6 @@
 package me.kall.narutotv.impl.screen;
 
+import me.kall.narutotv.impl.config.NarutoConfig; // 新增
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,6 +26,8 @@ public abstract class AbstractNarutoScreen extends Screen {
     protected static final Component VIDEO = Component.translatable("box.narutotv.video");
     protected static final Component AUDIO = Component.translatable("box.narutotv.audio");
     protected static final Component VOLUME = Component.translatable("box.narutotv.volume");
+    protected static final Component MAX_WIDTH = Component.translatable("box.narutotv.max_width");
+    protected static final Component MAX_HEIGHT = Component.translatable("box.narutotv.max_height");
 
     protected static final Component COMPATIBILITY = Component.translatable("mode.narutotv.compatibility").withStyle(ChatFormatting.GREEN);
     protected static final Component PERFORMANCE = Component.translatable("mode.narutotv.performance").withStyle(ChatFormatting.RED);
@@ -37,6 +40,7 @@ public abstract class AbstractNarutoScreen extends Screen {
     protected final @Nullable Screen lastScreen;
 
     protected EditBox videoBox, audioBox, volumeBox;
+    protected EditBox maxWidthBox, maxHeightBox;
     protected Button randomButton, swapButton, yesButton, noButton;
 
     protected int currentY;
@@ -61,6 +65,24 @@ public abstract class AbstractNarutoScreen extends Screen {
         this.addRenderableWidget(box);
         this.currentY += BOX_HEIGHT + BOX_SPACING;
         return box;
+    }
+
+    protected void initMaxSizeBoxes(int centerX) {
+        int halfWidth = BOX_WIDTH / 2 - 5;
+
+        this.maxWidthBox = new EditBox(this.font, centerX - BOX_WIDTH / 2, this.currentY, halfWidth, BOX_HEIGHT, MAX_WIDTH);
+        this.maxWidthBox.setMaxLength(Integer.MAX_VALUE);
+        this.maxWidthBox.setValue(String.valueOf(NarutoConfig.maxWidth()));
+        this.maxWidthBox.setFilter(NUMERIC);
+        this.addRenderableWidget(this.maxWidthBox);
+
+        this.maxHeightBox = new EditBox(this.font, centerX + 5, this.currentY, halfWidth, BOX_HEIGHT, MAX_HEIGHT);
+        this.maxHeightBox.setMaxLength(Integer.MAX_VALUE);
+        this.maxHeightBox.setValue(String.valueOf(NarutoConfig.maxHeight()));
+        this.maxHeightBox.setFilter(NUMERIC);
+        this.addRenderableWidget(this.maxHeightBox);
+
+        this.currentY += BOX_HEIGHT + BOX_SPACING;
     }
 
     protected void initRandomButton(int centerX) {
@@ -98,8 +120,9 @@ public abstract class AbstractNarutoScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        this.videoBox.tick();
-        this.audioBox.tick();
+        this.renderables.forEach(renderable -> {
+            if (renderable instanceof EditBox editBox) editBox.tick();
+        });
     }
 
     @Override
@@ -112,6 +135,10 @@ public abstract class AbstractNarutoScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, VIDEO, centerX, this.videoBox.getY() - 12, 0xFFFFFF);
         guiGraphics.drawCenteredString(this.font, AUDIO, centerX, this.audioBox.getY() - 12, 0xFFFFFF);
         guiGraphics.drawCenteredString(this.font, VOLUME, centerX, this.volumeBox.getY() - 12, 0xFFFFFF);
+
+        guiGraphics.drawCenteredString(this.font, MAX_WIDTH, this.maxWidthBox.getX() + this.maxWidthBox.getWidth() / 2, this.maxWidthBox.getY() - 12, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, MAX_HEIGHT, this.maxHeightBox.getX() + this.maxHeightBox.getWidth() / 2, this.maxHeightBox.getY() - 12, 0xFFFFFF);
+
         this.onTitles(guiGraphics, centerX);
 
         if (this.randomButton.isHovered()) guiGraphics.renderTooltip(this.font, RANDOM_TOOLTIP, mouseX, mouseY);
