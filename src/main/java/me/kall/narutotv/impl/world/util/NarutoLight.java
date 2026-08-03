@@ -2,9 +2,12 @@ package me.kall.narutotv.impl.world.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import me.kall.narutotv.impl.world.data.Wall;
+import me.kall.narutotv.mixin.context.NativeImageAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.NotNull;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
@@ -24,22 +27,24 @@ public class NarutoLight {
         return Math.min(15, Math.max(0, (int) Math.round((avgLuma / 255.0) * 15)));
     }
 
-    public static int forImage(NativeImage image) {
+    public static int forImage(@NotNull NativeImage image) {
+        long pixels = ((NativeImageAccessor)(Object)image).getPixels();
+
         int width = image.getWidth();
         int height = image.getHeight();
+
         long sum = 0;
         int samples = 0;
         int step = 8;
 
         for (int x = 0; x < width; x += step) {
             for (int y = 0; y < height; y += step) {
-                int pixel = image.getPixelRGBA(x, y);
+                int pixel = MemoryUtil.memGetInt(pixels + (x + (long)y * width) * 4L);
                 int r = (pixel) & 0xFF;
                 int g = (pixel >> 8) & 0xFF;
                 int b = (pixel >> 16) & 0xFF;
 
-                double luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                sum += (long) luminance;
+                sum += (long) (0.2126 * r + 0.7152 * g + 0.0722 * b);
                 samples++;
             }
         }

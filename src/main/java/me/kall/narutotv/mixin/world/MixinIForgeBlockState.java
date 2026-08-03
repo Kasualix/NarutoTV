@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 public interface MixinIForgeBlockState {
     /**
      * @author Kall
-     * @reason Light Wall
+     * @reason Light walls
      */
     @Overwrite(remap = false)
     default int getLightEmission(BlockGetter level, BlockPos pos) {
