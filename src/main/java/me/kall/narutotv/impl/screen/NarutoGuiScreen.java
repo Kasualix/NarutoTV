@@ -46,9 +46,7 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
 
         this.videoBox = this.initEditBox(centerX, VIDEO, this.video);
         this.audioBox = this.initEditBox(centerX, AUDIO, this.audio);
-        this.ticksBox = this.initEditBox(centerX, TICKS, String.valueOf(NarutoConfig.ticksBeforeFade()));
-        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(NarutoConfig.volume()));
-        this.volumeBox.setFilter(NUMERIC);
+        this.initTicksAndVolumeBoxes(centerX);
 
         this.initMaxSizeBoxes(centerX);
 
@@ -56,6 +54,13 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
         this.initRandomButton(centerX);
         this.initSwapButton(centerX, NarutoGuiCenter::swap);
         this.initConfirmButtons(centerX);
+    }
+
+    void initTicksAndVolumeBoxes(int centerX) {
+        this.ticksBox = this.initHalfEditBox(centerX - BOX_WIDTH / 2, TICKS, String.valueOf(NarutoConfig.ticksBeforeFade()));
+        this.volumeBox = this.initHalfEditBox(centerX + 5, VOLUME, String.valueOf(NarutoConfig.volume()));
+        this.volumeBox.setFilter(NUMERIC);
+        this.currentY += BOX_HEIGHT + BOX_SPACING;
     }
 
     void initCheckboxes(int centerX) {
@@ -134,7 +139,7 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
 
     @Override
     protected void onTitles(@NotNull GuiGraphics guiGraphics, int centerX) {
-        guiGraphics.drawCenteredString(this.font, TICKS, centerX, this.ticksBox.getY() - 12, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, TICKS, this.ticksBox.getX() + this.ticksBox.getWidth() / 2, this.ticksBox.getY() - 12, 0xFFFFFF);
     }
 
     @Override

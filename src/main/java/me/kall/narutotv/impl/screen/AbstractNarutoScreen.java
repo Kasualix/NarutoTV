@@ -93,8 +93,20 @@ public abstract class AbstractNarutoScreen extends Screen {
         return box;
     }
 
+    protected EditBox initHalfEditBox(int x, Component label, String initialValue) {
+        EditBox box = new EditBox(this.font, x, this.currentY, halfBoxWidth(), BOX_HEIGHT, label);
+        box.setMaxLength(Integer.MAX_VALUE);
+        box.setValue(initialValue);
+        this.addRenderableWidget(box);
+        return box;
+    }
+
+    protected static int halfBoxWidth() {
+        return BOX_WIDTH / 2 - 5;
+    }
+
     protected void initMaxSizeBoxes(int centerX) {
-        int halfWidth = BOX_WIDTH / 2 - 5;
+        int halfWidth = halfBoxWidth();
 
         this.maxWidthBox = new EditBox(this.font, centerX - BOX_WIDTH / 2, this.currentY, halfWidth, BOX_HEIGHT, MAX_WIDTH);
         this.maxWidthBox.setMaxLength(Integer.MAX_VALUE);
@@ -113,15 +125,14 @@ public abstract class AbstractNarutoScreen extends Screen {
 
     protected void initRandomButton(int centerX) {
         this.randomButton = Button.builder(RANDOM, button -> this.onRandom())
-                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH * 2 + 10, BUTTON_HEIGHT)
+                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT)
                 .build();
         this.addRenderableWidget(this.randomButton);
-        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
     }
 
     protected void initSwapButton(int centerX, Runnable onSwap) {
         this.swapButton = Button.builder(SWAP, button -> onSwap.run())
-                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH * 2 + 10, BUTTON_HEIGHT)
+                .bounds(centerX + 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT)
                 .build();
         this.addRenderableWidget(this.swapButton);
         this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
@@ -161,7 +172,7 @@ public abstract class AbstractNarutoScreen extends Screen {
 
         guiGraphics.drawCenteredString(this.font, VIDEO, centerX, this.videoBox.getY() - 12, 0xFFFFFF);
         guiGraphics.drawCenteredString(this.font, AUDIO, centerX, this.audioBox.getY() - 12, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, VOLUME, centerX, this.volumeBox.getY() - 12, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, VOLUME, this.volumeBox.getX() + this.volumeBox.getWidth() / 2, this.volumeBox.getY() - 12, 0xFFFFFF);
 
         guiGraphics.drawCenteredString(this.font, MAX_WIDTH, this.maxWidthBox.getX() + this.maxWidthBox.getWidth() / 2, this.maxWidthBox.getY() - 12, 0xFFFFFF);
         guiGraphics.drawCenteredString(this.font, MAX_HEIGHT, this.maxHeightBox.getX() + this.maxHeightBox.getWidth() / 2, this.maxHeightBox.getY() - 12, 0xFFFFFF);
