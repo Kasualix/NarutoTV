@@ -6,6 +6,7 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.app.file.AppInstances;
 import me.kall.narutotv.app.util.LifetimeController;
+import me.kall.narutotv.base.data.NarutoPaths;
 import me.kall.narutotv.base.renderer.AbstractRenderer;
 import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.impl.world.cape.CapeBufferRenderer;
@@ -47,7 +48,7 @@ public class ClientVideoCapes {
 
                     ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "cape_" + System.currentTimeMillis() + "_" + System.nanoTime());
                     DATA.put(uuid, new VideoCape(mediaArgs, NarutoTexture.of(textureLocation, new DynamicTexture(256, 128, false))));
-                    NarutoPackets.INSTANCE.sendToServer(new CapeSavePacket(uuid, absVideoPath));
+                    NarutoPackets.INSTANCE.sendToServer(new CapeSavePacket(uuid, NarutoPaths.relConfig(absVideoPath)));
                 }, Minecraft.getInstance());
     }
 

@@ -39,7 +39,7 @@ public class Client {
             current.setVolume(wall.volume);
             existing.volume = wall.volume;
         } else {
-            Sources.cutInLine(NarutoPaths.absolute(wall.video), NarutoPaths.absolute(wall.audio));
+            Sources.cutInLine(NarutoPaths.absConfig(wall.video), NarutoPaths.absConfig(wall.audio));
             ClientWalls.add(wall).ifPresent(AbstractRenderer::shutdown);
             AbstractRenderer<?> updated = ClientWalls.get(wall);
             assert updated != null;
@@ -58,8 +58,8 @@ public class Client {
         MediaArgs mediaArgs = renderer.mediaArgs();
         assert mediaArgs != null;
 
-        wall.video = NarutoPaths.relative(mediaArgs.absVideoPath());
-        wall.audio = NarutoPaths.relative(mediaArgs.absAudioPath());
+        wall.video = NarutoPaths.relConfig(mediaArgs.absVideoPath());
+        wall.audio = NarutoPaths.relConfig(mediaArgs.absAudioPath());
 
         NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(wall));
     }
@@ -72,14 +72,14 @@ public class Client {
                 AbstractRenderer<?> renderer = ClientWalls.get(wall);
                 assert renderer != null;
 
-                Sources.cutInLine(NarutoPaths.absolute(wall.video), NarutoPaths.absolute(wall.audio));
+                Sources.cutInLine(NarutoPaths.absConfig(wall.video), NarutoPaths.absConfig(wall.audio));
 
                 renderer.shutdown();
                 renderer.setup(0D);
             };
 
             if (wall.hasLocalSound()) {
-                AppInstances.ffmpeg().convertAudio(NarutoPaths.absolute(wall.audio)).whenCompleteAsync((converted, throwable) -> {
+                AppInstances.ffmpeg().convertAudio(NarutoPaths.absConfig(wall.audio)).whenCompleteAsync((converted, throwable) -> {
                     if (throwable != null) {
                         throwable.printStackTrace(System.err);
                         throw new RuntimeException(throwable);
@@ -94,7 +94,7 @@ public class Client {
 
     public static void syncCapes(@NotNull List<UUID> players, @NotNull List<String> capes) {
         for (int index = 0; index < players.size(); index++) {
-            ClientVideoCapes.register(players.get(index), NarutoPaths.absolute(capes.get(index)));
+            ClientVideoCapes.register(players.get(index), NarutoPaths.absConfig(capes.get(index)));
         }
     }
 }

@@ -41,6 +41,7 @@ public class DragVideoInvoker implements SourceDragCenter.Invoker {
                 Files.createDirectories(dir);
                 Path target = dir.resolve("video." + FileNameUtils.getExtension(source.getName()));
 
+                if (Files.exists(target)) Files.delete(target);
                 FileUtils.copyFile(source, target.toFile());
 
                 return target.toString();

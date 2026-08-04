@@ -23,8 +23,6 @@ public final class AudioProducer extends AbstractProducer {
     private final MediaArgs mediaArgs;
     private final String absFFmpegPath;
 
-    private final AtomicBoolean prepared = new AtomicBoolean();
-
     private AudioProducer(MediaArgs mediaArgs, float volume, String absFFmpegPath) {
         this.volume = new AtomicDouble(volume);
         this.mediaArgs = mediaArgs;
@@ -34,10 +32,6 @@ public final class AudioProducer extends AbstractProducer {
     @Contract("_, _, _ -> new")
     public static @NotNull AudioProducer create(MediaArgs mediaArgs, float volume, String absFFmpegPath) {
         return new AudioProducer(mediaArgs, volume, absFFmpegPath);
-    }
-
-    public boolean prepared() {
-        return this.prepared.get();
     }
 
     public float getVolume() {
@@ -77,7 +71,6 @@ public final class AudioProducer extends AbstractProducer {
                 if (read != -1) {
                     ByteBuffer data = MemoryUtil.memAlloc(read);
                     data.put(bufferArray, 0, read).flip();
-                    this.prepared.set(true);
 
                     int buffer = AL11.alGenBuffers();
                     AL11.alBufferData(buffer, mediaArgs.openALFormat(), data, mediaArgs.sampleRate());

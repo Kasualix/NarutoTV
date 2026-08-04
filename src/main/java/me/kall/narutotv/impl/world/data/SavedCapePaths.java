@@ -3,7 +3,6 @@ package me.kall.narutotv.impl.world.data;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.base.data.NarutoPaths;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
 import me.kall.narutotv.impl.world.network.packet.cape.CapeSyncPacket;
 import net.minecraft.nbt.CompoundTag;
@@ -26,8 +25,9 @@ public class SavedCapePaths extends SavedData {
 
     private final Object2ObjectMap<UUID, String> data = new Object2ObjectOpenHashMap<>();
 
-    public void add(UUID player, String absVideoPath) {
-        this.data.put(player, NarutoPaths.relative(absVideoPath));
+    public void add(UUID player, String relPath) {
+        this.data.put(player, relPath);
+        this.setDirty();
     }
 
     public static @NotNull SavedCapePaths load(@NotNull CompoundTag tag) {

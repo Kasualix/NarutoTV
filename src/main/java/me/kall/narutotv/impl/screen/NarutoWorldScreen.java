@@ -52,8 +52,8 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     protected void initWidgets() {
         int centerX = this.width / 2;
 
-        this.videoBox = this.initEditBox(centerX, VIDEO, NarutoPaths.absolute(this.wall.video));
-        this.audioBox = this.initEditBox(centerX, AUDIO, NarutoPaths.absolute(this.wall.audio));
+        this.videoBox = this.initEditBox(centerX, VIDEO, NarutoPaths.absConfig(this.wall.video));
+        this.audioBox = this.initEditBox(centerX, AUDIO, NarutoPaths.absConfig(this.wall.audio));
         this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(this.wall.volume));
         this.volumeBox.setFilter(NUMERIC);
 
@@ -159,8 +159,8 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     }
 
     private void applyDone(String absVideo, String absAudio, ResourceLocation localSound, float newVolume) {
-        this.wall.video = NarutoPaths.relative(absVideo);
-        this.wall.audio = NarutoPaths.relative(absAudio);
+        this.wall.video = NarutoPaths.relConfig(absVideo);
+        this.wall.audio = NarutoPaths.relConfig(absAudio);
         this.wall.localSound = localSound;
         this.wall.volume = newVolume;
 

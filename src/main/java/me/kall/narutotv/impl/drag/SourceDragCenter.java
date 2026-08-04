@@ -27,7 +27,7 @@ public class SourceDragCenter extends GLFWDropCallback {
     public void invoke(long window, int count, long names) {
         if (last != null) last.invoke(window, count, names);
         for (Invoker invoker : this.invokers) {
-            if (invoker.invoke(window, count, names)) return;
+            if (invoker.invoke(window, count, names)) break;
         }
     }
 

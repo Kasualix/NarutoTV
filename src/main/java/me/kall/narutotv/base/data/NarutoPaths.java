@@ -17,12 +17,12 @@ public class NarutoPaths {
         CAPES = CONFIG.resolve("narutotv-capes");
     }
 
-    public static @NotNull String absolute(@NotNull String relativePath) {
+    public static @NotNull String absConfig(@NotNull String relativePath) {
         if (relativePath.isBlank()) return "";
         return CONFIG.resolve(relativePath.replace('\\', '/')).normalize().toString();
     }
 
-    public static @NotNull String relative(@NotNull String absolutePath) {
+    public static @NotNull String relConfig(@NotNull String absolutePath) {
         if (absolutePath.isBlank()) return "";
 
         Path target = Path.of(absolutePath).normalize();

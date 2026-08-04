@@ -1,6 +1,5 @@
 package me.kall.narutotv.impl.world.network.packet.cape;
 
-import me.kall.narutotv.base.data.NarutoPaths;
 import me.kall.narutotv.impl.world.data.SavedCapePaths;
 import me.kall.narutotv.impl.world.network.NarutoPackets;
 import net.minecraft.network.FriendlyByteBuf;
@@ -13,11 +12,11 @@ import java.util.function.Supplier;
 
 public class CapeSavePacket {
     private final UUID player;
-    private final String absVideoPath;
+    private final String relPath;
 
-    public CapeSavePacket(UUID player, String absVideoPath) {
+    public CapeSavePacket(UUID player, String relPath) {
         this.player = player;
-        this.absVideoPath = absVideoPath;
+        this.relPath = relPath;
     }
 
     public CapeSavePacket(@NotNull FriendlyByteBuf buffer) {
@@ -26,7 +25,7 @@ public class CapeSavePacket {
 
     public void encode(@NotNull FriendlyByteBuf buffer) {
         buffer.writeUUID(this.player);
-        buffer.writeUtf(this.absVideoPath);
+        buffer.writeUtf(this.relPath);
     }
 
     public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
@@ -36,7 +35,7 @@ public class CapeSavePacket {
             try {
                 ServerPlayer sender = context.getSender();
                 if (sender == null) return;
-                SavedCapePaths.get(sender.serverLevel()).add(this.player, NarutoPaths.relative(this.absVideoPath));
+                SavedCapePaths.get(sender.serverLevel()).add(this.player, this.relPath);
             } catch (Throwable throwable) {
                 NarutoPackets.LOGGER.error("Error handling CapeSavePacket", throwable);
             }
