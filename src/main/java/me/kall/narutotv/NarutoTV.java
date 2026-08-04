@@ -10,7 +10,7 @@ public final class NarutoTV {
     public static final String MOD_ID = "narutotv";
 
     private static final ExecutorService IO_WORKER = Executors.newSingleThreadExecutor(task -> {
-        Thread thread = new Thread(task, "NarutoIOWorker");
+        Thread thread = new Thread(task, "NarutoFileTasks");
         thread.setDaemon(true);
         return thread;
     });

@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 public final class LoadingFrame {
-    private static final String TEXT = "Video Loading...";
+    private static final String TEXT = "Loading...";
 
     private int width;
     private int height;
