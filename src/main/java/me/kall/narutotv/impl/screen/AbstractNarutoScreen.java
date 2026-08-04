@@ -4,8 +4,10 @@ import me.kall.narutotv.impl.config.NarutoConfig; // 新增
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +47,8 @@ public abstract class AbstractNarutoScreen extends Screen {
 
     protected int currentY;
 
+    private int offset;
+
     protected AbstractNarutoScreen(Component title, @Nullable Screen lastScreen) {
         super(title);
         this.lastScreen = lastScreen;
@@ -52,11 +56,33 @@ public abstract class AbstractNarutoScreen extends Screen {
 
     @Override
     protected void init() {
+        this.offset = 0;
         this.currentY = 25;
         this.initWidgets();
+        this.offset = this.clampOffset();
     }
 
     protected abstract void initWidgets();
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        int lastOffset = this.offset;
+        this.offset -= (int) (delta * 20D);
+        this.offset = this.clampOffset();
+
+        int deltaY = lastOffset - this.offset;
+        if (delta != 0) {
+            for (Renderable renderable : this.renderables) {
+                if (renderable instanceof AbstractWidget widget) widget.setY(widget.getY() + deltaY);
+            }
+        }
+
+        return super.mouseScrolled(mouseX, mouseY, delta);
+    }
+
+    private int clampOffset() {
+        return Math.max(0, Math.min(this.offset, Math.max(0, this.currentY - this.height + 10)));
+    }
 
     protected EditBox initEditBox(int centerX, Component label, String initialValue) {
         EditBox box = new EditBox(this.font, centerX - BOX_WIDTH / 2, this.currentY, BOX_WIDTH, BOX_HEIGHT, label);
@@ -111,6 +137,7 @@ public abstract class AbstractNarutoScreen extends Screen {
                 .bounds(centerX + 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT)
                 .build();
         this.addRenderableWidget(this.noButton);
+        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
     }
 
     protected abstract void onRandom();

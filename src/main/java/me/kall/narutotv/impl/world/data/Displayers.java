@@ -40,7 +40,7 @@ public class Displayers extends ChunkData.BlockData {
 
     @Override
     public @Nullable Predicate<BlockState> validation() {
-        return null;
+        return Displayers::isDisplayer;
     }
 
     public static @NotNull ChunkData<Long, BlockState> get(ServerLevel level) {
