@@ -39,14 +39,14 @@ public final class NarutoGuiCenter {
 
         AbstractRenderer<?> renderer = ACTIVE.get();
 
-        if (!renderer.isRunning()) return;
+        if (!renderer.isRunning) return;
 
         if (interval > 0) {
             interval--;
             return;
         }
 
-        MediaArgs mediaArgs = renderer.mediaArgs();
+        MediaArgs mediaArgs = renderer.mediaArgs;
         if (mediaArgs == null) return;
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -72,7 +72,7 @@ public final class NarutoGuiCenter {
 
     public static synchronized void swap() {
         boolean isImageRenderer = isImageRenderer();
-        MediaArgs mediaArgs = isImageRenderer ? NATIVE_IMAGE.mediaArgs() : BYTE_BUFFER.mediaArgs();
+        MediaArgs mediaArgs = isImageRenderer ? NATIVE_IMAGE.mediaArgs : BYTE_BUFFER.mediaArgs;
         if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
         ACTIVE.set(isImageRenderer ? BYTE_BUFFER : NATIVE_IMAGE);
         NATIVE_IMAGE.shutdown();

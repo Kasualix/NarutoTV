@@ -55,7 +55,7 @@ public class NarutoEarlyRenderer extends ByteBufferRenderer {
                         gl_Position = vec4(Position, 0.0, 1.0);
                     }
                     """;
-        return new GuiGLEngine(fragmentSource, vertexSource, this.mediaArgs());
+        return new GuiGLEngine(fragmentSource, vertexSource, this.mediaArgs);
     }
 
     @Override

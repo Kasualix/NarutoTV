@@ -35,7 +35,6 @@ public abstract class AbstractProducer {
         ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
             Thread thread = new Thread(task, this.getClass().getSimpleName() + "_" + System.nanoTime());
             thread.setDaemon(true);
-            thread.setPriority(Thread.MAX_PRIORITY);
             return thread;
         });
 

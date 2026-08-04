@@ -73,7 +73,7 @@ public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
     }
 
     @Override
-    public synchronized void render() {
+    public void render() {
         PoseStack poseStack = this.poseStack.get();
         MultiBufferSource.BufferSource bufferSource = this.bufferSource.get();
         Camera camera = this.camera.get();
@@ -119,7 +119,7 @@ public class WorldImageRenderer extends NativeImageRenderer implements InWorld {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public void shutdown() {
         super.shutdown();
         this.soundDelegate.shutdown();
     }

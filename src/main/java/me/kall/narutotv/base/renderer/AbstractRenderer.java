@@ -13,38 +13,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractRenderer<T> {
-    private final AtomicReference<MediaArgs> mediaArgs = new AtomicReference<>();
-    private final AtomicBoolean running = new AtomicBoolean();
-    private final AtomicInteger lightLevel = new AtomicInteger();
-    private final AtomicReference<CompletableFuture<MediaArgs>> prefetched = new AtomicReference<>();
+    public MediaArgs mediaArgs;
+    public boolean isRunning;
+    public int lightLevel;
+    public AbstractFrameProducer<T> video;
 
-    public final AtomicReference<AbstractFrameProducer<T>> video = new AtomicReference<>();
-
-    public @Nullable MediaArgs mediaArgs() {
-        return this.mediaArgs.get();
-    }
-
-    public @Nullable AbstractFrameProducer<T> video() {
-        return this.video.get();
-    }
+    private CompletableFuture<MediaArgs> prefetched;
 
     public @Nullable AudioProducer audio() {
-        var video = this.video();
-        return video == null ? null : video.audio();
+        return this.video == null ? null : this.video.audio();
     }
 
     public @Nullable LifetimeController life() {
-        var video = this.video();
-        return video == null ? null : video.life();
-    }
-
-    public boolean isRunning() {
-        return this.running.get();
+        return this.video == null ? null : this.video.life();
     }
 
     //----我----是----华----丽----的----分----割----线----
@@ -58,24 +41,25 @@ public abstract class AbstractRenderer<T> {
 
     public abstract void update(T frame);
 
-    public synchronized void setup(double seekTo) {
+    public void setup(double seekTo) {
         if (this.isRunnable()) {
-            CompletableFuture<MediaArgs> ready = this.prefetched.getAndSet(null);
-            this.mediaArgs.set(ready != null ? ready.join() : this.initMediaArgs());
+            CompletableFuture<MediaArgs> ready = this.prefetched;
+            this.prefetched = null;
+            this.mediaArgs = ready != null ? ready.join() : this.initMediaArgs();
 
             var video = this.initVideo().setAudioCreation(this::initAudio).setLifeCreation(this::initLife);
-            this.video.set(video);
+            this.video = video;
             video.setup(seekTo);
 
             this.onSetup(seekTo);
 
-            this.running.set(true);
+            this.isRunning = true;
         }
     }
 
-    public synchronized void render() {
+    public void render() {
         if (!this.isRunnable()) return;
-        if (!this.isRunning()) this.setup(0D);
+        if (!this.isRunning) this.setup(0D);
 
         var life = this.life();
         if (life != null) life.tick();
@@ -83,46 +67,46 @@ public abstract class AbstractRenderer<T> {
         life = this.life();
         if (life != null) this.prefetch(life);
 
-        var video = this.video();
+        var video = this.video;
         if (video != null && life != null && life.checkUpdate()) this.update(video.fetch());
     }
 
     private void prefetch(@NotNull LifetimeController life) {
-        if (this.prefetched.get() != null) return;
+        if (this.prefetched != null) return;
         if (life.remainingSec() <= 1.0D) {
-            MediaArgs mediaArgs = this.mediaArgs();
+            MediaArgs mediaArgs = this.mediaArgs;
             if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
-            this.prefetched.set(CompletableFuture.supplyAsync(this::initMediaArgs, NarutoTV.io()));
+            this.prefetched = CompletableFuture.supplyAsync(this::initMediaArgs, NarutoTV.io());
         }
     }
 
-    public synchronized void pause() {
+    public void pause() {
         LifetimeController life = this.life();
         if (life != null) life.pause();
         this.pauseAudio();
     }
 
-    @SuppressWarnings("unused")
-    public synchronized void resume() {
+    public void resume() {
         LifetimeController life = this.life();
         if (life != null) life.resume();
         this.resumeAudio();
     }
 
-    public synchronized void shutdown() {
-        this.running.set(false);
+    public void shutdown() {
+        this.isRunning = false;
 
-        var video = this.video.getAndSet(null);
+        var video = this.video;
+        this.video = null;
         if (video != null) video.shutdown();
     }
 
-    public synchronized void restart() {
+    public void restart() {
         this.restart(0D);
     }
 
-    public synchronized void restart(double seekTo) {
-        if (this.prefetched.get() == null) {
-            MediaArgs mediaArgs = this.mediaArgs();
+    public void restart(double seekTo) {
+        if (this.prefetched == null) {
+            MediaArgs mediaArgs = this.mediaArgs;
             if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
         }
         this.shutdown();
@@ -134,7 +118,7 @@ public abstract class AbstractRenderer<T> {
     public abstract float initVolume();
 
     public @Nullable LifetimeController initLife(double seekTo) {
-        MediaArgs mediaArgs = this.mediaArgs();
+        MediaArgs mediaArgs = this.mediaArgs;
         if (mediaArgs == null) return null;
         return LifetimeController.create(System.nanoTime(), mediaArgs.fps(), mediaArgs.duration())
                 .setEndRestartFunc(() -> this::restart)
@@ -145,7 +129,7 @@ public abstract class AbstractRenderer<T> {
     }
 
     public @Nullable AudioProducer initAudio(double seekTo) {
-        var mediaArgs = this.mediaArgs();
+        var mediaArgs = this.mediaArgs;
         if (mediaArgs == null) return null;
         var audio = AudioProducer.create(mediaArgs, this.initVolume(), AppPaths.absFFmpegPath());
         audio.setup(seekTo);
@@ -180,12 +164,12 @@ public abstract class AbstractRenderer<T> {
     }
 
     public int getLightLevel() {
-        return this.lightLevel.get();
+        return this.lightLevel;
     }
 
     public void updateLightLevel(int newLevel) {
-        if (this.lightLevel.get() != newLevel) {
-            this.lightLevel.set(newLevel);
+        if (this.lightLevel != newLevel) {
+            this.lightLevel = newLevel;
             if (this instanceof InWorld inWorld) {
                 NarutoLight.checkLight(inWorld.wall());
             }

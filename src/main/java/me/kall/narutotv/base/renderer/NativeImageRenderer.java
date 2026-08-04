@@ -18,7 +18,7 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
 
     @Override
     public @NotNull AbstractFrameProducer<NativeImage> initVideo() {
-        return ImageFrameProducer.create(this.mediaArgs(), 2, AppPaths.absFFmpegPath());
+        return ImageFrameProducer.create(this.mediaArgs, 2, AppPaths.absFFmpegPath());
     }
 
     @Override
@@ -32,7 +32,7 @@ public abstract class NativeImageRenderer extends AbstractRenderer<NativeImage> 
 
     @Override
     public void onSetup(double seekTo) {
-        MediaArgs mediaArgs = this.mediaArgs();
+        MediaArgs mediaArgs = this.mediaArgs;
         assert mediaArgs != null;
 
         int width = mediaArgs.width();

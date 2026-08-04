@@ -97,7 +97,7 @@ public class CapeBufferRenderer extends ByteBufferRenderer {
     }
 
     @Override
-    public synchronized void render() {
+    public void render() {
         super.render();
         CapeGLEngine engine = this.engine();
         if (engine != null) engine.render(this.poseStack.get());

@@ -56,7 +56,7 @@ public class GuiBufferRenderer extends ByteBufferRenderer {
                 }
                 """;
 
-        return new GuiGLEngine(fragmentSource, vertexSource, this.mediaArgs());
+        return new GuiGLEngine(fragmentSource, vertexSource, this.mediaArgs);
     }
 
     @Override

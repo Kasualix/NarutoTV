@@ -102,7 +102,7 @@ public class ClientWalls {
 
                 swapped.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>()).put(wall, latest);
 
-                MediaArgs mediaArgs = outdated.mediaArgs();
+                MediaArgs mediaArgs = outdated.mediaArgs;
                 if (mediaArgs != null) Sources.cutInLine(mediaArgs.absVideoPath(), mediaArgs.absAudioPath());
 
                 latest.setup(life != null ? life.sinceSetupSec() : 0D);

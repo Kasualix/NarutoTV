@@ -22,12 +22,12 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
 
     @Override
     public @NotNull AbstractFrameProducer<ByteBuffer> initVideo() {
-        return BufferFrameProducer.create(this.mediaArgs(), 2, AppPaths.absFFmpegPath());
+        return BufferFrameProducer.create(this.mediaArgs, 2, AppPaths.absFFmpegPath());
     }
 
     @Override
-    public synchronized void update(@Nullable ByteBuffer frame) {
-        MediaArgs mediaArgs = this.mediaArgs();
+    public void update(@Nullable ByteBuffer frame) {
+        MediaArgs mediaArgs = this.mediaArgs;
         if (mediaArgs == null || this.engine == null) return;
 
         int width = mediaArgs.width();
@@ -39,8 +39,8 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     }
 
     @Override
-    public synchronized void onSetup(double seekTo) {
-        MediaArgs mediaArgs = this.mediaArgs();
+    public void onSetup(double seekTo) {
+        MediaArgs mediaArgs = this.mediaArgs;
 
         assert mediaArgs != null;
 
@@ -49,7 +49,7 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     }
 
     @Override
-    public synchronized void render() {
+    public void render() {
         super.render();
         if (this.engine != null) {
             this.engine.render();
@@ -57,7 +57,7 @@ public abstract class ByteBufferRenderer extends AbstractRenderer<ByteBuffer> {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public void shutdown() {
         super.shutdown();
         if (this.engine != null) {
             this.engine.shutdown();

@@ -108,7 +108,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
         AbstractRenderer<?> renderer = ClientWalls.get(this.wall);
         assert renderer != null;
 
-        MediaArgs mediaArgs = renderer.mediaArgs();
+        MediaArgs mediaArgs = renderer.mediaArgs;
         assert mediaArgs != null;
 
         String videoNow = mediaArgs.absVideoPath();

@@ -73,7 +73,7 @@ public final class PasteListener {
 
                             Sources.cutInLine(downloaded.absVideoPath(), downloaded.absAudioPath());
 
-                            if (NarutoGuiCenter.getActive().isRunning()) {
+                            if (NarutoGuiCenter.getActive().isRunning) {
                                 NarutoGuiCenter.getActive().shutdown();
                                 NarutoGuiScreen.sync(videoStr, audioStr);
                             }
@@ -82,7 +82,7 @@ public final class PasteListener {
 
                             if (minecraft.hitResult instanceof BlockHitResult target && target.getType().equals(HitResult.Type.BLOCK) && level != null) {
                                 AbstractRenderer<?> renderer = ClientWalls.get(level.dimension().location(), target.getBlockPos().asLong());
-                                if (renderer != null && renderer.isRunning()) renderer.shutdown();
+                                if (renderer != null && renderer.isRunning) renderer.shutdown();
                                 NarutoWorldScreen.sync(videoStr, audioStr);
                             }
                         }, minecraft), Minecraft.getInstance().screen));

@@ -90,7 +90,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
                 }
                 """;
 
-        return new WorldGLEngine(fragmentSource, vertexSource, this.wall, this.mediaArgs());
+        return new WorldGLEngine(fragmentSource, vertexSource, this.wall, this.mediaArgs);
     }
 
     @Override
@@ -114,8 +114,8 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     }
 
     @Override
-    public synchronized void update(@Nullable ByteBuffer frame) {
-        MediaArgs mediaArgs = this.mediaArgs();
+    public void update(@Nullable ByteBuffer frame) {
+        MediaArgs mediaArgs = this.mediaArgs;
         if (frame != null && mediaArgs != null) this.updateLightLevel(NarutoLight.forBuffer(frame, mediaArgs.width(), mediaArgs.height()));
 
         super.update(frame);
@@ -128,7 +128,7 @@ public class WorldBufferRenderer extends ByteBufferRenderer implements InWorld {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public void shutdown() {
         super.shutdown();
         this.soundDelegate.shutdown();
     }

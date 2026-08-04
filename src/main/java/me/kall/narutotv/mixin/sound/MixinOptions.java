@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.Mixin;
 public abstract class MixinOptions {
     @WrapMethod(method = "getSoundSourceVolume")
     private float skipSound(@NotNull SoundSource category, Operation<Float> original) {
-        return category.equals(SoundSource.MUSIC) && NarutoConfig.muteMusic() && NarutoGuiCenter.getActive().isRunning() ? 0.0F : original.call(category);
+        return category.equals(SoundSource.MUSIC) && NarutoConfig.muteMusic() && NarutoGuiCenter.getActive().isRunning ? 0.0F : original.call(category);
     }
 }

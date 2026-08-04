@@ -26,14 +26,11 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
     Checkbox fadableCheck, muteMusicCheck;
 
     String video, audio;
-    int videoWidth, videoHeight;
 
     public NarutoGuiScreen(@Nullable Screen lastScreen, @NotNull MediaArgs mediaArgs) {
         super(SCREEN, lastScreen);
         this.video = mediaArgs.absVideoPath();
         this.audio = mediaArgs.absAudioPath();
-        this.videoWidth = mediaArgs.width();
-        this.videoHeight = mediaArgs.height();
     }
 
     public static void sync(String video, String audio) {
@@ -93,7 +90,7 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
         NarutoGuiCenter.getActive().shutdown();
         NarutoGuiCenter.getActive().setup(0D);
 
-        MediaArgs mediaArgs = NarutoGuiCenter.getActive().mediaArgs();
+        MediaArgs mediaArgs = NarutoGuiCenter.getActive().mediaArgs;
         assert mediaArgs != null;
 
         this.videoBox.setValue(mediaArgs.absVideoPath());
@@ -107,22 +104,21 @@ public class NarutoGuiScreen extends AbstractNarutoScreen {
         int maxWidthBox = Integer.parseInt(this.maxWidthBox.getValue());
         int maxHeightBox = Integer.parseInt(this.maxHeightBox.getValue());
 
-        MediaArgs current = NarutoGuiCenter.getActive().mediaArgs();
+        MediaArgs current = NarutoGuiCenter.getActive().mediaArgs;
+
         if (current != null) {
             this.video = current.absVideoPath();
             this.audio = current.absAudioPath();
-            this.videoWidth = current.width();
-            this.videoHeight = current.height();
         }
 
         NarutoConfig.ticksBeforeFade(Integer.parseInt(this.ticksBox.getValue()));
 
-        NarutoConfig.maxWidth(maxWidthBox);
-        NarutoConfig.maxHeight(maxHeightBox);
-
         if (NarutoConfig.volume(Double.parseDouble(this.volumeBox.getValue()))) NarutoGuiCenter.getActive().setVolume(NarutoConfig.volume());
 
-        if (!videoBox.equals(this.video) || !audioBox.equals(this.audio) || maxWidthBox != this.videoWidth || maxHeightBox != this.videoHeight) {
+        boolean maxWidthChanged = NarutoConfig.maxWidth(maxWidthBox);
+        boolean maxHeightChanged = NarutoConfig.maxHeight(maxHeightBox);
+
+        if (!videoBox.equals(this.video) || !audioBox.equals(this.audio) || maxHeightChanged || maxWidthChanged) {
             Sources.cutInLine(videoBox, audioBox);
             NarutoGuiCenter.getActive().shutdown();
         }

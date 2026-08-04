@@ -55,7 +55,7 @@ public class Client {
         assert renderer != null;
         renderer.setup(0D);
 
-        MediaArgs mediaArgs = renderer.mediaArgs();
+        MediaArgs mediaArgs = renderer.mediaArgs;
         assert mediaArgs != null;
 
         wall.video = NarutoPaths.relConfig(mediaArgs.absVideoPath());

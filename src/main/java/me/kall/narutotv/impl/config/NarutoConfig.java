@@ -98,17 +98,19 @@ public class NarutoConfig {
         return true;
     }
 
-    public static void maxWidth(int maxWidth) {
-        if (NarutoConfig.maxWidth == maxWidth) return;
+    public static boolean maxWidth(int maxWidth) {
+        if (NarutoConfig.maxWidth == maxWidth) return false;
 
         NarutoConfig.maxWidth = maxWidth;
         CONFIG.put("maxVideoWidth", maxWidth).saveToFile();
+        return true;
     }
 
-    public static void maxHeight(int maxHeight) {
-        if (NarutoConfig.maxHeight == maxHeight) return;
+    public static boolean maxHeight(int maxHeight) {
+        if (NarutoConfig.maxHeight == maxHeight) return false;
 
         NarutoConfig.maxHeight = maxHeight;
         CONFIG.put("maxVideoHeight", maxHeight).saveToFile();
+        return true;
     }
 }

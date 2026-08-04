@@ -4,7 +4,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class JavaFileCollector {
     public static void merge(File sourceFolder, File targetTxt) throws IOException {
@@ -37,7 +38,9 @@ public class JavaFileCollector {
     public static void main(String[] args) {
         try {
             Path path = Path.of("D:\\ModDev\\NarutoTV\\src\\main\\java\\me\\kall\\narutotv");
-            JavaFileCollector.merge(path.toFile(), path.resolve("code" + ".txt").toFile());
+            Path txt = path.resolve("code" + ".txt");
+            if (Files.exists(txt)) Files.delete(txt);
+            JavaFileCollector.merge(path.toFile(), txt.toFile());
         } catch (IOException e) {
             e.printStackTrace(System.err);
         }
