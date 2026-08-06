@@ -8,9 +8,7 @@
     "defaultRequire": 1
   },
   "client": [
-    "cape.MixinAbstractClientPlayer",
-    "cape.MixinCapeLayer",
-    "cape.MixinPlayerInfo",
+    "world.MixinIForgeBlockState",
     "context.MixinGameRenderer",
     "context.MixinMinecraft",
     "context.MixinResourceLoadStateTracker",
@@ -27,9 +25,7 @@
     "override.screen.MixinScreen",
     "override.screen.MixinTitleScreen",
     "override.screen.MixinWinScreen",
-    "world.MixinIForgeBlockState",
     "sound.ChannelAccessor",
-    "sound.MixinMinecraft",
     "sound.MixinOptions",
     "sound.MixinSoundEngine"
   ],

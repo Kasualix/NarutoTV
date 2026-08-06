@@ -4,7 +4,7 @@ import net.minecraftforge.fml.loading.FMLLoader;
 
 public class CompatCenter {
     public static final boolean HAS_SHADER_MOD = isLoaded("oculus") || isLoaded("iris");
-    public static final ICompat COMPAT = HAS_SHADER_MOD ? new OculusCompat() : () -> false;
+    public static final ICompat COMPAT = HAS_SHADER_MOD ? new IrisCompat() : () -> false;
 
     public static boolean shaderUsing() {
         return COMPAT.shaderUsing();

@@ -1,7 +1,7 @@
 package me.kall.narutotv.fade;
 
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.impl.config.NarutoConfig;
+import me.kall.narutotv.config.NarutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraftforge.api.distmarker.Dist;
@@ -13,10 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class FadeCenter {
-    private static final float HIDDEN = 0F;
-    private static final float FULL = 1F;
-
-    private static final MousePos lastMouse = new MousePos();
+    private static final MousePos LAST_MOUSE = new MousePos();
 
     private static int stopTicks = 0;
     private static int fadeAlpha = 100;
@@ -30,29 +27,28 @@ public class FadeCenter {
     }
 
     public static float fadeAlpha() {
-        if (isFull()) return FULL;
-        if (isHidden()) return HIDDEN;
-        return (float) fadeAlpha / 100F;
+        return (float) fadeAlpha / 100.0F;
     }
 
     public static int modifyAlpha(int color) {
-        if (!NarutoConfig.fadable() || isFull()) return color;
+        if (isFull() || !NarutoConfig.fadable()) return color;
         if (isHidden()) return (color & 0x00FFFFFF);
         int alpha = (int)(fadeAlpha() * 255.0F) & 0xFF;
         return (color & 0x00FFFFFF) | (alpha << 24);
     }
 
     @SubscribeEvent
-    public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && NarutoConfig.fadable()) {
+    public static void tick(TickEvent.@NotNull ClientTickEvent event) {
+        if (event.phase.equals(TickEvent.Phase.START) && NarutoConfig.fadable()) {
             Minecraft minecraft = Minecraft.getInstance();
             MouseHandler mouseHandler = minecraft.mouseHandler;
+
             double x = mouseHandler.xpos();
             double y = mouseHandler.ypos();
 
-            if (minecraft.level == null && minecraft.player == null && minecraft.screen != null && minecraft.getOverlay() == null && !lastMouse.init(x, y)) {
-                stopTicks = lastMouse.same(x, y) ? stopTicks + 1 : 0;
-                lastMouse.set(x, y);
+            if (minecraft.level == null && minecraft.player == null && minecraft.screen != null && minecraft.getOverlay() == null && !LAST_MOUSE.init(x, y)) {
+                stopTicks = LAST_MOUSE.same(x, y) ? stopTicks + 1 : 0;
+                LAST_MOUSE.set(x, y);
             } else {
                 stopTicks = 0;
             }
@@ -73,7 +69,7 @@ public class FadeCenter {
         Minecraft.getInstance().execute(() -> fadeAlpha = 100);
     }
 
-    private static final class MousePos {
+    static final class MousePos {
         double x = Double.NaN;
         double y = Double.NaN;
 

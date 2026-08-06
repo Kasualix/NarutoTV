@@ -3,7 +3,7 @@ package me.kall.narutotv.mixin.override.screen;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import me.kall.narutotv.fade.FadeCenter;
-import me.kall.narutotv.impl.gui.OverrideCenter;
+import me.kall.narutotv.override.OverrideCenter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Renderable;

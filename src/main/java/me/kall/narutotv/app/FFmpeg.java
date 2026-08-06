@@ -1,20 +1,20 @@
 package me.kall.narutotv.app;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.impl.config.NarutoConfig;
+import me.kall.narutotv.data.system.AppProps;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.openal.AL10;
+import org.lwjgl.openal.AL11;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public final class FFmpeg {
     private static final Pattern VIDEO_STREAM = Pattern.compile("\\{[^}]*\"codec_type\"\\s*:\\s*\"video\"[^}]*}");
     private static final Pattern R_FPS = Pattern.compile("\"r_frame_rate\"\\s*:\\s*\"(\\d+)/(\\d+)\"");
@@ -25,83 +25,71 @@ public final class FFmpeg {
     private static final Pattern AUDIO_STREAM = Pattern.compile("\\{[^}]*\"codec_type\"\\s*:\\s*\"audio\"[^}]*}");
     private static final Pattern SAMPLE_RATE = Pattern.compile("\"sample_rate\"\\s*:\\s*\"(\\d+)\"");
     private static final Pattern CHANNEL_COUNT = Pattern.compile("\"channels\"\\s*:\\s*(\\d+)");
-
-    private final String absFFmpegPath, absFFprobePath;
-
-    private FFmpeg(String absFFmpegPath, String absFFprobePath) {
-        this.absFFmpegPath = absFFmpegPath;
-        this.absFFprobePath = absFFprobePath;
-    }
+    private static final Pattern START_TIME = Pattern.compile("\"start_time\"\\s*:\\s*\"([0-9.]+)\"");
 
     @Contract("_, _ -> new")
-    public static @NotNull FFmpeg create(@NotNull String absFFmpegPath, @NotNull String absFFprobePath) {
-        return new FFmpeg(absFFmpegPath, absFFprobePath);
-    }
+    public static @NotNull MediaArgs read(@NotNull String absVideoPath, @Nullable String absAudioPath) {
+        String ffprobePath = AppProps.ffprobePath();
 
-    public @NotNull MediaArgs read(@NotNull String absVideoPath, @Nullable String absAudioPath) {
-        System.out.println("Start to probe " + absVideoPath + (absAudioPath != null ? " | " + absAudioPath : "") + " ...");
-        MediaArgs mediaArgs = this.probe(absVideoPath, absAudioPath);
-        System.out.println("MediaArgs initialized: " + mediaArgs.toReadableString());
-        return mediaArgs;
-    }
+        String videoJson = Executable.runCommand(ffprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absVideoPath);
+        if (videoJson == null) throw new RuntimeException("Error generating probe json for " + absVideoPath + ". Using " + ffprobePath + ". Reading log for details.");
 
-    @Contract("_, _ -> new")
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private @NotNull MediaArgs probe(@NotNull String absVideoPath, @Nullable String absAudioPath) {
-        String videoJson = Executable.runCommand(new String[]{this.absFFprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absVideoPath}, false);
-        if (videoJson == null) throw new RuntimeException("Error generating probe json for " + absVideoPath + ". Using " + this.absFFprobePath + ". Reading log for details.");
-
-        String audioJson = absAudioPath != null ? Executable.runCommand(new String[]{this.absFFprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absAudioPath}, false) : null;
+        String audioJson = absAudioPath != null ? Executable.runCommand(ffprobePath, "-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", absAudioPath) : null;
 
         try {
             Matcher videoMatcher = VIDEO_STREAM.matcher(videoJson);
-            Matcher audioMatcher = audioJson != null ? AUDIO_STREAM.matcher(audioJson) : null;
-            if (!videoMatcher.find()) throw new RuntimeException("Error matching video block");
-            if (audioMatcher != null && !audioMatcher.find()) throw new RuntimeException("Error matching audio block");
+            if (!videoMatcher.find()) throw new RuntimeException("Error matching video");
+
             String videoBlock = videoMatcher.group();
-            String audioBlock = audioMatcher != null ? audioMatcher.group() : null;
-
-            Matcher channelCountMatcher = audioBlock == null ? null : CHANNEL_COUNT.matcher(audioBlock);
-            Matcher sampleRateMatcher = audioBlock == null ? null : SAMPLE_RATE.matcher(audioBlock);
-
-            if (channelCountMatcher != null && !channelCountMatcher.find()) throw new RuntimeException("Error matching channel count");
-            if (sampleRateMatcher != null && !sampleRateMatcher.find()) throw new RuntimeException("Error matching sample rate");
 
             Matcher avgFpsMatcher = AVG_FPS.matcher(videoBlock);
             Matcher rFpsMatcher = R_FPS.matcher(videoBlock);
             Matcher widthMatcher = WIDTH.matcher(videoBlock);
             Matcher heightMatcher = HEIGHT.matcher(videoBlock);
+            Matcher videoStartMatcher = START_TIME.matcher(videoBlock);
             Matcher durationMatcher = DURATION.matcher(videoJson);
 
-            avgFpsMatcher.find();
-            rFpsMatcher.find();
-            widthMatcher.find();
-            heightMatcher.find();
-            durationMatcher.find();
-
-            int channelCount = channelCountMatcher == null ? 0 : Integer.parseInt(channelCountMatcher.group(1));
-            int sampleRate = sampleRateMatcher == null ? 0 : Integer.parseInt(sampleRateMatcher.group(1));
+            avgFpsMatcher.find(); rFpsMatcher.find(); widthMatcher.find(); heightMatcher.find(); videoStartMatcher.find(); durationMatcher.find();
 
             double avgFps = Double.parseDouble(avgFpsMatcher.group(1)) / Double.parseDouble(avgFpsMatcher.group(2));
             double rFps = Double.parseDouble(rFpsMatcher.group(1)) / Double.parseDouble(rFpsMatcher.group(2));
 
+            double fps = avgFps > 0 ? avgFps : rFps;
+
             int width = Integer.parseInt(widthMatcher.group(1));
             int height = Integer.parseInt(heightMatcher.group(1));
 
-            double scale = Math.min(1.0, Math.min((double) NarutoConfig.maxWidth() / width, (double) NarutoConfig.maxHeight() / height));
-
-            width = ((int) (width * scale)) & ~1;
-            height = ((int) (height * scale)) & ~1;
+            double videoStartSec = Double.parseDouble(videoStartMatcher.group(1));
 
             double duration = Double.parseDouble(durationMatcher.group(1)) * 1000D;
 
-            return new MediaArgs(absVideoPath, absAudioPath, channelCount, sampleRate, channelCount == 1 ? AL10.AL_FORMAT_MONO16 : AL10.AL_FORMAT_STEREO16, avgFps > 0 ? avgFps : rFps, width, height, duration);
+            if (audioJson != null) {
+                Matcher audioMatcher = AUDIO_STREAM.matcher(audioJson);
+                if (!audioMatcher.find()) throw new RuntimeException("Error matching audio");
+
+                String audioBlock = audioMatcher.group();
+
+                Matcher channelCountMatcher = CHANNEL_COUNT.matcher(audioBlock);
+                Matcher sampleRateMatcher = SAMPLE_RATE.matcher(audioBlock);
+                Matcher audioStartMatcher = START_TIME.matcher(audioBlock);
+
+                channelCountMatcher.find(); sampleRateMatcher.find(); audioStartMatcher.find();
+
+                int channelCount = Integer.parseInt(channelCountMatcher.group(1));
+                int sampleRate = Integer.parseInt(sampleRateMatcher.group(1));
+                double audioStartSec = Double.parseDouble(audioStartMatcher.group(1));
+
+                int openALFormat = channelCount == 1 ? AL11.AL_FORMAT_MONO16 : AL11.AL_FORMAT_STEREO16;
+                return new MediaArgs(absVideoPath, absAudioPath, channelCount, sampleRate, openALFormat, fps, width, height, duration, videoStartSec, audioStartSec);
+            } else {
+                return new MediaArgs(absVideoPath, fps, width, height, duration, videoStartSec);
+            }
         } catch (Throwable throwable) {
             System.err.println("————————————————————————————");
-            System.err.println("Exception reading video " + absVideoPath + " using " + this.absFFprobePath);
+            System.err.println("Exception reading video " + absVideoPath + " using " + ffprobePath);
             System.err.println(videoJson);
             System.err.println("————————————————————————————");
-            System.err.println("Exception reading audio " + absAudioPath + " using " + this.absFFprobePath);
+            System.err.println("Exception reading audio " + absAudioPath + " using " + ffprobePath);
             System.err.println(audioJson);
             System.err.println("————————————————————————————");
             throwable.printStackTrace(System.err);
@@ -110,35 +98,29 @@ public final class FFmpeg {
     }
 
     @Contract("_ -> new")
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    public @NotNull CompletableFuture<@Nullable String> convertAudio(String absSource) {
+    public static @NotNull CompletableFuture<String> toMonoOgg(String sourceStr) {
         return CompletableFuture.supplyAsync(() -> {
-            if ("ogg".equals(Files.getFileExtension(absSource)) && this.isMono(absSource)) return absSource;
+            if ("ogg".equals(Files.getFileExtension(sourceStr)) && isMono(sourceStr)) return sourceStr;
 
-            File absOutput = this.setOutput(absSource);
-            String absOutputPath = absOutput.getAbsolutePath();
-            if (absOutput.exists()) {
-                if (this.isMono(absOutputPath) && "ogg".equals(Files.getFileExtension(absOutputPath))) {
-                    return absOutputPath;
+            File source = new File(sourceStr);
+            String name = source.getName();
+
+            File output = source.toPath().getParent().resolve(name.substring(0, name.lastIndexOf(".")) + ".ogg").toFile();
+            String outputStr = output.getAbsolutePath();
+
+            if (output.exists()) {
+                if (isMono(outputStr)) {
+                    return outputStr;
                 } else {
-                    absOutput.delete();
+                    output.delete();
                 }
             }
 
-            return Executable.runCommand(Lists.newArrayList(this.absFFmpegPath, "-i", absSource, "-vn", "-acodec", "libvorbis", "-ac", "1", "-q:a", "4", "-y", absOutputPath), false) && absOutput.exists() ? absOutputPath : null;
+            return Executable.runCommand(AppProps.ffmpegPath(), "-i", sourceStr, "-vn", "-acodec", "libvorbis", "-ac", "1", "-q:a", "4", "-y", outputStr) != null ? outputStr : null;
         }, NarutoTV.io());
     }
 
-    private @NotNull File setOutput(String absSource) {
-        File sourceFile = new File(absSource);
-        if (!sourceFile.exists() || !sourceFile.isFile()) throw new IllegalArgumentException("Invalid source audio: " + absSource);
-
-        String toConvertName = sourceFile.getName();
-
-        return sourceFile.toPath().getParent().resolve(toConvertName.substring(0, toConvertName.lastIndexOf(".")) + ".ogg").toFile();
-    }
-
-    private boolean isMono(String absAudioPath) {
-        return "1".equals(Executable.runCommand(new String[]{this.absFFprobePath, "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1:nokey=1", absAudioPath}, false));
+    private static boolean isMono(String absAudioPath) {
+        return "1".equals(Executable.runCommand(AppProps.ffprobePath(), "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1:nokey=1", absAudioPath));
     }
 }

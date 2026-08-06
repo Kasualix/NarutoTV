@@ -2,7 +2,7 @@ package me.kall.narutotv.mixin.override.overlay;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import me.kall.narutotv.impl.gui.OverrideCenter;
+import me.kall.narutotv.override.OverrideCenter;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

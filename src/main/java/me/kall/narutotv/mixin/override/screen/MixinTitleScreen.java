@@ -2,7 +2,7 @@ package me.kall.narutotv.mixin.override.screen;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import me.kall.narutotv.impl.gui.OverrideCenter;
+import me.kall.narutotv.override.OverrideCenter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.resources.ResourceLocation;

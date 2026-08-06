@@ -97,7 +97,7 @@ processResources {
 jar {
     manifest {
         attributes(
-                "Premain-Class": "me.kall.narutotv.impl.agent.NarutoAgent"
+                "Premain-Class": "me.kall.narutotv.agent.NarutoAgent"
         )
     }
 }

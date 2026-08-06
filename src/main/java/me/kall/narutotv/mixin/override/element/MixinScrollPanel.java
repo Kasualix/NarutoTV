@@ -1,6 +1,6 @@
 package me.kall.narutotv.mixin.override.element;
 
-import me.kall.narutotv.impl.gui.OverrideCenter;
+import me.kall.narutotv.override.OverrideCenter;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;

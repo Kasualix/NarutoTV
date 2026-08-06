@@ -9,13 +9,13 @@ import java.util.concurrent.Executors;
 public final class NarutoTV {
     public static final String MOD_ID = "narutotv";
 
-    private static final ExecutorService IO_WORKER = Executors.newSingleThreadExecutor(task -> {
+    private static final ExecutorService FILE_TASKS = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "NarutoFileTasks");
         thread.setDaemon(true);
         return thread;
     });
 
     public static ExecutorService io() {
-        return IO_WORKER;
+        return FILE_TASKS;
     }
 }
