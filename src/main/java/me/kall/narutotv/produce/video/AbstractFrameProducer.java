@@ -2,12 +2,12 @@ package me.kall.narutotv.produce.video;
 
 import com.google.common.collect.Lists;
 import me.kall.narutotv.app.data.MediaArgs;
+import me.kall.narutotv.data.system.AppProps;
+import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.produce.AbstractProducer;
 import me.kall.narutotv.produce.audio.AudioProducer;
 import me.kall.narutotv.produce.util.LifetimeController;
 import me.kall.narutotv.produce.util.TimeCostDebugger;
-import me.kall.narutotv.data.system.AppProps;
-import me.kall.narutotv.data.system.RenderProps;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +52,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         this.frameSize = frameSize;
         this.bufferCapacity = (int) (this.mediaArgs.fps() * bufferSeconds);
         this.frames = new LinkedBlockingQueue<>(this.bufferCapacity);
-        this.frameReading = new TimeCostDebugger(20, "Frame Reading Cost For " + mediaArgs.absVideoPath());
+        this.frameReading = new TimeCostDebugger(this.bufferCapacity / 2, "Frame Reading Cost For " + mediaArgs.absVideoPath());
     }
 
     public AbstractFrameProducer<T> setLifeCreation(BiFunction<MediaArgs, Double, LifetimeController> lifeCreation) {
@@ -107,6 +107,9 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         command.add("-fflags");
         command.add("nobuffer");
 
+        command.add("-sws_flags");
+        command.add("fast_bilinear");
+
         command.add("-flags");
         command.add("low_delay");
 
@@ -144,7 +147,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     }
 
     @Override
-    protected void forInput(@NotNull InputStream input) throws IOException, InterruptedException{
+    protected void forInput(@NotNull InputStream input) throws IOException, InterruptedException {
         byte[] bufferArray = new byte[Math.min(this.frameSize, 256 * 1024)];
 
         while (!this.off.get()) {
@@ -157,55 +160,54 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
                 if (read == -1) return;
                 frame.put(bufferArray, 0, read);
             }
+
             this.frameReading.record(System.nanoTime() - start);
 
             this.onBuilt(frame.flip(), this.frameIndex.incrementAndGet());
-            this.checkWarmed();
+            if (this.frames.remainingCapacity() == 0 && !this.ready.get()) this.onWarm();
         }
     }
 
-    private void checkWarmed() {
-        if (this.frames.remainingCapacity() == 0 && !this.ready.get()) {
-            this.waitExecutor.get().submit(() -> {
-                synchronized (this.waiter) {
-                    while (!this.ready.get()) {
-                        if (this.eager.get()) {
-                            BiFunction<MediaArgs, Double, LifetimeController> lifeCreation = this.lifeCreation.getAndSet(null);
-                            BiFunction<MediaArgs, Double, AudioProducer> audioCreation = this.audioCreation.getAndSet(null);
-                            if (lifeCreation != null && audioCreation != null) {
-                                double seekTo = Double.longBitsToDouble(this.seekTo.get());
+    private void onWarm() {
+        this.waitExecutor.get().submit(() -> {
+            synchronized (this.waiter) {
+                while (!this.ready.get()) {
+                    if (this.eager.get()) {
+                        BiFunction<MediaArgs, Double, LifetimeController> lifeCreation = this.lifeCreation.getAndSet(null);
+                        BiFunction<MediaArgs, Double, AudioProducer> audioCreation = this.audioCreation.getAndSet(null);
+                        if (lifeCreation != null && audioCreation != null) {
+                            double seekTo = Double.longBitsToDouble(this.seekTo.get());
 
-                                AudioProducer audio = audioCreation.apply(this.mediaArgs, seekTo);
-                                LifetimeController life = lifeCreation.apply(this.mediaArgs, seekTo);
+                            AudioProducer audio = audioCreation.apply(this.mediaArgs, seekTo);
+                            LifetimeController life = lifeCreation.apply(this.mediaArgs, seekTo);
 
-                                this.life.set(life);
+                            this.life.set(life);
 
-                                if (audio != null) {
-                                    audio.setOnInitTune(() -> {
-                                        this.life.get().seekTo(seekTo);
-                                        this.ready.set(true);
-                                    });
-                                    this.audio.set(audio);
-                                } else {
-                                    life.seekTo(seekTo);
+                            if (audio != null) {
+                                audio.setOnInitTune(() -> {
+                                    this.life.get().seekTo(seekTo);
                                     this.ready.set(true);
-                                }
-
-                                break;
+                                });
+                                this.audio.set(audio);
+                            } else {
+                                life.seekTo(seekTo);
+                                this.ready.set(true);
                             }
-                        }
 
-                        try {
-                            this.waiter.wait();
-                        } catch (InterruptedException exception) {
-                            if (this.off.get()) break;
-                            exception.printStackTrace(System.err);
-                            throw new RuntimeException(exception);
+                            break;
                         }
                     }
+
+                    try {
+                        this.waiter.wait();
+                    } catch (InterruptedException exception) {
+                        if (this.off.get()) break;
+                        exception.printStackTrace(System.err);
+                        throw new RuntimeException(exception);
+                    }
                 }
-            });
-        }
+            }
+        });
     }
 
     public void eager() {
@@ -267,6 +269,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         this.lifeCreation.set(null);
         this.audioCreation.set(null);
 
+        this.frameReading.printDebug();
         this.frameReading.reset();
 
         AudioProducer audio = this.audio.getAndSet(null);

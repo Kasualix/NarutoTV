@@ -15,20 +15,20 @@ public class GuiSceneControl {
     }
 
     public static void init() {
+        RenderProps.turnAccel(true);
         double earlyCost = RenderProps.earlyCost();
         if (earlyCost != 0D) active.setup(earlyCost);
     }
 
     public static void swap() {
-        boolean isCompatMode = GuiSceneControl.isCompatMode();
-        active = isCompatMode ? BUFFER : IMAGE;
-
-        if (isCompatMode) {
+        if (GuiSceneControl.isCompatMode()) {
             BUFFER.mediaArgs = IMAGE.mediaArgs;
             IMAGE.shutdownEntire(false);
+            active = BUFFER;
         } else {
             IMAGE.mediaArgs = BUFFER.mediaArgs;
             BUFFER.shutdownEntire(false);
+            active = IMAGE;
         }
 
         active.setup(0D);

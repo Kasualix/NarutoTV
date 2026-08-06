@@ -58,7 +58,8 @@ public final class Lighter implements LightAccessor {
 
         long sum = 0;
         int samples = 0;
-        int step = 8;
+
+        int step = Math.max(8, width / 120);
 
         for (int x = 0; x < width; x += step) {
             for (int y = 0; y < height; y += step) {
@@ -67,7 +68,7 @@ public final class Lighter implements LightAccessor {
                 int g = (pixel >> 8) & 0xFF;
                 int b = (pixel >> 16) & 0xFF;
 
-                sum += (long) (0.2126 * r + 0.7152 * g + 0.0722 * b);
+                sum += (54L * r + 183L * g + 19L * b) >> 8;
                 samples++;
             }
         }

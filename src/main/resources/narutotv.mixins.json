@@ -8,7 +8,6 @@
     "defaultRequire": 1
   },
   "client": [
-    "world.MixinIForgeBlockState",
     "context.MixinGameRenderer",
     "context.MixinMinecraft",
     "context.MixinResourceLoadStateTracker",
@@ -27,7 +26,8 @@
     "override.screen.MixinWinScreen",
     "sound.ChannelAccessor",
     "sound.MixinOptions",
-    "sound.MixinSoundEngine"
+    "sound.MixinSoundEngine",
+    "world.MixinIForgeBlockState"
   ],
   "mixins": [
     "world.MixinServerLevel"

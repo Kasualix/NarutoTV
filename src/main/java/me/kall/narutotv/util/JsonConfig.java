@@ -1,6 +1,5 @@
 package me.kall.narutotv.util;
 
-
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import me.kall.narutotv.data.file.GamePaths;
