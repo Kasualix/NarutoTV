@@ -15,15 +15,18 @@ import java.nio.IntBuffer;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class AudioProducer extends AbstractProducer {
     private final AtomicInteger volume;
     private final AtomicBoolean volumeChanged = new AtomicBoolean(true);
-
     private final MediaArgs mediaArgs;
 
+    private final AtomicBoolean tuneInit = new AtomicBoolean();
+    private final AtomicReference<Runnable> onInitTune = new AtomicReference<>();
+
     public AudioProducer(float volume, MediaArgs mediaArgs) {
-        this.volume= new AtomicInteger(Float.floatToIntBits(volume));
+        this.volume = new AtomicInteger(Float.floatToIntBits(volume));
         this.mediaArgs = mediaArgs;
     }
 
@@ -36,6 +39,10 @@ public final class AudioProducer extends AbstractProducer {
             this.volume.set(Float.floatToIntBits(volume));
             this.volumeChanged.set(true);
         }
+    }
+
+    public void setOnInitTune(@Nullable Runnable onInitTune) {
+        this.onInitTune.set(onInitTune);
     }
 
     @Override
@@ -56,7 +63,6 @@ public final class AudioProducer extends AbstractProducer {
             AL.createCapabilities(ALC.createCapabilities(device));
 
             source = AL11.alGenSources();
-
             byte[] bufferArray = new byte[8192];
 
             while (!this.off.get()) {
@@ -77,7 +83,13 @@ public final class AudioProducer extends AbstractProducer {
                 while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
 
                 int queued = AL11.alGetSourcei(source, AL11.AL_BUFFERS_QUEUED);
-                if (queued > 0 && AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
+                if (queued > 0 && AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) {
+                    if (this.tuneInit.compareAndSet(false, true)) {
+                        Runnable onInitTune = this.onInitTune.getAndSet(null);
+                        if (onInitTune != null) onInitTune.run();
+                    }
+                    AL11.alSourcePlay(source);
+                }
             }
         } finally {
             if (source != 0) {

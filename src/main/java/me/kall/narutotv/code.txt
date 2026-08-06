@@ -1171,6 +1171,7 @@ public abstract class AbstractTV<T> {
                         return video;
                     }, NarutoTV.io());
                 }
+
                 if (life.checkUpdate()) this.renderer.update(this.mediaArgs, this.video.fetch());
             }
 
@@ -5051,9 +5052,16 @@ public final class AudioProducer extends AbstractProducer {
 
     private final MediaArgs mediaArgs;
 
+    private Runnable onFirstTune;
+
     public AudioProducer(float volume, MediaArgs mediaArgs) {
         this.volume= new AtomicInteger(Float.floatToIntBits(volume));
         this.mediaArgs = mediaArgs;
+    }
+
+    public AudioProducer setOnFirstTune(Runnable onFirstTune) {
+        this.onFirstTune = onFirstTune;
+        return this;
     }
 
     public float volume() {
@@ -5088,6 +5096,8 @@ public final class AudioProducer extends AbstractProducer {
 
             byte[] bufferArray = new byte[8192];
 
+            boolean firstTuned = false;
+
             while (!this.off.get()) {
                 int read = input.read(bufferArray);
                 if (read != -1) {
@@ -5106,7 +5116,9 @@ public final class AudioProducer extends AbstractProducer {
                 while (processed-- > 0) AL11.alDeleteBuffers(AL11.alSourceUnqueueBuffers(source));
 
                 int queued = AL11.alGetSourcei(source, AL11.AL_BUFFERS_QUEUED);
-                if (queued > 0 && AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) AL11.alSourcePlay(source);
+                if (queued > 0 && AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) {
+                    AL11.alSourcePlay(source);
+                }
             }
         } finally {
             if (source != 0) {

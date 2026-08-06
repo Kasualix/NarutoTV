@@ -3,6 +3,7 @@ package me.kall.narutotv.app;
 import com.google.common.io.Files;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
+import me.kall.narutotv.config.NarutoConfig;
 import me.kall.narutotv.data.system.AppProps;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,11 @@ public final class FFmpeg {
 
             int width = Integer.parseInt(widthMatcher.group(1));
             int height = Integer.parseInt(heightMatcher.group(1));
+
+            double scale = Math.min(1.0, Math.min((double) NarutoConfig.maxWidth() / width, (double) NarutoConfig.maxHeight() / height));
+
+            width = ((int) (width * scale)) & ~1;
+            height = ((int) (height * scale)) & ~1;
 
             double videoStartSec = Double.parseDouble(videoStartMatcher.group(1));
 

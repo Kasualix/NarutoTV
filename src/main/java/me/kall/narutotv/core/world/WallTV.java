@@ -97,6 +97,7 @@ public abstract class WallTV<T> extends AbstractTV<T> {
                 if (this.soundOff != null) this.soundOff.run();
                 Minecraft.getInstance().getSoundManager().play(new NarutoSound(this.wall, seekToArg));
             };
+            this.soundOn.accept(seekTo);
             return null;
         } else {
             return super.initAudio(mediaArgs, seekTo);

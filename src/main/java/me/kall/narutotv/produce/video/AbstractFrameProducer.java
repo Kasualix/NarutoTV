@@ -174,9 +174,23 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
                             BiFunction<MediaArgs, Double, AudioProducer> audioCreation = this.audioCreation.getAndSet(null);
                             if (lifeCreation != null && audioCreation != null) {
                                 double seekTo = Double.longBitsToDouble(this.seekTo.get());
-                                this.audio.set(audioCreation.apply(this.mediaArgs, seekTo));
-                                this.life.set(lifeCreation.apply(this.mediaArgs, seekTo));
-                                this.ready.set(true);
+
+                                AudioProducer audio = audioCreation.apply(this.mediaArgs, seekTo);
+                                LifetimeController life = lifeCreation.apply(this.mediaArgs, seekTo);
+
+                                this.life.set(life);
+
+                                if (audio != null) {
+                                    audio.setOnInitTune(() -> {
+                                        this.life.get().seekTo(seekTo);
+                                        this.ready.set(true);
+                                    });
+                                    this.audio.set(audio);
+                                } else {
+                                    life.seekTo(seekTo);
+                                    this.ready.set(true);
+                                }
+
                                 break;
                             }
                         }
