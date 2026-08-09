@@ -1,13 +1,14 @@
-package me.kall.narutotv.shader;
+package me.kall.narutotv.gl;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.context.RenderCaptured;
-import me.kall.narutotv.core.world.NarutoMath;
+import me.kall.narutotv.world.NarutoMath;
+import me.kall.narutotv.world.api.RenderCoordsEvent;
 import me.kall.narutotv.data.world.Wall;
 import net.minecraft.client.Camera;
-import org.jetbrains.annotations.Contract;
+import net.minecraftforge.common.MinecraftForge;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
@@ -15,7 +16,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 
-import static org.lwjgl.opengl.GL30C.*;
+import static org.lwjgl.opengl.GL46C.*;
 
 public class WorldGLEngine extends AbstractGLEngine {
     private int mvpUniformLocation;
@@ -60,7 +61,16 @@ public class WorldGLEngine extends AbstractGLEngine {
 
         if (this.textures == null || this.program == 0 || this.vertexArray == 0 || camera == null || poseStack == null) return;
 
-        float[] vertexData = prepare(NarutoMath.computeCoords(this.wall, camera));
+        NarutoMath.Coords coords = NarutoMath.computeCoords(this.wall, camera);
+
+        MinecraftForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
+
+        float[] vertexData = new float[]{
+                (float) coords.bottomFromX(), (float) coords.bottomFromY(), (float) coords.bottomFromZ(), coords.u0(), coords.v0(),
+                (float) coords.bottomToX(), (float) coords.bottomToY(), (float) coords.bottomToZ(), coords.u1(), coords.v1(),
+                (float) coords.topFromX(), (float) coords.topFromY(), (float) coords.topFromZ(), coords.u3(), coords.v3(),
+                (float) coords.topToX(), (float) coords.topToY(), (float) coords.topToZ(), coords.u2(), coords.v2(),
+        };
 
         int prevProgram = glGetInteger(GL_CURRENT_PROGRAM);
         int prevVao = glGetInteger(GL_VERTEX_ARRAY_BINDING);
@@ -123,17 +133,5 @@ public class WorldGLEngine extends AbstractGLEngine {
         glDepthMask(wasDepthMask);
         glDepthFunc(depthFunc);
         if (wasCullFace) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
-    }
-
-    @Contract("_ -> new")
-    private static float @NotNull [] prepare(NarutoMath.@NotNull Coords coords) {
-        double offsetX = coords.normalX() * 0.1, offsetY = coords.normalY() * 0.1, offsetZ = coords.normalZ() * 0.1;
-
-        return new float[]{
-                (float) (coords.bottomFromX() + offsetX), (float) (coords.bottomFromY() + offsetY), (float) (coords.bottomFromZ() + offsetZ), coords.u0(), coords.v0(),
-                (float) (coords.bottomToX() + offsetX), (float) (coords.bottomToY() + offsetY), (float) (coords.bottomToZ() + offsetZ), coords.u1(), coords.v1(),
-                (float) (coords.topFromX() + offsetX), (float) (coords.topFromY() + offsetY), (float) (coords.topFromZ() + offsetZ), coords.u3(), coords.v3(),
-                (float) (coords.topToX() + offsetX), (float) (coords.topToY() + offsetY), (float) (coords.topToZ() + offsetZ), coords.u2(), coords.v2(),
-        };
     }
 }

@@ -2,7 +2,7 @@ package me.kall.narutotv.core;
 
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.core.renderer.FrameRenderer;
+import me.kall.narutotv.renderer.FrameRenderer;
 import me.kall.narutotv.produce.audio.AudioProducer;
 import me.kall.narutotv.produce.util.LifetimeController;
 import me.kall.narutotv.produce.video.AbstractFrameProducer;

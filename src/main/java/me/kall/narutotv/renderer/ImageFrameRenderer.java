@@ -1,4 +1,4 @@
-package me.kall.narutotv.core.renderer;
+package me.kall.narutotv.renderer;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -6,9 +6,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.context.RenderCaptured;
-import me.kall.narutotv.core.world.NarutoMath;
-import me.kall.narutotv.core.world.light.LightAccessor;
-import me.kall.narutotv.core.world.light.Lighter;
+import me.kall.narutotv.world.NarutoMath;
+import me.kall.narutotv.world.api.RenderCoordsEvent;
+import me.kall.narutotv.world.light.LightAccessor;
+import me.kall.narutotv.world.light.PosLighter;
 import me.kall.narutotv.data.world.Wall;
 import me.kall.narutotv.fade.Fadable;
 import me.kall.narutotv.mixin.context.NativeImageAccessor;
@@ -22,7 +23,9 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,11 +104,11 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
     protected abstract ResourceLocation setLocation();
 
     @Override
-    public void update(@NotNull MediaArgs mediaArgs, @Nullable NativeImage frame) {
+    public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<NativeImage> frame) {
         if (frame == null || this.dynamicTexture == null) return;
-        this.dynamicTexture.setPixels(frame);
+        this.dynamicTexture.setPixels(frame.data());
         this.dynamicTexture.upload();
-        frame.close();
+        frame.data().close();
     }
 
     @Override
@@ -137,11 +140,11 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
 
     public static final class World extends ImageFrameRenderer implements LightAccessor {
         private final Wall wall;
-        private final Lighter lighter;
+        private final PosLighter posLighter;
 
         public World(Wall wall) {
             this.wall = wall;
-            this.lighter = new Lighter(wall);
+            this.posLighter = new PosLighter(wall);
         }
 
         @Override
@@ -151,8 +154,8 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         }
 
         @Override
-        public void update(@NotNull MediaArgs mediaArgs, @Nullable NativeImage frame) {
-            if (frame != null) this.lighter.updateLight(Lighter.forImage(frame));
+        public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<NativeImage> frame) {
+            if (frame != null) this.posLighter.updateLight(frame.lightMap(), mediaArgs.width(), mediaArgs.height());
             super.update(mediaArgs, frame);
         }
 
@@ -170,6 +173,8 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
 
             NarutoMath.Coords coords = NarutoMath.computeCoords(this.wall, camera);
 
+            MinecraftForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
+
             vertex(consumer, pose, normal, coords.bottomFromX(), coords.bottomFromY(), coords.bottomFromZ(), coords.u0(), coords.v0(), coords.normalX(), coords.normalY(), coords.normalZ());
             vertex(consumer, pose, normal, coords.bottomToX(), coords.bottomToY(), coords.bottomToZ(), coords.u1(), coords.v1(), coords.normalX(), coords.normalY(), coords.normalZ());
             vertex(consumer, pose, normal, coords.topToX(), coords.topToY(), coords.topToZ(), coords.u2(), coords.v2(), coords.normalX(), coords.normalY(), coords.normalZ());
@@ -177,7 +182,7 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         }
 
         private static void vertex(@NotNull VertexConsumer consumer, Matrix4f pose, Matrix3f normal, double x, double y, double z, float u, float v, double normalX, double normalY, double normalZ) {
-            consumer.vertex(pose, (float) x + (float) normalX * 0.1F, (float) y + (float) normalY * 0.1F, (float) z + (float) normalZ * 0.1F)
+            consumer.vertex(pose, (float) x, (float) y, (float) z)
                     .color(255, 255, 255, 255)
                     .uv(u, v)
                     .overlayCoords(OverlayTexture.NO_OVERLAY)
@@ -187,8 +192,8 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         }
 
         @Override
-        public int getLight() {
-            return this.lighter.getLight();
+        public int getLight(BlockPos pos) {
+            return this.posLighter.getLight(pos);
         }
     }
 }

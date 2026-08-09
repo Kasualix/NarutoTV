@@ -8,6 +8,8 @@
     "defaultRequire": 1
   },
   "client": [
+    "block.MixinBlock",
+    "block.MixinBlockOcclusionCache",
     "context.MixinGameRenderer",
     "context.MixinMinecraft",
     "context.MixinResourceLoadStateTracker",
@@ -27,9 +29,12 @@
     "sound.ChannelAccessor",
     "sound.MixinOptions",
     "sound.MixinSoundEngine",
-    "world.MixinIForgeBlockState"
+    "world.MixinIForgeBlockState",
+    "world.MixinLevelLightEngine",
+    "world.MixinLightEngine"
   ],
   "mixins": [
-    "world.MixinServerLevel"
+    "world.MixinServerLevel",
+    "world.structure.MixinStructureTemplate"
   ]
 }

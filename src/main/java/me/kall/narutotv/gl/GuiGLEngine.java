@@ -1,11 +1,11 @@
-package me.kall.narutotv.shader;
+package me.kall.narutotv.gl;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 
-import static org.lwjgl.opengl.GL30C.*;
+import static org.lwjgl.opengl.GL46C.*;
 
 public class GuiGLEngine extends AbstractGLEngine {
     public GuiGLEngine(String fragmentSource, String vertexSource, MediaArgs mediaArgs) {

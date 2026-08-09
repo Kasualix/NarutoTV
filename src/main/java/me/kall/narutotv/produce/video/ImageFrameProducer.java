@@ -39,8 +39,24 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
 
         NativeImage image = new NativeImage(width, height, false);
 
-        MemoryUtil.memCopy(MemoryUtil.memAddress(frame), ((NativeImageAccessor)(Object)image).getPixels(), (long) width * (long) height * 4L);
-        this.frames.put(new Frame<>(frameIndex, image));
+        long pixels = ((NativeImageAccessor)(Object)image).getPixels();
+
+        MemoryUtil.memCopy(MemoryUtil.memAddress(frame), pixels, (long) width * (long) height * 4L);
+
+        byte[] lightMap = new byte[width * height];
+        for (int i = 0; i < width * height; i++) {
+            int pixel = MemoryUtil.memGetInt(pixels + i * 4L);
+
+            int r = (pixel) & 0xFF;
+            int g = (pixel >> 8) & 0xFF;
+            int b = (pixel >> 16) & 0xFF;
+
+            int luma = (54 * r + 183 * g + 19 * b) >> 8;
+
+            lightMap[i] = (byte) ((luma * 15 + 127) / 255);
+        }
+
+        this.frames.put(new Frame<>(frameIndex, image, lightMap));
     }
 
     @Override

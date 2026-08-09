@@ -72,8 +72,8 @@ dependencies {
         modImplementation("curse.maven:duplicationless-1380105:8122786")
     } else {
         forge "net.minecraftforge:forge:${project.minecraft_version}-${versionInfo.forge}"
-        modImplementation("curse.maven:oculus-581495:6020952")
         modImplementation("curse.maven:duplicationless-1380105:8122781")
+        modImplementation(files("deps/celeritas-forge-mc20.1-2.4.0-dev.jar"))
     }
 
     if (!isNeo) shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixinextras_version}"))
@@ -92,6 +92,9 @@ processResources {
         }
         exclude("META-INF/neoforge.mods.toml")
     }
+}
+
+compileTestJava {
 }
 
 jar {

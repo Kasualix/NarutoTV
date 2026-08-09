@@ -1,14 +1,15 @@
-package me.kall.narutotv.core.renderer;
+package me.kall.narutotv.renderer;
 
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.core.world.light.LightAccessor;
-import me.kall.narutotv.core.world.light.Lighter;
+import me.kall.narutotv.world.light.LightAccessor;
+import me.kall.narutotv.world.light.PosLighter;
 import me.kall.narutotv.data.world.Wall;
 import me.kall.narutotv.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.produce.video.BufferFrameProducer;
-import me.kall.narutotv.shader.AbstractGLEngine;
-import me.kall.narutotv.shader.GuiGLEngine;
-import me.kall.narutotv.shader.WorldGLEngine;
+import me.kall.narutotv.gl.AbstractGLEngine;
+import me.kall.narutotv.gl.GuiGLEngine;
+import me.kall.narutotv.gl.WorldGLEngine;
+import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,10 +37,9 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
     protected abstract AbstractGLEngine initGLEngine(MediaArgs mediaArgs);
 
     @Override
-    public void update(@NotNull MediaArgs mediaArgs, @Nullable ByteBuffer frame) {
+    public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<ByteBuffer> frame) {
         if (this.engine == null) return;
-        if (frame == null) frame = this.loading.get(mediaArgs.width(), mediaArgs.height());
-        this.engine.update(frame);
+        this.engine.update(frame == null ? this.loading.get(mediaArgs.width(), mediaArgs.height()) : frame.data());
     }
 
     @Override
@@ -116,7 +116,7 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         @Contract("_ -> new")
         protected @NotNull AbstractGLEngine initGLEngine(MediaArgs mediaArgs) {
             String fragmentSource = """
-                    #version 330 core
+                    #version 460 core
     
                     uniform sampler2D uTexY;
                     uniform sampler2D uTexU;
@@ -142,7 +142,7 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
                     }
                     """;
             String vertexSource = """
-                    #version 330 core
+                    #version 460 core
     
                     layout(location = 0) in vec2 Position;
     
@@ -162,7 +162,7 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         @Override
         protected @NotNull AbstractGLEngine initGLEngine(MediaArgs mediaArgs) {
             String fragmentSource = """
-                #version 330 core
+                #version 460 core
       
                 uniform sampler2D uTexY;
                 uniform sampler2D uTexU;
@@ -207,18 +207,18 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
 
     public static final class World extends BufferFrameRenderer implements LightAccessor {
         private final Wall wall;
-        private final Lighter lighter;
+        private final PosLighter posLighter;
 
         public World(Wall wall) {
             this.wall = wall;
-            this.lighter = new Lighter(wall);
+            this.posLighter = new PosLighter(wall);
         }
 
         @Override
         @Contract("_ -> new")
         protected @NotNull AbstractGLEngine initGLEngine(MediaArgs mediaArgs) {
             String fragmentSource = """
-                #version 330 core
+                #version 460 core
 
                 uniform sampler2D uTexY;
                 uniform sampler2D uTexU;
@@ -263,14 +263,14 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         }
 
         @Override
-        public void update(@NotNull MediaArgs mediaArgs, @Nullable ByteBuffer frame) {
+        public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<ByteBuffer> frame) {
             super.update(mediaArgs, frame);
-            if (frame != null) this.lighter.updateLight(Lighter.forBuffer(frame, mediaArgs.width(), mediaArgs.height()));
+            if (frame != null) this.posLighter.updateLight(frame.lightMap(), mediaArgs.width(), mediaArgs.height());
         }
 
         @Override
-        public int getLight() {
-            return this.lighter.getLight();
+        public int getLight(BlockPos pos) {
+            return this.posLighter.getLight(pos);
         }
     }
 }

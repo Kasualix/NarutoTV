@@ -1,8 +1,9 @@
-package me.kall.narutotv.core.world;
+package me.kall.narutotv.world;
 
 import me.kall.narutotv.data.world.Wall;
 import net.minecraft.client.Camera;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
@@ -15,15 +16,10 @@ public final class NarutoMath {
             double topFromX, double topFromY, double topFromZ, float u3, float v3
     ) {}
 
-    public static float computeU(double pointX, double pointY, double pointZ, double centerX, double centerY, double centerZ, double rightX, double rightY, double rightZ) {
-        return ((pointX - centerX) * rightX + (pointY - centerY) * rightY + (pointZ - centerZ) * rightZ) >= 0 ? 1.0F : 0.0F;
-    }
+    private static final double OFFSET = 0.0003D;
 
-    public static float computeV(double pointX, double pointY, double pointZ, double centerX, double centerY, double centerZ, double upX, double upY, double upZ) {
-        return ((pointX - centerX) * upX + (pointY - centerY) * upY + (pointZ - centerZ) * upZ) >= 0 ? 0.0F : 1.0F;
-    }
-
-    public static @NotNull NarutoMath.Coords computeCoords(@NotNull Wall wall, @NotNull Camera camera) {
+    @Contract("_, _ -> new")
+    public static NarutoMath.@NotNull Coords computeCoords(@NotNull Wall wall, @NotNull Camera camera) {
         Vec3 camVec = camera.getPosition();
         Vector3f upVec = camera.getUpVector();
 
@@ -64,7 +60,7 @@ public final class NarutoMath {
         double upProjZ = camUpZ - normalZ * dotUpN;
         double upProjLenSq = upProjX * upProjX + upProjY * upProjY + upProjZ * upProjZ;
 
-        if (upProjLenSq < 1e-4) {
+        if (upProjLenSq < 1e-5) {
             Vector3f lookVec = camera.getLookVector();
             double lookX = lookVec.x(), lookY = lookVec.y(), lookZ = lookVec.z();
             double dotLookN = lookX * normalX + lookY * normalY + lookZ * normalZ;
@@ -73,7 +69,7 @@ public final class NarutoMath {
             upProjZ = lookZ - normalZ * dotLookN;
             upProjLenSq = upProjX * upProjX + upProjY * upProjY + upProjZ * upProjZ;
 
-            if (upProjLenSq < 1e-4) {
+            if (upProjLenSq < 1e-5) {
                 upProjX = uDirX; upProjY = uDirY; upProjZ = uDirZ;
                 upProjLenSq = 1.0;
             }
@@ -131,10 +127,20 @@ public final class NarutoMath {
 
         return new Coords(
                 normalX, normalY, normalZ,
-                bottomFromX, bottomFromY, bottomFromZ, u0, v0,
-                bottomToX, bottomToY, bottomToZ, u1, v1,
-                topToX, topToY, topToZ, u2, v2,
-                topFromX, topFromY, topFromZ, u3, v3
+                bottomFromX + normalX * OFFSET, bottomFromY + normalY * OFFSET, bottomFromZ + normalZ * OFFSET, u0, v0,
+                bottomToX + normalX * OFFSET, bottomToY + normalY * OFFSET, bottomToZ + normalZ * OFFSET, u1, v1,
+                topToX + normalX * OFFSET, topToY + normalY * OFFSET, topToZ + normalZ * OFFSET, u2, v2,
+                topFromX + normalX * OFFSET , topFromY + normalY * OFFSET, topFromZ + normalZ * OFFSET, u3, v3
         );
+    }
+
+    @Contract(pure = true)
+    private static float computeU(double pointX, double pointY, double pointZ, double centerX, double centerY, double centerZ, double rightX, double rightY, double rightZ) {
+        return ((pointX - centerX) * rightX + (pointY - centerY) * rightY + (pointZ - centerZ) * rightZ) >= 0 ? 1.0F : 0.0F;
+    }
+
+    @Contract(pure = true)
+    private static float computeV(double pointX, double pointY, double pointZ, double centerX, double centerY, double centerZ, double upX, double upY, double upZ) {
+        return ((pointX - centerX) * upX + (pointY - centerY) * upY + (pointZ - centerZ) * upZ) >= 0 ? 0.0F : 1.0F;
     }
 }

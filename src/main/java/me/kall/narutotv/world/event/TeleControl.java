@@ -1,10 +1,10 @@
-package me.kall.narutotv.core.world.event;
+package me.kall.narutotv.world.event;
 
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import me.kall.duplicationless.ext.RegistryEntry;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
-import me.kall.narutotv.core.world.WallTV;
+import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.world.ClientWalls;
 import me.kall.narutotv.data.world.Wall;
 import me.kall.narutotv.screen.NarutoWorldScreen;

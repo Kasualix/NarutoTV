@@ -58,7 +58,18 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
 
     @Override
     protected void onBuilt(ByteBuffer frame, long frameIndex) throws InterruptedException {
-        this.frames.put(new Frame<>(frameIndex, frame));
+        int width = this.mediaArgs.width();
+        int height = this.mediaArgs.height();
+        int ySize = width * height;
+
+        byte[] lightMap = new byte[ySize];
+        for (int i = 0; i < ySize; i++) {
+            int y = frame.get(i) & 0xFF;
+            int light = Math.min(15, Math.max(0, (int) Math.round(y / 255.0 * 15)));
+            lightMap[i] = (byte) light;
+        }
+
+        this.frames.put(new Frame<>(frameIndex, frame, lightMap));
     }
 
     @Override

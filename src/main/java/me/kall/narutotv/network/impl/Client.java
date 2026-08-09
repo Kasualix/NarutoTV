@@ -4,7 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import me.kall.narutotv.app.FFmpeg;
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.core.world.WallTV;
+import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.ClientWalls;

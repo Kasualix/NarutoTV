@@ -43,7 +43,7 @@ public final class TimeCostDebugger {
         for (double cost : costs) total += cost;
         double average = total / costs.length;
 
-        System.err.println("[" + this.reason + "] Costs of the last " + this.count + " records in ms: " + Arrays.toString(costs) + ". Average: " + average + "ms.");
+        System.out.println("[" + this.reason + "] Costs of the last " + this.count + " records in ms: " + Arrays.toString(costs) + ". Average: " + average + "ms.");
     }
 
     @Contract(pure = true)

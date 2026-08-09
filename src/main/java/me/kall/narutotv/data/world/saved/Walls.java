@@ -22,13 +22,16 @@ import org.jetbrains.annotations.Nullable;
 
 @Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class Walls extends SavedData {
-    private static final String SCREENS_KEY = "Screens";
+    private static final String SCREENS_KEY = "Walls";
     private static final String DIMENSION_KEY = "Dimension";
-    private static final String CORNERS_KEY = "Corners";
-    private static final String LOCAL_SOUND_KEY = "LocalSound";
-    private static final String VIDEO_KEY = "Video";
-    private static final String AUDIO_KEY = "Audio";
-    private static final String VOLUME_KEY = "Volume";
+
+    public static final String DATA_NAME = "NarutoWalls";
+
+    public static final String CORNERS_KEY = "Corners";
+    public static final String LOCAL_SOUND_KEY = "LocalSound";
+    public static final String VIDEO_KEY = "Video";
+    public static final String AUDIO_KEY = "Audio";
+    public static final String VOLUME_KEY = "Volume";
 
     private final Object2ObjectOpenHashMap<ResourceLocation, ObjectOpenHashSet<Wall>> data = new Object2ObjectOpenHashMap<>();
 
@@ -46,6 +49,10 @@ public class Walls extends SavedData {
             if (wall.areaInvolved().contains(position)) return wall;
         }
         return null;
+    }
+
+    public ObjectOpenHashSet<Wall> getIn(ResourceLocation dimension) {
+        return this.data.get(dimension);
     }
 
     public void remove(ResourceLocation dimension, long position) {
@@ -104,7 +111,7 @@ public class Walls extends SavedData {
     }
 
     public static @NotNull Walls get(@NotNull ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(Walls::load, Walls::new, "NarutoScreens");
+        return level.getDataStorage().computeIfAbsent(Walls::load, Walls::new, DATA_NAME);
     }
 
     @SubscribeEvent

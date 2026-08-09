@@ -1,16 +1,16 @@
 package me.kall.narutotv.data.world;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.*;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.context.RenderCaptured;
-import me.kall.narutotv.core.renderer.ImageFrameRenderer;
-import me.kall.narutotv.core.world.WallTV;
 import me.kall.narutotv.produce.util.LifetimeController;
+import me.kall.narutotv.renderer.ImageFrameRenderer;
+import me.kall.narutotv.world.WallTV;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientWalls {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Wall, WallTV<?>>> DATA = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectMap<ResourceLocation, Long2ObjectMap<WallTV<?>>> POSITION_CACHE = new Object2ObjectOpenHashMap<>();
 
     public static @NotNull ObjectCollection<WallTV<?>> getIn(ResourceLocation dimension) {
         return DATA.getOrDefault(dimension, Object2ObjectMaps.emptyMap()).values();
@@ -45,23 +46,17 @@ public class ClientWalls {
     }
 
     public static @Nullable WallTV<?> get(ResourceLocation dimension, long position) {
-        Object2ObjectMap<Wall, WallTV<?>> inDimension = DATA.get(dimension);
-        if (inDimension == null || inDimension.isEmpty()) return null;
-        for (Map.Entry<Wall, WallTV<?>> entry : inDimension.entrySet()) {
-            if (entry.getKey().areaInvolved().contains(position)) return entry.getValue();
-        }
-        return null;
+        Long2ObjectMap<WallTV<?>> cacheMap = POSITION_CACHE.get(dimension);
+        return cacheMap == null ? null : cacheMap.get(position);
     }
 
     public static @NotNull Optional<WallTV<?>> remove(@NotNull Wall wall) {
-        Object2ObjectMap<Wall, WallTV<?>> inDimension = DATA.get(wall.dimension);
-        if (inDimension == null) return Optional.empty();
-        return Optional.ofNullable(inDimension.remove(wall));
-    }
+        Object2ObjectMap<Wall, WallTV<?>> dimMap = DATA.get(wall.dimension);
+        if (dimMap == null) return Optional.empty();
 
-    public static @NotNull Optional<WallTV<?>> add(@NotNull WallTV<?> tv) {
-        Wall wall = tv.wall;
-        return Optional.ofNullable(DATA.computeIfAbsent(wall.dimension, key -> new Object2ObjectOpenHashMap<>()).put(wall, tv));
+        WallTV<?> removed = dimMap.remove(wall);
+        if (removed != null) clearCacheForWall(wall.dimension, wall.areaInvolved());
+        return Optional.ofNullable(removed);
     }
 
     public static @NotNull Optional<WallTV<?>> add(Wall wall) {
@@ -69,6 +64,26 @@ public class ClientWalls {
             return add(new WallTV.Image(wall));
         } else {
             return add(new WallTV.Buffer(wall));
+        }
+    }
+
+    private static @NotNull Optional<WallTV<?>> add(@NotNull WallTV<?> tv) {
+        Wall wall = tv.wall;
+        Object2ObjectMap<Wall, WallTV<?>> dimMap = DATA.computeIfAbsent(wall.dimension, key -> new Object2ObjectOpenHashMap<>());
+
+        WallTV<?> old = dimMap.put(wall, tv);
+        if (old != null) clearCacheForWall(wall.dimension, old.wall.areaInvolved());
+
+        Long2ObjectMap<WallTV<?>> cacheMap = POSITION_CACHE.computeIfAbsent(wall.dimension, key -> new Long2ObjectOpenHashMap<>());
+        for (long pos : wall.areaInvolved()) cacheMap.put(pos, tv);
+        return Optional.ofNullable(old);
+    }
+
+    private static void clearCacheForWall(ResourceLocation dimension, LongSet area) {
+        Long2ObjectMap<WallTV<?>> cacheMap = POSITION_CACHE.get(dimension);
+        if (cacheMap != null) {
+            for (long pos : area) cacheMap.remove(pos);
+            if (cacheMap.isEmpty()) POSITION_CACHE.remove(dimension);
         }
     }
 
@@ -82,9 +97,10 @@ public class ClientWalls {
 
     public static void swap() {
         boolean isCompatMode = ClientWalls.isCompatMode();
-        Object2ObjectMap<ResourceLocation, Object2ObjectMap<Wall, WallTV<?>>> swapped = new Object2ObjectOpenHashMap<>();
+
+        ObjectSet<WallTV<?>> latestSet = new ObjectOpenHashSet<>();
+
         for (Map.Entry<ResourceLocation, Object2ObjectMap<Wall, WallTV<?>>> dimEntry : DATA.object2ObjectEntrySet()) {
-            ResourceLocation dimension = dimEntry.getKey();
             for (Object2ObjectMap.Entry<Wall, WallTV<?>> wallEntry : dimEntry.getValue().object2ObjectEntrySet()) {
                 Wall wall = wallEntry.getKey();
                 WallTV<?> outdated = wallEntry.getValue();
@@ -93,17 +109,18 @@ public class ClientWalls {
 
                 WallTV<?> latest = isCompatMode ? new WallTV.Buffer(wall) : new WallTV.Image(wall);
 
-                swapped.computeIfAbsent(dimension, key -> new Object2ObjectOpenHashMap<>()).put(wall, latest);
-
                 latest.mediaArgs = outdated.mediaArgs;
 
                 latest.setup(life == null ? 0D : life.sinceSetupSec());
                 outdated.shutdownEntire(false);
+
+                latestSet.add(latest);
             }
         }
 
         DATA.clear();
-        DATA.putAll(swapped);
+        POSITION_CACHE.clear();
+        latestSet.forEach(ClientWalls::add);
     }
 
     public static void setCompatMode() {
@@ -121,6 +138,8 @@ public class ClientWalls {
     @SubscribeEvent
     public static void logOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientWalls.forEach(WallTV.DEATH);
+        DATA.clear();
+        POSITION_CACHE.clear();
     }
 
     @SubscribeEvent
@@ -148,7 +167,6 @@ public class ClientWalls {
         for (WallTV<?> tv : inDimension.values()) {
             poseStack.pushPose();
             poseStack.translate(-cameraPos.x, - cameraPos.y, - cameraPos.z);
-
             RenderCaptured.poseStack(poseStack);
 
             tv.render();

@@ -23,13 +23,14 @@ public class GuiSceneControl {
     public static void swap() {
         if (GuiSceneControl.isCompatMode()) {
             BUFFER.mediaArgs = IMAGE.mediaArgs;
-            IMAGE.shutdownEntire(false);
             active = BUFFER;
         } else {
             IMAGE.mediaArgs = BUFFER.mediaArgs;
-            BUFFER.shutdownEntire(false);
             active = IMAGE;
         }
+
+        BUFFER.shutdownEntire(true);
+        IMAGE.shutdownEntire(true);
 
         active.setup(0D);
     }

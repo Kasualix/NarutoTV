@@ -1,12 +1,12 @@
-package me.kall.narutotv.core.world;
+package me.kall.narutotv.world;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.core.AbstractTV;
-import me.kall.narutotv.core.renderer.BufferFrameRenderer;
-import me.kall.narutotv.core.renderer.FrameRenderer;
-import me.kall.narutotv.core.renderer.ImageFrameRenderer;
-import me.kall.narutotv.core.world.light.LightAccessor;
+import me.kall.narutotv.renderer.BufferFrameRenderer;
+import me.kall.narutotv.renderer.FrameRenderer;
+import me.kall.narutotv.renderer.ImageFrameRenderer;
+import me.kall.narutotv.world.light.LightAccessor;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.Wall;
@@ -14,6 +14,7 @@ import me.kall.narutotv.produce.audio.AudioProducer;
 import me.kall.narutotv.produce.util.LifetimeController;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +37,8 @@ public abstract class WallTV<T> extends AbstractTV<T> {
         this.wall = wall;
     }
 
-    public int getLight() {
-        return ((LightAccessor) this.renderer).getLight();
+    public int getLight(BlockPos pos) {
+        return ((LightAccessor)this.renderer).getLight(pos);
     }
 
     @Override

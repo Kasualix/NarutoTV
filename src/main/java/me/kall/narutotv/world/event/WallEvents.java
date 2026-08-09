@@ -1,4 +1,4 @@
-package me.kall.narutotv.core.world.event;
+package me.kall.narutotv.world.event;
 
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;

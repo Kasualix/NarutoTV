@@ -3,7 +3,7 @@ package me.kall.narutotv.context;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.YtDlp;
-import me.kall.narutotv.core.world.WallTV;
+import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.ClientWalls;

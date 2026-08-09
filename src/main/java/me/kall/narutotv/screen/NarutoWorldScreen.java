@@ -4,7 +4,7 @@ package me.kall.narutotv.screen;
 import me.kall.narutotv.app.FFmpeg;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.config.NarutoConfig;
-import me.kall.narutotv.core.world.WallTV;
+import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.ClientWalls;

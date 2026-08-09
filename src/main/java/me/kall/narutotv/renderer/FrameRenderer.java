@@ -1,4 +1,4 @@
-package me.kall.narutotv.core.renderer;
+package me.kall.narutotv.renderer;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.produce.video.AbstractFrameProducer;
@@ -10,7 +10,7 @@ public interface FrameRenderer<T> {
 
     void setup(@NotNull MediaArgs mediaArgs, double seekTo);
 
-    void update(@NotNull MediaArgs mediaArgs, @Nullable T frame);
+    void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<T> frame);
 
     void render();
 

@@ -1,4 +1,4 @@
-package me.kall.narutotv.shader;
+package me.kall.narutotv.gl;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-import static org.lwjgl.opengl.GL30C.*;
+import static org.lwjgl.opengl.GL46C.*;
 
 public abstract class AbstractGLEngine {
     protected int program, vertexArray, buffer;

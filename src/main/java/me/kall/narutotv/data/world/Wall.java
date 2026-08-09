@@ -5,8 +5,10 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.data.world.saved.Walls;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Contract;
@@ -307,6 +309,32 @@ public class Wall {
         }
 
         return new double[]{bottomFromX, bottomFromY, bottomFromZ, bottomToX, bottomToY, bottomToZ, topFromX, topFromY, topFromZ, topToX, topToY, topToZ};
+    }
+
+    public boolean isInside(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        return isInside(this.leftBottom, minX, minY, minZ, maxX, maxY, maxZ)
+                && isInside(this.leftTop, minX, minY, minZ, maxX, maxY, maxZ)
+                && isInside(this.rightBottom, minX, minY, minZ, maxX, maxY, maxZ)
+                && isInside(this.rightTop, minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    private static boolean isInside(@NotNull BlockPos pos, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        return pos.getX() >= minX && pos.getX() <= maxX && pos.getY() >= minY && pos.getY() <= maxY && pos.getZ() >= minZ && pos.getZ() <= maxZ;
+    }
+
+    public CompoundTag toRelativeNBT(int originX, int originY, int originZ) {
+        CompoundTag tag = new CompoundTag();
+        long[] relCorners = new long[4];
+        relCorners[0] = BlockPos.asLong(this.leftBottom.getX() - originX, this.leftBottom.getY() - originY, this.leftBottom.getZ() - originZ);
+        relCorners[1] = BlockPos.asLong(this.rightBottom.getX() - originX, this.rightBottom.getY() - originY, this.rightBottom.getZ() - originZ);
+        relCorners[2] = BlockPos.asLong(this.leftTop.getX() - originX, this.leftTop.getY() - originY, this.leftTop.getZ() - originZ);
+        relCorners[3] = BlockPos.asLong(this.rightTop.getX() - originX, this.rightTop.getY() - originY, this.rightTop.getZ() - originZ);
+        tag.putLongArray(Walls.CORNERS_KEY, relCorners);
+        tag.putString(Walls.LOCAL_SOUND_KEY, this.localSound.toString());
+        tag.putFloat(Walls.VOLUME_KEY, this.volume);
+        tag.putString(Walls.VIDEO_KEY, this.video);
+        tag.putString(Walls.AUDIO_KEY, this.audio);
+        return tag;
     }
 
     @Override

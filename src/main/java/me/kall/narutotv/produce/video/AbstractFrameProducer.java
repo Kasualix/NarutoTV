@@ -217,7 +217,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         }
     }
 
-    public @Nullable T fetch() {
+    public @Nullable Frame<T> fetch() {
         if (this.ready.get()) {
             T lastFrame = this.lastFrame.getAndSet(null);
             if (lastFrame != null) this.onDead(lastFrame);
@@ -240,7 +240,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
                     }
 
                     this.lastFrame.set(frame.data());
-                    return frame.data();
+                    return frame;
                 }
             }
         }
@@ -283,5 +283,5 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     protected abstract void onBuilt(ByteBuffer frame, long frameIndex) throws InterruptedException;
     protected abstract void onDead(T frame);
 
-    protected record Frame<T>(long index, T data) {}
+    public record Frame<T>(long index, T data, byte[] lightMap) {}
 }

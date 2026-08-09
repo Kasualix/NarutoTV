@@ -1,6 +1,6 @@
 package me.kall.narutotv.mixin.world;
 
-import me.kall.narutotv.core.world.WallTV;
+import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.world.ClientWalls;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -20,7 +20,7 @@ public interface MixinIForgeBlockState {
     default int getLightEmission(BlockGetter level, BlockPos pos) {
         if (level instanceof ClientLevel clientLevel) {
             WallTV<?> renderer = ClientWalls.get(clientLevel.dimension().location(), pos.asLong());
-            if (renderer != null && renderer.isRunning()) return renderer.getLight();
+            if (renderer != null && renderer.isRunning()) return renderer.getLight(pos);
         }
         return ((BlockState)this).getBlock().getLightEmission(((BlockState)this), level, pos);
     }
