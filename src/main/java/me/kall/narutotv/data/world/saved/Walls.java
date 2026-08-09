@@ -32,6 +32,7 @@ public class Walls extends SavedData {
     public static final String VIDEO_KEY = "Video";
     public static final String AUDIO_KEY = "Audio";
     public static final String VOLUME_KEY = "Volume";
+    public static final String LIGHT_KEY = "Light";
 
     private final Object2ObjectOpenHashMap<ResourceLocation, ObjectOpenHashSet<Wall>> data = new Object2ObjectOpenHashMap<>();
 
@@ -88,6 +89,7 @@ public class Walls extends SavedData {
                 screenTag.putString(VIDEO_KEY, wall.video);
                 screenTag.putString(AUDIO_KEY, wall.audio);
                 screenTag.putFloat(VOLUME_KEY, wall.volume);
+                screenTag.putBoolean(LIGHT_KEY, wall.light);
                 screensList.add(screenTag);
             }
         }
@@ -104,7 +106,7 @@ public class Walls extends SavedData {
 
             ResourceLocation dimension = ResourceLocation.parse(screenTag.getString(DIMENSION_KEY));
 
-            walls.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new Wall(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY)), screenTag.getString(VIDEO_KEY), screenTag.getString(AUDIO_KEY), screenTag.getFloat(VOLUME_KEY)));
+            walls.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new Wall(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY)), screenTag.getString(VIDEO_KEY), screenTag.getString(AUDIO_KEY), screenTag.getFloat(VOLUME_KEY), screenTag.getBoolean(LIGHT_KEY)));
         }
 
         return walls;

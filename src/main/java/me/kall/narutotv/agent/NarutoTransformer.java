@@ -37,7 +37,47 @@ public class NarutoTransformer implements ClassFileTransformer {
             }
         }
 
+        if ("net/minecraftforge/fml/earlydisplay/RenderElement".equals(className)) {
+            try {
+                ClassReader classReader = new ClassReader(classFileBuffer);
+                ClassNode classNode = new ClassNode();
+                classReader.accept(classNode, 0);
+
+                for (MethodNode method : classNode.methods) {
+                    if ("barRenderer".equals(method.name)) {
+                        modifyBarRenderer(method);
+                    }
+                }
+
+                ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                classNode.accept(classWriter);
+                return classWriter.toByteArray();
+            } catch (Exception exception) {
+                exception.printStackTrace(System.err);
+                throw new RuntimeException(exception);
+            }
+        }
+
         return null;
+    }
+
+    private void modifyBarRenderer(@NotNull MethodNode method) {
+        for (AbstractInsnNode insn : method.instructions.toArray()) {
+            if (insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
+                MethodInsnNode mInsn = (MethodInsnNode) insn;
+                if ("then".equals(mInsn.name)) {
+                    AbstractInsnNode prev = insn.getPrevious();
+                    AbstractInsnNode prevPrev = prev.getPrevious();
+
+                    if (prev.getOpcode() == Opcodes.ALOAD && prevPrev.getOpcode() == Opcodes.ALOAD) {
+
+                        method.instructions.remove(prev);
+                        method.instructions.remove(insn);
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     @SuppressWarnings("ExtractMethodRecommender")

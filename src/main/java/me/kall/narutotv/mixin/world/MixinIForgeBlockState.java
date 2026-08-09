@@ -20,7 +20,7 @@ public interface MixinIForgeBlockState {
     default int getLightEmission(BlockGetter level, BlockPos pos) {
         if (level instanceof ClientLevel clientLevel) {
             WallTV<?> renderer = ClientWalls.get(clientLevel.dimension().location(), pos.asLong());
-            if (renderer != null && renderer.isRunning()) return renderer.getLight(pos);
+            if (renderer != null && renderer.isRunning() && renderer.wall.light) return renderer.getLight(pos);
         }
         return ((BlockState)this).getBlock().getLightEmission(((BlockState)this), level, pos);
     }

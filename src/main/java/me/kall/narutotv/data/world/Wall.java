@@ -38,12 +38,15 @@ public class Wall {
 
     public String video = "", audio = "";
 
-    public Wall(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio, float volume) {
+    public boolean light = false;
+
+    public Wall(long @NotNull [] corners, ResourceLocation dimension, ResourceLocation localSound, String video, String audio, float volume, boolean light) {
         this(BlockPos.of(corners[0]), BlockPos.of(corners[1]), BlockPos.of(corners[2]), BlockPos.of(corners[3]), dimension);
         this.localSound = localSound;
         this.video = video;
         this.audio = audio;
         this.volume = volume;
+        this.light = light;
     }
 
     public Wall(@NotNull BlockPos bottomCorner1, @NotNull BlockPos bottomCorner2, @NotNull BlockPos topCorner1, @NotNull BlockPos topCorner2, ResourceLocation dimension) {
@@ -334,6 +337,7 @@ public class Wall {
         tag.putFloat(Walls.VOLUME_KEY, this.volume);
         tag.putString(Walls.VIDEO_KEY, this.video);
         tag.putString(Walls.AUDIO_KEY, this.audio);
+        tag.putBoolean(Walls.LIGHT_KEY, this.light);
         return tag;
     }
 
@@ -362,6 +366,7 @@ public class Wall {
                 ", volume=" + this.volume +
                 ", video='" + this.video + '\'' +
                 ", audio='" + this.audio + '\'' +
+                ", light=" + this.light +
                 '}';
     }
 }

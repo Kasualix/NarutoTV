@@ -88,7 +88,7 @@ public abstract class MixinStructureTemplate {
                 absCorners[i] = BlockPos.asLong(transformed.getX() + pos.getX(), transformed.getY() + pos.getY(), transformed.getZ() + pos.getZ());
             }
 
-            Wall wall = new Wall(absCorners, dimension, ResourceLocation.parse(wallTag.getString(Walls.LOCAL_SOUND_KEY)), wallTag.getString(Walls.VIDEO_KEY), wallTag.getString(Walls.AUDIO_KEY), wallTag.getFloat(Walls.VOLUME_KEY));
+            Wall wall = new Wall(absCorners, dimension, ResourceLocation.parse(wallTag.getString(Walls.LOCAL_SOUND_KEY)), wallTag.getString(Walls.VIDEO_KEY), wallTag.getString(Walls.AUDIO_KEY), wallTag.getFloat(Walls.VOLUME_KEY), wallTag.getBoolean(Walls.LIGHT_KEY));
 
             Walls.get(level).update(wall);
             NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(wall));

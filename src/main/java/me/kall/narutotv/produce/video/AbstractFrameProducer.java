@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,6 +47,9 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
     private final AtomicReference<ExecutorService> waitExecutor = new AtomicReference<>();
     private final Object waiter = new Object();
+    private final AtomicBoolean isWaiting = new AtomicBoolean();
+
+    public @Nullable Runnable initCall;
 
     protected AbstractFrameProducer(@NotNull MediaArgs mediaArgs, int frameSize, int bufferSeconds) {
         this.mediaArgs = mediaArgs;
@@ -94,53 +98,24 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         List<String> command = Lists.newArrayList(AppProps.ffmpegPath(), "-loglevel", "quiet");
 
         if (RenderProps.gpuAccel()) {
-            command.add("-hwaccel");
-            command.add("auto");
+            command.add("-hwaccel"); command.add("auto");
         }
 
-        command.add("-probesize");
-        command.add("32");
-
-        command.add("-analyzeduration");
-        command.add("0");
-
-        command.add("-fflags");
-        command.add("nobuffer");
-
-        command.add("-sws_flags");
-        command.add("fast_bilinear");
-
-        command.add("-flags");
-        command.add("low_delay");
-
-        command.add("-ss");
-        command.add(String.valueOf(seekTo + this.mediaArgs.videoStartSec()));
-
-        command.add("-i");
-        command.add(this.mediaArgs.absVideoPath());
-
-        command.add("-map");
-        command.add("0:v:0");
-
-        command.add("-an");
-        command.add("-sn");
-        command.add("-dn");
-
-        command.add("-threads");
-        command.add("0");
-
-        command.add("-vf");
-        command.add("scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear,format=" + this.frameType());
-
-        command.add("-f");
-        command.add("rawvideo");
-
-        command.add("-vcodec");
-        command.add("rawvideo");
-
-        command.add("-tune");
-        command.add("zerolatency");
-
+        command.add("-probesize"); command.add("32");
+        command.add("-analyzeduration"); command.add("0");
+        command.add("-fflags"); command.add("nobuffer");
+        command.add("-sws_flags"); command.add("fast_bilinear");
+        command.add("-flags"); command.add("low_delay");
+        command.add("-accurate_seek");
+        command.add("-ss"); command.add(String.valueOf(seekTo + this.mediaArgs.videoStartSec()));
+        command.add("-i"); command.add(this.mediaArgs.absVideoPath());
+        command.add("-map"); command.add("0:v:0");
+        command.add("-an"); command.add("-sn"); command.add("-dn");
+        command.add("-threads"); command.add("0");
+        command.add("-vf"); command.add("scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear,format=" + this.frameType());
+        command.add("-f"); command.add("rawvideo");
+        command.add("-vcodec"); command.add("rawvideo");
+        command.add("-tune"); command.add("zerolatency");
         command.add("-");
 
         return command;
@@ -164,12 +139,16 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
             this.frameReading.record(System.nanoTime() - start);
 
             this.onBuilt(frame.flip(), this.frameIndex.incrementAndGet());
-            if (this.frames.remainingCapacity() == 0 && !this.ready.get()) this.onWarm();
+
+            if (!RenderProps.isEnd() || this.frames.remainingCapacity() == 0 && !this.ready.get()) this.onWarm();
         }
     }
 
     private void onWarm() {
-        this.waitExecutor.get().submit(() -> {
+        if (this.isWaiting.get() || this.waitExecutor.get() == null) return;
+        this.isWaiting.set(true);
+
+        CompletableFuture.runAsync(() -> {
             synchronized (this.waiter) {
                 while (!this.ready.get()) {
                     if (this.eager.get()) {
@@ -185,11 +164,19 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
                             if (audio != null) {
                                 audio.setOnInitTune(() -> {
+                                    if (this.initCall != null) {
+                                        this.initCall.run();
+                                        this.initCall = null;
+                                    }
                                     this.life.get().seekTo(seekTo);
                                     this.ready.set(true);
                                 });
                                 this.audio.set(audio);
                             } else {
+                                if (this.initCall != null) {
+                                    this.initCall.run();
+                                    this.initCall = null;
+                                }
                                 life.seekTo(seekTo);
                                 this.ready.set(true);
                             }
@@ -207,6 +194,10 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
                     }
                 }
             }
+        }, this.waitExecutor.get()).whenComplete((unused, throwable) -> {
+            if (throwable != null) throw new RuntimeException(throwable);
+            ExecutorService waitExecutor = this.waitExecutor.getAndSet(null);
+            if (waitExecutor != null) waitExecutor.shutdownNow();
         });
     }
 
@@ -240,6 +231,7 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
                     }
 
                     this.lastFrame.set(frame.data());
+
                     return frame;
                 }
             }
@@ -269,7 +261,6 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
         this.lifeCreation.set(null);
         this.audioCreation.set(null);
 
-        this.frameReading.printDebug();
         this.frameReading.reset();
 
         AudioProducer audio = this.audio.getAndSet(null);

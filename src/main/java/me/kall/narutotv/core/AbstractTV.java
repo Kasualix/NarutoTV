@@ -15,8 +15,8 @@ public abstract class AbstractTV<T> {
     public MediaArgs mediaArgs;
     public AbstractFrameProducer<T> video;
 
-    private boolean isRunning;
-    private CompletableFuture<AbstractFrameProducer<T>> prefetched;
+    protected boolean isRunning;
+    protected CompletableFuture<AbstractFrameProducer<T>> prefetched;
 
     public final FrameRenderer<T> renderer;
 
@@ -114,7 +114,10 @@ public abstract class AbstractTV<T> {
                         return video;
                     }, NarutoTV.io());
                 }
-                if (life.checkUpdate()) this.renderer.update(this.mediaArgs, this.video.fetch());
+
+                if (life.checkUpdate()) {
+                    this.renderer.update(this.mediaArgs, this.video.fetch());
+                }
             }
 
             this.renderer.render();

@@ -155,7 +155,7 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
 
         @Override
         public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<NativeImage> frame) {
-            if (frame != null) this.posLighter.updateLight(frame.lightMap(), mediaArgs.width(), mediaArgs.height());
+            if (frame != null && this.wall.light) this.posLighter.updateLight(frame.lightMap(), mediaArgs.width(), mediaArgs.height());
             super.update(mediaArgs, frame);
         }
 

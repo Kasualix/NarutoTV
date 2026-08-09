@@ -15,7 +15,7 @@ public abstract class WallPacket {
     }
 
     public WallPacket(@NotNull FriendlyByteBuf buffer) {
-        this(new Wall(buffer.readLongArray(), buffer.readResourceLocation(), buffer.readResourceLocation(), buffer.readUtf(), buffer.readUtf(), buffer.readFloat()));
+        this(new Wall(buffer.readLongArray(), buffer.readResourceLocation(), buffer.readResourceLocation(), buffer.readUtf(), buffer.readUtf(), buffer.readFloat(), buffer.readBoolean()));
     }
 
     public void encode(@NotNull FriendlyByteBuf buffer) {
@@ -25,6 +25,7 @@ public abstract class WallPacket {
         buffer.writeUtf(this.wall.video);
         buffer.writeUtf(this.wall.audio);
         buffer.writeFloat(this.wall.volume);
+        buffer.writeBoolean(this.wall.light);
     }
 
     public abstract void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier);

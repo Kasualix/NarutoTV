@@ -9,6 +9,7 @@
   "checkbox.narutotv.mute_music": "Mute Music",
 
   "checkbox.narutotv.local_sound": "Local Sound",
+  "checkbox.narutotv.light": "Immersive Light",
 
   "box.narutotv.video": "Video",
   "box.narutotv.audio": "Audio",
@@ -21,7 +22,7 @@
 
   "note.narutotv.confirm": "Press Enter to confirm.",
 
-  "tooltip.narutotv.random": "Randomly select one from sources that are not played yet.",
+  "tooltip.narutotv.random": "Randomly select one from sources.",
   "tooltip.narutotv.clean": "Destroy all the blocks except those on border for the current block screen.",
   "tooltip.narutotv.swap": "Swap between compatibility mode and performance mode.",
   "tooltip.narutotv.swap.universal": "Note that all the block screens in your world are affected by this option.",

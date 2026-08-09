@@ -2,9 +2,9 @@ package me.kall.narutotv.agent;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.core.AbstractTV;
-import me.kall.narutotv.renderer.BufferFrameRenderer;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.system.RenderProps;
+import me.kall.narutotv.renderer.BufferFrameRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
@@ -27,7 +27,6 @@ public class NarutoEarlyTV extends AbstractTV<ByteBuffer> {
             this.shutdownEntire(true);
             return false;
         }
-        RenderProps.markStart();
         return true;
     }
 

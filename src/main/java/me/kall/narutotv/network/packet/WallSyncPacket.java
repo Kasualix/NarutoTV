@@ -33,7 +33,8 @@ public class WallSyncPacket {
                 String video = buffer.readUtf();
                 String audio = buffer.readUtf();
                 float volume = buffer.readFloat();
-                screens.add(new Wall(corners, dimension, localSound, video, audio, volume));
+                boolean light = buffer.readBoolean();
+                screens.add(new Wall(corners, dimension, localSound, video, audio, volume, light));
             }
             this.walls.add(screens);
         }
@@ -50,6 +51,7 @@ public class WallSyncPacket {
                 buffer.writeUtf(wall.video);
                 buffer.writeUtf(wall.audio);
                 buffer.writeFloat(wall.volume);
+                buffer.writeBoolean(wall.light);
             });
         });
     }

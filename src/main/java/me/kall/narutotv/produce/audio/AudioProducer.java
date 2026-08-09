@@ -47,7 +47,19 @@ public final class AudioProducer extends AbstractProducer {
 
     @Override
     protected @Nullable @Unmodifiable List<String> setCommand(double seekTo) {
-        return this.mediaArgs.hasAudio() ? List.of(AppProps.ffmpegPath(), "-ss", String.valueOf(seekTo + this.mediaArgs.audioStartSec()), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-") : null;
+        return this.mediaArgs.hasAudio() ?
+                List.of(
+                        AppProps.ffmpegPath(),
+                        "-accurate_seek",
+                        "-ss", String.valueOf(seekTo + this.mediaArgs.audioStartSec()),
+                        "-i", this.mediaArgs.absAudioPath(),
+                        "-vn",
+                        "-f", "s16le",
+                        "-ac", String.valueOf(this.mediaArgs.channelCount()),
+                        "-ar", String.valueOf(this.mediaArgs.sampleRate()),
+                        "-loglevel", "error",
+                        "-"
+                ) : null;
     }
 
     @Override
@@ -84,11 +96,12 @@ public final class AudioProducer extends AbstractProducer {
 
                 int queued = AL11.alGetSourcei(source, AL11.AL_BUFFERS_QUEUED);
                 if (queued > 0 && AL11.alGetSourcei(source, AL11.AL_SOURCE_STATE) != AL11.AL_PLAYING) {
+                    AL11.alSourcePlay(source);
+
                     if (this.tuneInit.compareAndSet(false, true)) {
                         Runnable onInitTune = this.onInitTune.getAndSet(null);
                         if (onInitTune != null) onInitTune.run();
                     }
-                    AL11.alSourcePlay(source);
                 }
             }
         } finally {

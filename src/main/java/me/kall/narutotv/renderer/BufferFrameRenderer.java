@@ -1,6 +1,7 @@
 package me.kall.narutotv.renderer;
 
 import me.kall.narutotv.app.data.MediaArgs;
+import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.world.light.LightAccessor;
 import me.kall.narutotv.world.light.PosLighter;
 import me.kall.narutotv.data.world.Wall;
@@ -23,18 +24,18 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
     private final Loading loading = new Loading();
     private AbstractGLEngine engine;
 
+    protected abstract AbstractGLEngine initGLEngine(MediaArgs mediaArgs);
+
     @Override
     public @NotNull AbstractFrameProducer<ByteBuffer> initVideo(@NotNull MediaArgs args) {
-        return new BufferFrameProducer(args, 2);
+        return new BufferFrameProducer(args, RenderProps.isEnd() ? 2 : 5);
     }
 
     @Override
     public void setup(@NotNull MediaArgs mediaArgs, double seekTo) {
         this.engine = this.initGLEngine(mediaArgs);
-        this.update(mediaArgs, null);
+        this.engine.setup();
     }
-
-    protected abstract AbstractGLEngine initGLEngine(MediaArgs mediaArgs);
 
     @Override
     public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<ByteBuffer> frame) {
@@ -155,6 +156,18 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
                     """;
             return new GuiGLEngine(fragmentSource, vertexSource, mediaArgs);
         }
+
+        @Override
+        public void setup(@NotNull MediaArgs mediaArgs, double seekTo) {
+            super.setup(mediaArgs, seekTo);
+            this.update(mediaArgs, null);
+        }
+
+        @Override
+        public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<ByteBuffer> frame) {
+            RenderProps.markStart();
+            super.update(mediaArgs, frame);
+        }
     }
 
     public static final class Gui extends BufferFrameRenderer {
@@ -265,7 +278,7 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         @Override
         public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<ByteBuffer> frame) {
             super.update(mediaArgs, frame);
-            if (frame != null) this.posLighter.updateLight(frame.lightMap(), mediaArgs.width(), mediaArgs.height());
+            if (frame != null && this.wall.light) this.posLighter.updateLight(frame.lightMap(), mediaArgs.width(), mediaArgs.height());
         }
 
         @Override

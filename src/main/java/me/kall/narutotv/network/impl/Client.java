@@ -31,9 +31,10 @@ public class Client {
         WallTV<?> current = ClientWalls.get(wall);
         if (current == null) return;
         Wall existing = current.wall;
-        if (Objects.equals(existing.video, wall.video) && Objects.equals(existing.audio, wall.audio) && existing.localSound.equals(wall.localSound) && wall.volume != existing.volume) {
+        if (Objects.equals(existing.video, wall.video) && Objects.equals(existing.audio, wall.audio) && existing.localSound.equals(wall.localSound)) {
             current.setVolume(wall.volume);
             existing.volume = wall.volume;
+            existing.light = wall.light;
         } else {
             ClientWalls.add(wall).ifPresent(outdated -> {
                 WallTV<?> latest = ClientWalls.get(wall);

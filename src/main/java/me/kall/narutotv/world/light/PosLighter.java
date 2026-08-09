@@ -16,9 +16,18 @@ public final class PosLighter implements LightAccessor {
     public PosLighter(@NotNull Wall wall) {
         this.wall = wall;
         switch (wall.axisThickness) {
-            case X -> { this.lightMapWidth = wall.widthZ; this.lightMapHeight = wall.widthY; }
-            case Y -> { this.lightMapWidth = wall.widthX; this.lightMapHeight = wall.widthZ; }
-            case Z -> { this.lightMapWidth = wall.widthX; this.lightMapHeight = wall.widthY; }
+            case X -> {
+                this.lightMapWidth = wall.widthZ;
+                this.lightMapHeight = wall.widthY;
+            }
+            case Y -> {
+                this.lightMapWidth = wall.widthX;
+                this.lightMapHeight = wall.widthZ;
+            }
+            case Z -> {
+                this.lightMapWidth = wall.widthX;
+                this.lightMapHeight = wall.widthY;
+            }
         }
         this.blockLightMap = new byte[this.lightMapWidth * this.lightMapHeight];
     }
