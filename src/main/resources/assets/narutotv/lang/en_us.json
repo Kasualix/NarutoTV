@@ -5,6 +5,9 @@
   "button.narutotv.swap": "Swap",
   "button.narutotv.clean": "Clean Blocks",
 
+  "button.narutotv.existing": "Use Existing",
+  "button.narutotv.replace": "Replace Existing",
+
   "checkbox.narutotv.fadable": "Fadable GUI",
   "checkbox.narutotv.mute_music": "Mute Music",
 
@@ -21,6 +24,7 @@
   "box.narutotv.max_height": "Height Limit",
 
   "note.narutotv.confirm": "Press Enter to confirm.",
+  "note.narutotv.double_check": "%s already exists.",
 
   "tooltip.narutotv.random": "Randomly select one from sources.",
   "tooltip.narutotv.clean": "Destroy all the blocks except those on border for the current block screen.",
@@ -37,5 +41,9 @@
 
   "message.narutotv.corner.fail": "Exception occurs when building screen with bottom corners [%s] and [%s]! See latest.log for details.",
   "message.narutotv.corner.none": "Failed to find complete rectangle block screen for bottom corners [%s] and [%s]. Check what you build.",
-  "message.narutotv.corner.success": "Rectangle block screen for bottom corners [%s] and [%s] is built successfully!"
+  "message.narutotv.corner.success": "Rectangle block screen for bottom corners [%s] and [%s] is built successfully!",
+
+  "invoker.narutotv.video": "Video",
+  "invoker.narutotv.gui_scene.tooltip": "Play the video file on the current screen background.",
+  "invoker.narutotv.wall.tooltip": "Play the video file on the nearest media wall you are looking at."
 }

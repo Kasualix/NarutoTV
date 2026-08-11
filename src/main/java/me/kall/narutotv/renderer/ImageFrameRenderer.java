@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.context.RenderCaptured;
-import me.kall.narutotv.world.NarutoMath;
+import me.kall.narutotv.util.NarutoMath;
 import me.kall.narutotv.world.api.RenderCoordsEvent;
 import me.kall.narutotv.world.light.LightAccessor;
 import me.kall.narutotv.world.light.PosLighter;

@@ -2,6 +2,7 @@ package me.kall.narutotv.override;
 
 import me.kall.narutotv.core.AbstractTV;
 import me.kall.narutotv.data.system.RenderProps;
+import me.kall.narutotv.produce.util.LifetimeController;
 import org.jetbrains.annotations.NotNull;
 
 public class GuiSceneControl {
@@ -21,17 +22,28 @@ public class GuiSceneControl {
     }
 
     public static void swap() {
+        double seekTo = 0D;
         if (GuiSceneControl.isCompatMode()) {
             BUFFER.mediaArgs = IMAGE.mediaArgs;
             active = BUFFER;
+
+            if (IMAGE.video != null) {
+                LifetimeController life = IMAGE.video.life();
+                if (life != null) seekTo = life.sinceSetupSec();
+            }
         } else {
             IMAGE.mediaArgs = BUFFER.mediaArgs;
             active = IMAGE;
+
+            if (BUFFER.video != null) {
+                LifetimeController life = BUFFER.video.life();
+                if (life != null) seekTo = life.sinceSetupSec();
+            }
         }
 
         BUFFER.shutdownEntire(true);
         IMAGE.shutdownEntire(true);
 
-        active.setup(0D);
+        active.setup(seekTo);
     }
 }

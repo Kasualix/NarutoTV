@@ -10,6 +10,7 @@ import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.context.RenderCaptured;
 import me.kall.narutotv.produce.util.LifetimeController;
 import me.kall.narutotv.renderer.ImageFrameRenderer;
+import me.kall.narutotv.util.NarutoMath;
 import me.kall.narutotv.world.WallTV;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -17,6 +18,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -37,6 +39,30 @@ public class ClientWalls {
 
     public static @NotNull ObjectCollection<WallTV<?>> getIn(ResourceLocation dimension) {
         return DATA.getOrDefault(dimension, Object2ObjectMaps.emptyMap()).values();
+    }
+
+    public static @Nullable Wall getNearest(ResourceLocation dimension, @NotNull Player player) {
+        float partialTick = Minecraft.getInstance().getPartialTick();
+        Vec3 eye = player.getEyePosition(partialTick);
+        Vec3 view = player.getViewVector(partialTick);
+        var tvs = ClientWalls.getIn(dimension);
+        if (tvs.isEmpty()) return null;
+
+        Wall target = null;
+        double minDist = Double.MAX_VALUE;
+
+        for (WallTV<?> tv : tvs) {
+            Wall wall = tv.wall;
+            Vec3 intersection = NarutoMath.getIntersection(eye, view, wall);
+            if (intersection == null) continue;
+            double dist = eye.distanceToSqr(intersection);
+            if (dist < minDist) {
+                minDist = dist;
+                target = wall;
+            }
+        }
+
+        return target;
     }
 
     public static @Nullable WallTV<?> get(@NotNull Wall wall) {

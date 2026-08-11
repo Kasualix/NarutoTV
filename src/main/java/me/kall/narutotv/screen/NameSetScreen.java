@@ -58,9 +58,9 @@ public class NameSetScreen extends Screen {
         long window = this.getMinecraft().getWindow().getWindow();
 
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_ENTER) == GLFW.GLFW_PRESS || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_KP_ENTER) == GLFW.GLFW_PRESS) {
+            this.onClose();
             this.nameAction.accept(this.nameBox.getValue());
             this.nameAction = null;
-            this.onClose();
         }
     }
 
@@ -72,6 +72,5 @@ public class NameSetScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().setScreen(this.lastScreen);
-        super.onClose();
     }
 }

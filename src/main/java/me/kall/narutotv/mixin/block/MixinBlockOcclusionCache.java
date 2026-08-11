@@ -1,7 +1,7 @@
 package me.kall.narutotv.mixin.block;
 
 import me.kall.narutotv.context.LastCoords;
-import me.kall.narutotv.world.NarutoMath;
+import me.kall.narutotv.util.NarutoMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;

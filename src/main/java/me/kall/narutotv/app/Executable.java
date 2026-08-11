@@ -7,8 +7,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Executable {
+    public static final AtomicBoolean PRINT = new AtomicBoolean();
+
     public static @Nullable String runCommand(@NotNull List<String> command) {
         Process process;
         try {
@@ -23,7 +26,7 @@ public class Executable {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                //System.out.println(line);
+                if (PRINT.get()) System.out.println(line);
                 output.append(line.trim()).append("\n");
             }
         } catch (IOException exception) {

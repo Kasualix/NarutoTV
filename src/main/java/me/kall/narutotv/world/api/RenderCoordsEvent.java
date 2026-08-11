@@ -1,6 +1,6 @@
 package me.kall.narutotv.world.api;
 
-import me.kall.narutotv.world.NarutoMath;
+import me.kall.narutotv.util.NarutoMath;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.Event;
 

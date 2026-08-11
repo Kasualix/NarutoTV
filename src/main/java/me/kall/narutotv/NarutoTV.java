@@ -1,6 +1,7 @@
 package me.kall.narutotv;
 
 import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.Contract;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +16,7 @@ public final class NarutoTV {
         return thread;
     });
 
+    @Contract(pure = true)
     public static ExecutorService io() {
         return FILE_TASKS;
     }

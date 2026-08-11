@@ -2,7 +2,7 @@ package me.kall.narutotv.context;
 
 import it.unimi.dsi.fastutil.objects.*;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.world.NarutoMath;
+import me.kall.narutotv.util.NarutoMath;
 import me.kall.narutotv.world.api.RenderCoordsEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

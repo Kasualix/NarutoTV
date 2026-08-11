@@ -1,6 +1,5 @@
 package me.kall.narutotv.app;
 
-import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.Downloaded;
 import me.kall.narutotv.data.system.AppProps;
 import org.jetbrains.annotations.Contract;
@@ -9,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class YtDlp {
     public static final String VIDEO_DOWNLOADING_FILE = "video-downloading.txt";
@@ -16,6 +17,12 @@ public class YtDlp {
 
     private static final String VIDEO_DOWNLOADED_FILE = "video-downloaded.txt";
     private static final String AUDIO_DOWNLOADED_FILE = "audio-downloaded.txt";
+
+    private static final ExecutorService DOWNLOADER = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "NarutoDownloadThread");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     @Contract("_, _ -> new")
     public static @NotNull CompletableFuture<Downloaded> download(String url, Path outputDir) {
@@ -33,10 +40,12 @@ public class YtDlp {
                 return null;
             }
 
-            String outputTemplate = outputDir.resolve("audio.%(ext)s").toString();
+            Executable.PRINT.set(true);
 
-            boolean audioSuccess = Executable.runCommand(AppProps.ytDlpPath(), url, "-o", outputTemplate, "-x", "--audio-format", "mp3", "--audio-quality", "0", "--no-playlist", "--progress", "--ffmpeg-location", AppProps.ffmpegPath()) != null;
-            boolean videoSuccess = Executable.runCommand(AppProps.ytDlpPath(), url, "-o", outputTemplate, "--format", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best", "--merge-output-format", "mp4", "--no-playlist", "--progress", "--ffmpeg-location", AppProps.ffmpegPath()) != null;
+            boolean audioSuccess = Executable.runCommand(AppProps.ytDlpPath(), url, "-o", outputDir.resolve("audio.%(ext)s").toString(), "-x", "--audio-format", "mp3", "--audio-quality", "0", "--no-playlist", "--progress", "--ffmpeg-location", AppProps.ffmpegPath()) != null;
+            boolean videoSuccess = Executable.runCommand(AppProps.ytDlpPath(), url, "-o", outputDir.resolve("video.%(ext)s").toString(), "--format", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best", "--merge-output-format", "mp4", "--no-playlist", "--progress", "--ffmpeg-location", AppProps.ffmpegPath()) != null;
+
+            Executable.PRINT.set(false);
 
             if (!audioSuccess || !videoSuccess) return null;
 
@@ -50,6 +59,6 @@ public class YtDlp {
             }
 
             return new Downloaded(outputDir.resolve("video.mp4"), outputDir.resolve("audio.mp3"));
-        }, NarutoTV.io());
+        }, DOWNLOADER);
     }
 }

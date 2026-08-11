@@ -35,7 +35,7 @@ public abstract class AbstractNarutoScreen extends Screen {
     protected static final Component PERFORMANCE = Component.translatable("mode.narutotv.performance").withStyle(ChatFormatting.RED);
 
     static final int BOX_WIDTH = 200, BOX_HEIGHT = 20, BOX_SPACING = 18;
-    protected static final int BUTTON_WIDTH = 80, BUTTON_HEIGHT = 20, BUTTON_SPACING = 5;
+    static final int BUTTON_WIDTH = 80, BUTTON_HEIGHT = 20, BUTTON_SPACING = 5;
 
     protected static final Predicate<String> NUMERIC = string -> string.matches("-?\\d*\\.?\\d*");
 
@@ -205,6 +205,5 @@ public abstract class AbstractNarutoScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().setScreen(this.lastScreen);
-        super.onClose();
     }
 }

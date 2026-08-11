@@ -5,6 +5,9 @@
   "button.narutotv.swap": "切换",
   "button.narutotv.clean": "清理方块",
 
+  "button.narutotv.existing": "使用已有文件",
+  "button.narutotv.replace": "取代已有文件",
+
   "checkbox.narutotv.fadable": "界面渐隐",
   "checkbox.narutotv.mute_music": "静音音乐",
 
@@ -19,6 +22,9 @@
 
   "box.narutotv.max_width": "限宽",
   "box.narutotv.max_height": "限高",
+
+  "note.narutotv.confirm": "按下 Enter 键以确认。",
+  "note.narutotv.double_check": "%s 已存在。",
 
   "tooltip.narutotv.random": "从来源中随机选取一个。",
   "tooltip.narutotv.clean": "除了边框上的，清除当前方块屏幕中的所有方块。",
@@ -35,5 +41,9 @@
 
   "message.narutotv.corner.fail": "使用[%s]和[%s]两底角构建屏幕时发生意外！查看最新日志获取详细信息。",
   "message.narutotv.corner.none": "未能根据底角[%s]和[%s]找到完整的矩形方块屏幕。请检查你的建筑。",
-  "message.narutotv.corner.success": "成功基于底角[%s]和[%s]构建出矩形方块屏幕！"
+  "message.narutotv.corner.success": "成功基于底角[%s]和[%s]构建出矩形方块屏幕！",
+
+  "invoker.narutotv.video": "视频",
+  "invoker.narutotv.gui_scene.tooltip": "为屏幕背景切换播放此视频文件。",
+  "invoker.narutotv.wall.tooltip": "为你视线内最近的视频方块屏幕切换播放此视频文件。"
 }

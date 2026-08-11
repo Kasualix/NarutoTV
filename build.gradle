@@ -74,6 +74,7 @@ dependencies {
         forge "net.minecraftforge:forge:${project.minecraft_version}-${versionInfo.forge}"
         modImplementation("curse.maven:duplicationless-1380105:8122781")
         modImplementation(files("deps/celeritas-forge-mc20.1-2.4.0-dev.jar"))
+        modImplementation(files("deps/dragit-1.20.1-1.0.0.jar"))
     }
 
     if (!isNeo) shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixinextras_version}"))

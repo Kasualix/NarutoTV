@@ -34,7 +34,7 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
     @Override
     public void setup(@NotNull MediaArgs mediaArgs, double seekTo) {
         this.engine = this.initGLEngine(mediaArgs);
-        this.engine.setup();
+        this.update(mediaArgs, null);
     }
 
     @Override
@@ -155,12 +155,6 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
                     }
                     """;
             return new GuiGLEngine(fragmentSource, vertexSource, mediaArgs);
-        }
-
-        @Override
-        public void setup(@NotNull MediaArgs mediaArgs, double seekTo) {
-            super.setup(mediaArgs, seekTo);
-            this.update(mediaArgs, null);
         }
 
         @Override
