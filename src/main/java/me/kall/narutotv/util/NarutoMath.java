@@ -1,6 +1,6 @@
 package me.kall.narutotv.util;
 
-import me.kall.narutotv.data.world.Wall;
+import me.kall.narutotv.data.world.wall.Wall;
 import net.minecraft.client.Camera;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Contract;

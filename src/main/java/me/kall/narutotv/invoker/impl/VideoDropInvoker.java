@@ -3,16 +3,14 @@ package me.kall.narutotv.invoker.impl;
 import me.kall.dragit.api.Invoker;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.screen.DoubleCheckScreen;
 import me.kall.narutotv.screen.NameSetScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,14 +20,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public abstract class VideoDropInvoker implements Invoker {
-    private static final Logger LOGGER = LoggerFactory.getLogger(VideoDropInvoker.class);
-    private static final Component ID = Component.translatable("invoker.narutotv.video");
+    private static final Logger LOGGER = LogManager.getLogger(VideoDropInvoker.class);
 
     @Override
     public void run(String absVideoPath) {
         Minecraft minecraft = Minecraft.getInstance();
         minecraft.setScreen(new NameSetScreen(name -> {
-            Path directory = GamePaths.SOURCES.resolve(name);
+            Path directory = this.copyTarget().resolve(name);
             Path target = directory.resolve("video." + FileNameUtils.getExtension(absVideoPath));
 
             if (Files.exists(target)) {
@@ -40,7 +37,7 @@ public abstract class VideoDropInvoker implements Invoker {
         }, minecraft.screen));
     }
 
-    private void forPath(Supplier<String> pathSupplier) {
+    protected void forPath(Supplier<String> pathSupplier) {
         CompletableFuture.supplyAsync(pathSupplier, NarutoTV.io())
                 .thenApplyAsync(Sources::get, NarutoTV.io())
                 .whenCompleteAsync((mediaArgs, throwable) -> {
@@ -70,9 +67,5 @@ public abstract class VideoDropInvoker implements Invoker {
     }
 
     protected abstract void forResolved(MediaArgs mediaArgs);
-
-    @Override
-    public Component id() {
-        return ID;
-    }
+    protected abstract Path copyTarget();
 }

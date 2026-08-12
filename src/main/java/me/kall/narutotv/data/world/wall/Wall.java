@@ -1,11 +1,10 @@
-package me.kall.narutotv.data.world;
+package me.kall.narutotv.data.world.wall;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.data.world.saved.Walls;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -17,7 +16,7 @@ import org.joml.Vector3f;
 
 import java.util.Objects;
 
-public class Wall {
+public final class Wall {
     public static final ResourceLocation NO_LOCAL_SOUND = ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "no");
 
     public final BlockPos leftBottom, leftTop, rightBottom, rightTop;
@@ -325,19 +324,19 @@ public class Wall {
         return pos.getX() >= minX && pos.getX() <= maxX && pos.getY() >= minY && pos.getY() <= maxY && pos.getZ() >= minZ && pos.getZ() <= maxZ;
     }
 
-    public CompoundTag toRelativeNBT(int originX, int originY, int originZ) {
+    public @NotNull CompoundTag toRelativeNBT(int originX, int originY, int originZ) {
         CompoundTag tag = new CompoundTag();
         long[] relCorners = new long[4];
         relCorners[0] = BlockPos.asLong(this.leftBottom.getX() - originX, this.leftBottom.getY() - originY, this.leftBottom.getZ() - originZ);
         relCorners[1] = BlockPos.asLong(this.rightBottom.getX() - originX, this.rightBottom.getY() - originY, this.rightBottom.getZ() - originZ);
         relCorners[2] = BlockPos.asLong(this.leftTop.getX() - originX, this.leftTop.getY() - originY, this.leftTop.getZ() - originZ);
         relCorners[3] = BlockPos.asLong(this.rightTop.getX() - originX, this.rightTop.getY() - originY, this.rightTop.getZ() - originZ);
-        tag.putLongArray(Walls.CORNERS_KEY, relCorners);
-        tag.putString(Walls.LOCAL_SOUND_KEY, this.localSound.toString());
-        tag.putFloat(Walls.VOLUME_KEY, this.volume);
-        tag.putString(Walls.VIDEO_KEY, this.video);
-        tag.putString(Walls.AUDIO_KEY, this.audio);
-        tag.putBoolean(Walls.LIGHT_KEY, this.light);
+        tag.putLongArray(SavedWalls.CORNERS_KEY, relCorners);
+        tag.putString(SavedWalls.LOCAL_SOUND_KEY, this.localSound.toString());
+        tag.putFloat(SavedWalls.VOLUME_KEY, this.volume);
+        tag.putString(SavedWalls.VIDEO_KEY, this.video);
+        tag.putString(SavedWalls.AUDIO_KEY, this.audio);
+        tag.putBoolean(SavedWalls.LIGHT_KEY, this.light);
         return tag;
     }
 

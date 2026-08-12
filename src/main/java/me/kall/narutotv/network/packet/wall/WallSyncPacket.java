@@ -1,9 +1,9 @@
-package me.kall.narutotv.network.packet;
+package me.kall.narutotv.network.packet.wall;
 
 
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import me.kall.narutotv.data.world.Wall;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
 import net.minecraft.network.FriendlyByteBuf;

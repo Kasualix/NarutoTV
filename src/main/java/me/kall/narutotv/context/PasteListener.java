@@ -5,7 +5,7 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.YtDlp;
 import me.kall.narutotv.app.data.Downloaded;
 import me.kall.narutotv.data.file.GamePaths;
-import me.kall.narutotv.data.world.ClientWalls;
+import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
 import me.kall.narutotv.screen.NameSetScreen;
 import me.kall.narutotv.screen.NarutoSceneScreen;

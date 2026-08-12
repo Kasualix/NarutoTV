@@ -115,9 +115,7 @@ public abstract class AbstractTV<T> {
                     }, NarutoTV.io());
                 }
 
-                if (life.checkUpdate()) {
-                    this.renderer.update(this.mediaArgs, this.video.fetch());
-                }
+                if (life.checkUpdate()) this.renderer.update(this.mediaArgs, this.video.fetch());
             }
 
             this.renderer.render();

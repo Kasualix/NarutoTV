@@ -1,6 +1,6 @@
 package me.kall.narutotv.world.light;
 
-import me.kall.narutotv.data.world.Wall;
+import me.kall.narutotv.data.world.wall.Wall;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;

@@ -1,11 +1,10 @@
-package me.kall.narutotv.data.world.saved;
+package me.kall.narutotv.data.world.wall;
 
 import it.unimi.dsi.fastutil.objects.*;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.data.world.Wall;
 import me.kall.narutotv.network.NarutoPackets;
-import me.kall.narutotv.network.packet.WallDeathPacket;
-import me.kall.narutotv.network.packet.WallSyncPacket;
+import me.kall.narutotv.network.packet.wall.WallDeathPacket;
+import me.kall.narutotv.network.packet.wall.WallSyncPacket;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
-public class Walls extends SavedData {
+public class SavedWalls extends SavedData {
     private static final String SCREENS_KEY = "Walls";
     private static final String DIMENSION_KEY = "Dimension";
 
@@ -97,8 +96,8 @@ public class Walls extends SavedData {
         return compoundTag;
     }
 
-    public static @NotNull Walls load(@NotNull CompoundTag tag) {
-        Walls walls = new Walls();
+    public static @NotNull SavedWalls load(@NotNull CompoundTag tag) {
+        SavedWalls savedWalls = new SavedWalls();
 
         ListTag screensList = tag.getList(SCREENS_KEY, Tag.TAG_COMPOUND);
         for (int index = 0; index < screensList.size(); index++) {
@@ -106,20 +105,20 @@ public class Walls extends SavedData {
 
             ResourceLocation dimension = ResourceLocation.parse(screenTag.getString(DIMENSION_KEY));
 
-            walls.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new Wall(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY)), screenTag.getString(VIDEO_KEY), screenTag.getString(AUDIO_KEY), screenTag.getFloat(VOLUME_KEY), screenTag.getBoolean(LIGHT_KEY)));
+            savedWalls.data.computeIfAbsent(dimension, key -> new ObjectOpenHashSet<>()).add(new Wall(screenTag.getLongArray(CORNERS_KEY), dimension, ResourceLocation.parse(screenTag.getString(LOCAL_SOUND_KEY)), screenTag.getString(VIDEO_KEY), screenTag.getString(AUDIO_KEY), screenTag.getFloat(VOLUME_KEY), screenTag.getBoolean(LIGHT_KEY)));
         }
 
-        return walls;
+        return savedWalls;
     }
 
-    public static @NotNull Walls get(@NotNull ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(Walls::load, Walls::new, DATA_NAME);
+    public static @NotNull SavedWalls get(@NotNull ServerLevel level) {
+        return level.getDataStorage().computeIfAbsent(SavedWalls::load, SavedWalls::new, DATA_NAME);
     }
 
     @SubscribeEvent
-    public static void syncScreens(PlayerEvent.@NotNull PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && player.level() instanceof ServerLevel level) {
-            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallSyncPacket(Walls.get(level).values()));
+    public static void sync(PlayerEvent.@NotNull PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallSyncPacket(SavedWalls.get(player.serverLevel()).values()));
         }
     }
 }

@@ -1,6 +1,6 @@
 package me.kall.narutotv.mixin.context;
 
-import me.kall.narutotv.data.world.ClientWalls;
+import me.kall.narutotv.data.world.wall.ClientWalls;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ResourceLoadStateTracker;
 import org.spongepowered.asm.mixin.Mixin;

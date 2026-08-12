@@ -3,18 +3,19 @@ package me.kall.narutotv.renderer;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import me.kall.dragit.DragIt;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.context.RenderCaptured;
-import me.kall.narutotv.util.NarutoMath;
-import me.kall.narutotv.world.api.RenderCoordsEvent;
-import me.kall.narutotv.world.light.LightAccessor;
-import me.kall.narutotv.world.light.PosLighter;
-import me.kall.narutotv.data.world.Wall;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.fade.Fadable;
 import me.kall.narutotv.mixin.context.NativeImageAccessor;
 import me.kall.narutotv.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.produce.video.ImageFrameProducer;
+import me.kall.narutotv.util.NarutoMath;
+import me.kall.narutotv.world.api.RenderCoordsEvent;
+import me.kall.narutotv.world.light.LightAccessor;
+import me.kall.narutotv.world.light.PosLighter;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -162,7 +163,7 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         @Override
         public void render() {
             PoseStack poseStack = RenderCaptured.poseStack();
-            MultiBufferSource.BufferSource bufferSource = RenderCaptured.bufferSource();
+            MultiBufferSource bufferSource = RenderCaptured.bufferSource();
             Camera camera = RenderCaptured.camera();
             if (poseStack == null || bufferSource == null || camera == null || this.textureLocation == null || this.dynamicTexture == null) return;
 
@@ -194,6 +195,38 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         @Override
         public int getLight(BlockPos pos) {
             return this.posLighter.getLight(pos);
+        }
+    }
+
+    public static final class Cape extends ImageFrameRenderer {
+        private final me.kall.narutotv.data.world.cape.Cape cape;
+        public Cape(me.kall.narutotv.data.world.cape.Cape cape) {
+
+            this.cape = cape;
+        }
+
+        @Override
+        @Contract(" -> new")
+        protected @NotNull ResourceLocation setLocation() {
+            return ResourceLocation.fromNamespaceAndPath(DragIt.MOD_ID, "cape_" + this.cape.player().hashCode());
+        }
+
+        @Override
+        public void render() {
+            PoseStack poseStack = RenderCaptured.poseStack();
+            MultiBufferSource bufferSource = RenderCaptured.bufferSource();
+            Camera camera = RenderCaptured.camera();
+
+            if (poseStack == null || bufferSource == null || camera == null || this.textureLocation == null || this.dynamicTexture == null) return;
+
+            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(this.textureLocation));
+            Matrix4f pose = poseStack.last().pose();
+            Matrix3f normal = poseStack.last().normal();
+
+            consumer.vertex(pose, -0.3125F, 0.01F, 0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
+            consumer.vertex(pose, -0.3125F, 1.01F, 0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
+            consumer.vertex(pose, +0.3125F, 1.01F, 0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
+            consumer.vertex(pose, +0.3125F, 0.01F, 0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
         }
     }
 }

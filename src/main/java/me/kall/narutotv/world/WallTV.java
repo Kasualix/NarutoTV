@@ -9,7 +9,7 @@ import me.kall.narutotv.renderer.ImageFrameRenderer;
 import me.kall.narutotv.world.light.LightAccessor;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
-import me.kall.narutotv.data.world.Wall;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.produce.audio.AudioProducer;
 import me.kall.narutotv.produce.util.LifetimeController;
 import net.minecraft.client.Minecraft;
@@ -32,7 +32,7 @@ public abstract class WallTV<T> extends AbstractTV<T> {
     protected @Nullable Runnable soundOff;
     protected @Nullable DoubleConsumer soundOn;
 
-    public WallTV(FrameRenderer<T> renderer, Wall wall) {
+    protected WallTV(FrameRenderer<T> renderer, Wall wall) {
         super(renderer);
         this.wall = wall;
     }

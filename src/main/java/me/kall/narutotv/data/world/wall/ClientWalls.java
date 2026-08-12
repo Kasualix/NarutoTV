@@ -1,4 +1,4 @@
-package me.kall.narutotv.data.world;
+package me.kall.narutotv.data.world.wall;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -28,7 +28,6 @@ import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -126,8 +125,8 @@ public class ClientWalls {
 
         ObjectSet<WallTV<?>> latestSet = new ObjectOpenHashSet<>();
 
-        for (Map.Entry<ResourceLocation, Object2ObjectMap<Wall, WallTV<?>>> dimEntry : DATA.object2ObjectEntrySet()) {
-            for (Object2ObjectMap.Entry<Wall, WallTV<?>> wallEntry : dimEntry.getValue().object2ObjectEntrySet()) {
+        for (Object2ObjectMap<Wall, WallTV<?>> value : DATA.values()) {
+            for (Object2ObjectMap.Entry<Wall, WallTV<?>> wallEntry : value.object2ObjectEntrySet()) {
                 Wall wall = wallEntry.getKey();
                 WallTV<?> outdated = wallEntry.getValue();
 
@@ -169,7 +168,7 @@ public class ClientWalls {
     }
 
     @SubscribeEvent
-    public static void renderLevel(RenderLevelStageEvent event) {
+    public static void renderLevel(@NotNull RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;

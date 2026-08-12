@@ -18,15 +18,15 @@ public class GamePaths {
     }
 
     public static @NotNull String absConfig(@NotNull String relativePath) {
-        if (relativePath.isBlank()) return "";
+        if (relativePath.isBlank()) throw new IllegalArgumentException("Path string is blank.");
         return CONFIG.resolve(relativePath.replace('\\', '/')).normalize().toString();
     }
 
     public static @NotNull String relConfig(@NotNull String absolutePath) {
-        if (absolutePath.isBlank()) return "";
+        if (absolutePath.isBlank()) throw new IllegalArgumentException("Path string is blank.");
 
         Path target = Path.of(absolutePath).normalize();
-        if (!target.startsWith(CONFIG)) return "";
+        if (!target.startsWith(CONFIG)) throw new IllegalArgumentException("Already relative: " + absolutePath);
 
         return CONFIG.relativize(target).toString().replace('\\', '/');
     }

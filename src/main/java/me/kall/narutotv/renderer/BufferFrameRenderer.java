@@ -2,14 +2,15 @@ package me.kall.narutotv.renderer;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.data.system.RenderProps;
+import me.kall.narutotv.renderer.gl.CapeGLEngine;
 import me.kall.narutotv.world.light.LightAccessor;
 import me.kall.narutotv.world.light.PosLighter;
-import me.kall.narutotv.data.world.Wall;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.produce.video.BufferFrameProducer;
-import me.kall.narutotv.gl.AbstractGLEngine;
-import me.kall.narutotv.gl.GuiGLEngine;
-import me.kall.narutotv.gl.WorldGLEngine;
+import me.kall.narutotv.renderer.gl.AbstractGLEngine;
+import me.kall.narutotv.renderer.gl.GuiGLEngine;
+import me.kall.narutotv.renderer.gl.WorldGLEngine;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -278,6 +279,57 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         @Override
         public int getLight(BlockPos pos) {
             return this.posLighter.getLight(pos);
+        }
+    }
+
+    public static final class Cape extends BufferFrameRenderer {
+        @Override
+        @Contract("_ -> new")
+        protected @NotNull AbstractGLEngine initGLEngine(MediaArgs mediaArgs) {
+            String fragmentSource = """
+                #version 330 core
+
+                uniform sampler2D uTexY;
+                uniform sampler2D uTexU;
+                uniform sampler2D uTexV;
+
+                in vec2 texCoord;
+                out vec4 fragColor;
+
+                void main() {
+                    float y = texture(uTexY, texCoord).r;
+                    float u = texture(uTexU, texCoord).r;
+                    float v = texture(uTexV, texCoord).r;
+
+                    float c = y - 16.0 / 255.0;
+                    float d = u - 128.0 / 255.0;
+                    float e = v - 128.0 / 255.0;
+
+                    float r = 1.164 * c + 1.596 * e;
+                    float g = 1.164 * c - 0.392 * d - 0.813 * e;
+                    float b = 1.164 * c + 2.017 * d;
+
+                    fragColor = vec4(clamp(vec3(r, g, b), 0.0, 1.0), 1.0);
+                }
+                """;
+
+            String vertexSource = """
+                #version 330 core
+
+                layout(location = 0) in vec3 Position;
+                layout(location = 1) in vec2 TexCoord;
+
+                uniform mat4 uMVP;
+
+                out vec2 texCoord;
+
+                void main() {
+                    gl_Position = uMVP * vec4(Position, 1.0);
+                    texCoord = TexCoord;
+                }
+                """;
+
+            return new CapeGLEngine(fragmentSource, vertexSource, mediaArgs);
         }
     }
 }

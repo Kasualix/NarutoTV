@@ -1,11 +1,11 @@
 package me.kall.narutotv.network.impl;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
-import me.kall.narutotv.data.world.Wall;
-import me.kall.narutotv.data.world.saved.Displayers;
-import me.kall.narutotv.data.world.saved.Walls;
+import me.kall.narutotv.data.world.wall.Wall;
+import me.kall.narutotv.data.world.Displayers;
+import me.kall.narutotv.data.world.wall.SavedWalls;
 import me.kall.narutotv.network.NarutoPackets;
-import me.kall.narutotv.network.packet.WallUpdatePacket;
+import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,7 +33,7 @@ public class Server {
         if (player == null) return;
         ServerLevel level = player.serverLevel();
 
-        Walls.get(level).update(wall);
+        SavedWalls.get(level).update(wall);
 
         WallUpdatePacket packet = new WallUpdatePacket(wall);
         for (ServerPlayer other : level.getServer().getPlayerList().getPlayers()) {

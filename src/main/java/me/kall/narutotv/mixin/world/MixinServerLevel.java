@@ -1,6 +1,6 @@
 package me.kall.narutotv.mixin.world;
 
-import me.kall.narutotv.data.world.saved.Displayers;
+import me.kall.narutotv.data.world.Displayers;
 import net.minecraft.server.level.ServerLevel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

@@ -1,4 +1,4 @@
-package me.kall.narutotv.data.world.saved;
+package me.kall.narutotv.data.world;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;

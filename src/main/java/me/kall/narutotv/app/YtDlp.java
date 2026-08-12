@@ -15,9 +15,6 @@ public class YtDlp {
     public static final String VIDEO_DOWNLOADING_FILE = "video-downloading.txt";
     public static final String AUDIO_DOWNLOADING_FILE = "audio-downloading.txt";
 
-    private static final String VIDEO_DOWNLOADED_FILE = "video-downloaded.txt";
-    private static final String AUDIO_DOWNLOADED_FILE = "audio-downloaded.txt";
-
     private static final ExecutorService DOWNLOADER = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "NarutoDownloadThread");
         thread.setDaemon(true);
@@ -50,8 +47,8 @@ public class YtDlp {
             if (!audioSuccess || !videoSuccess) return null;
 
             try {
-                Files.move(videoDownloading, outputDir.resolve(VIDEO_DOWNLOADED_FILE));
-                Files.move(audioDownloading, outputDir.resolve(AUDIO_DOWNLOADED_FILE));
+                Files.move(videoDownloading, outputDir.resolve("video-downloaded.txt"));
+                Files.move(audioDownloading, outputDir.resolve("audio-downloaded.txt"));
             } catch (Throwable throwable) {
                 System.err.println("Exception validating downloaded source url. Output directory: " + outputDir);
                 throwable.printStackTrace(System.err);

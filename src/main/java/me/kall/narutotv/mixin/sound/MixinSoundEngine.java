@@ -6,7 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.audio.Channel;
 import me.kall.narutotv.world.WallTV;
-import me.kall.narutotv.data.world.ClientWalls;
+import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;

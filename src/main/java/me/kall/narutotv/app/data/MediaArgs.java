@@ -7,13 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
 
-public record MediaArgs(String absVideoPath, String absAudioPath, int channelCount, int sampleRate, int openALFormat, double fps, int width, int height, double duration, boolean hasAudio, double videoStartSec, double audioStartSec) {
+public record MediaArgs(String absVideoPath, String absAudioPath, int channelCount, int sampleRate, int openALFormat, double fps, int width, int height, double duration, double videoStartSec, double audioStartSec) {
     public MediaArgs(String absVideoPath, double fps, int width, int height, double duration, double videoStartSec) {
-        this(absVideoPath, "", 0, 0, 0, fps, width, height, duration, false, videoStartSec, 0D);
-    }
-
-    public MediaArgs(String absVideoPath, String absAudioPath, int channelCount, int sampleRate, int openALFormat, double fps, int width, int height, double duration, double videoStartSec, double audioStartSec) {
-        this(absVideoPath, absAudioPath, channelCount, sampleRate, openALFormat, fps, width, height, duration, true, videoStartSec, audioStartSec);
+        this(absVideoPath, "", 0, 0, 0, fps, width, height, duration, videoStartSec, 0D);
     }
 
     @Override

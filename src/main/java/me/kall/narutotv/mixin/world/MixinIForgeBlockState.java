@@ -1,7 +1,7 @@
 package me.kall.narutotv.mixin.world;
 
 import me.kall.narutotv.world.WallTV;
-import me.kall.narutotv.data.world.ClientWalls;
+import me.kall.narutotv.data.world.wall.ClientWalls;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;

@@ -31,7 +31,8 @@
     "sound.MixinSoundEngine",
     "world.MixinIForgeBlockState",
     "world.MixinLevelLightEngine",
-    "world.MixinLightEngine"
+    "world.MixinLightEngine",
+    "world.cape.MixinCapeLayer"
   ],
   "mixins": [
     "world.MixinServerLevel",

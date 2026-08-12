@@ -3,7 +3,7 @@ package me.kall.narutotv.context;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.core.AbstractTV;
 import me.kall.narutotv.data.system.RenderProps;
-import me.kall.narutotv.data.world.ClientWalls;
+import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
 import me.kall.narutotv.produce.util.LifetimeController;
 import net.minecraft.client.Minecraft;

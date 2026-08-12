@@ -10,7 +10,7 @@ public class RenderCaptured {
     private static @Nullable GuiGraphics graphics;
     private static @Nullable PoseStack poseStack;
     private static @Nullable Camera camera;
-    private static @Nullable MultiBufferSource.BufferSource bufferSource;
+    private static @Nullable MultiBufferSource bufferSource;
 
     public static @Nullable GuiGraphics graphics() {
         return graphics;
@@ -36,11 +36,11 @@ public class RenderCaptured {
         RenderCaptured.camera = camera;
     }
 
-    public static @Nullable MultiBufferSource.BufferSource bufferSource() {
+    public static @Nullable MultiBufferSource bufferSource() {
         return bufferSource;
     }
 
-    public static void bufferSource(@Nullable MultiBufferSource.BufferSource bufferSource) {
+    public static void bufferSource(@Nullable MultiBufferSource bufferSource) {
         RenderCaptured.bufferSource = bufferSource;
     }
 }

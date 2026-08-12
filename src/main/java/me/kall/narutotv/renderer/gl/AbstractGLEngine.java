@@ -1,4 +1,4 @@
-package me.kall.narutotv.gl;
+package me.kall.narutotv.renderer.gl;
 
 import me.kall.narutotv.app.data.MediaArgs;
 import org.jetbrains.annotations.NotNull;

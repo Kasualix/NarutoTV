@@ -16,8 +16,7 @@ import java.util.Spliterator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
-import static me.kall.narutotv.app.YtDlp.AUDIO_DOWNLOADING_FILE;
-import static me.kall.narutotv.app.YtDlp.VIDEO_DOWNLOADING_FILE;
+import static me.kall.narutotv.app.YtDlp.*;
 
 public class Sources {
     private static final String VIDEO_FILE_NAME = "video";

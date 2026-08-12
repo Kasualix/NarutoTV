@@ -8,12 +8,12 @@ import me.kall.duplicationless.ext.RegistryEntry;
 import me.kall.duplicationless.util.Executor;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
-import me.kall.narutotv.data.world.Wall;
-import me.kall.narutotv.data.world.saved.Displayers;
-import me.kall.narutotv.data.world.saved.Walls;
+import me.kall.narutotv.data.world.wall.Wall;
+import me.kall.narutotv.data.world.Displayers;
+import me.kall.narutotv.data.world.wall.SavedWalls;
 import me.kall.narutotv.network.NarutoPackets;
-import me.kall.narutotv.network.packet.WallConfigPacket;
-import me.kall.narutotv.network.packet.WallLifePacket;
+import me.kall.narutotv.network.packet.wall.WallConfigPacket;
+import me.kall.narutotv.network.packet.wall.WallLifePacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -56,7 +56,7 @@ public class WallEvents {
         if (Displayers.isDisplayer(event.oldState()) && !Displayers.isDisplayer(event.newState())) {
             Executor.run(() -> {
                 if (Displayers.Cleaner.isCleaning(level)) return;
-                Walls.get(level).remove(dimension, block);
+                SavedWalls.get(level).remove(dimension, block);
             });
         }
     }
@@ -67,7 +67,7 @@ public class WallEvents {
         if (!(player.level() instanceof ServerLevel level)) return;
         if (!player.isShiftKeyDown()) return;
         if (!player.getMainHandItem().isEmpty()) return;
-        Wall wall = Walls.get(level).get(level.dimension().location(), event.getPos().asLong());
+        Wall wall = SavedWalls.get(level).get(level.dimension().location(), event.getPos().asLong());
         if (wall == null) return;
         NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallConfigPacket(wall));
     }
@@ -112,7 +112,7 @@ public class WallEvents {
             }
 
             player.displayClientMessage(WallEvents.success(last, pos), false);
-            Walls.get(level).update(built);
+            SavedWalls.get(level).update(built);
             NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(built));
         } else {
             perCreator.put(uuid, pos);

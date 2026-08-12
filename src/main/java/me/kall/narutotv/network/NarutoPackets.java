@@ -2,8 +2,10 @@ package me.kall.narutotv.network;
 
 import me.kall.duplicationless.network.Networker;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.network.packet.*;
 import me.kall.narutotv.network.packet.base.WallPacket;
+import me.kall.narutotv.network.packet.cape.CapeSyncPacket;
+import me.kall.narutotv.network.packet.cape.CapeUpdatePacket;
+import me.kall.narutotv.network.packet.wall.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -27,6 +29,9 @@ public class NarutoPackets {
             INSTANCE.registerMessage(id++, WallSyncPacket.class, WallSyncPacket::encode, WallSyncPacket::new, WallSyncPacket::handle);
             INSTANCE.registerMessage(id++, WallUpdatePacket.class, WallPacket::encode, WallUpdatePacket::new, WallUpdatePacket::handle);
             INSTANCE.registerMessage(id++, WallConfigPacket.class, WallPacket::encode, WallConfigPacket::new, WallConfigPacket::handle);
+
+            INSTANCE.registerMessage(id++, CapeSyncPacket.class, CapeSyncPacket::encode, CapeSyncPacket::new, CapeSyncPacket::handle);
+            INSTANCE.registerMessage(id++, CapeUpdatePacket.class, CapeUpdatePacket::encode, CapeUpdatePacket::new, CapeUpdatePacket::handle);
         });
     }
 }

@@ -2,7 +2,8 @@ package me.kall.narutotv.context;
 
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.compat.CompatCenter;
-import me.kall.narutotv.data.world.ClientWalls;
+import me.kall.narutotv.data.world.cape.ClientCapes;
+import me.kall.narutotv.data.world.wall.ClientWalls;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,7 +26,10 @@ public class ShaderDetection {
             interval = 10;
 
             boolean current = CompatCenter.shaderUsing();
-            if (current != last) ClientWalls.setCompatMode();
+            if (current != last) {
+                ClientWalls.setCompatMode();
+                ClientCapes.setCompatMode();
+            }
             last = current;
         }
     }

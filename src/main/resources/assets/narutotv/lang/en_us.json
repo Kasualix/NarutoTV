@@ -43,7 +43,12 @@
   "message.narutotv.corner.none": "Failed to find complete rectangle block screen for bottom corners [%s] and [%s]. Check what you build.",
   "message.narutotv.corner.success": "Rectangle block screen for bottom corners [%s] and [%s] is built successfully!",
 
-  "invoker.narutotv.video": "Video",
-  "invoker.narutotv.gui_scene.tooltip": "Play the video file on the current screen background.",
-  "invoker.narutotv.wall.tooltip": "Play the video file on the nearest media wall you are looking at."
+  "invoker.narutotv.gui_scene": "Video Gui Screen",
+  "invoker.narutotv.gui_scene.tooltip": "Play the video file on the current gui screen background.",
+
+  "invoker.narutotv.wall": "Video Block Wall",
+  "invoker.narutotv.wall.tooltip": "Play the video file on the nearest block media wall you are looking at.",
+
+  "invoker.narutotv.cape": "Video Cape",
+  "invoker.narutotv.cape.tooltip": "Serve the video file as your cape"
 }

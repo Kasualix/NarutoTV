@@ -1,9 +1,9 @@
 package me.kall.narutotv.mixin.world.structure;
 
-import me.kall.narutotv.data.world.Wall;
-import me.kall.narutotv.data.world.saved.Walls;
+import me.kall.narutotv.data.world.wall.Wall;
+import me.kall.narutotv.data.world.wall.SavedWalls;
 import me.kall.narutotv.network.NarutoPackets;
-import me.kall.narutotv.network.packet.WallLifePacket;
+import me.kall.narutotv.network.packet.wall.WallLifePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.Vec3i;
@@ -47,7 +47,7 @@ public abstract class MixinStructureTemplate {
 
         this.narutoTV$walls.clear();
 
-        for (Wall wall : Walls.get(serverLevel).getIn(serverLevel.dimension().location())) {
+        for (Wall wall : SavedWalls.get(serverLevel).getIn(serverLevel.dimension().location())) {
             if (wall.isInside(minX, minY, minZ, maxX, maxY, maxZ)) this.narutoTV$walls.add(wall.toRelativeNBT(minX, minY, minZ));
         }
     }
@@ -57,15 +57,15 @@ public abstract class MixinStructureTemplate {
         if (!this.narutoTV$walls.isEmpty()) {
             ListTag list = new ListTag();
             list.addAll(this.narutoTV$walls);
-            tag.put(Walls.DATA_NAME, list);
+            tag.put(SavedWalls.DATA_NAME, list);
         }
     }
 
     @Inject(method = "load", at = @At("RETURN"))
     private void onLoad(HolderGetter<Block> blockGetter, @NotNull CompoundTag tag, CallbackInfo ci) {
         this.narutoTV$walls.clear();
-        if (tag.contains(Walls.DATA_NAME, Tag.TAG_LIST)) {
-            ListTag list = tag.getList(Walls.DATA_NAME, Tag.TAG_COMPOUND);
+        if (tag.contains(SavedWalls.DATA_NAME, Tag.TAG_LIST)) {
+            ListTag list = tag.getList(SavedWalls.DATA_NAME, Tag.TAG_COMPOUND);
             for (int index = 0; index < list.size(); index++) {
                 this.narutoTV$walls.add(list.getCompound(index));
             }
@@ -80,7 +80,7 @@ public abstract class MixinStructureTemplate {
         ResourceLocation dimension = level.dimension().location();
 
         for (CompoundTag wallTag : this.narutoTV$walls) {
-            long[] relCorners = wallTag.getLongArray(Walls.CORNERS_KEY);
+            long[] relCorners = wallTag.getLongArray(SavedWalls.CORNERS_KEY);
             long[] absCorners = new long[4];
 
             for (int i = 0; i < 4; i++) {
@@ -88,9 +88,9 @@ public abstract class MixinStructureTemplate {
                 absCorners[i] = BlockPos.asLong(transformed.getX() + pos.getX(), transformed.getY() + pos.getY(), transformed.getZ() + pos.getZ());
             }
 
-            Wall wall = new Wall(absCorners, dimension, ResourceLocation.parse(wallTag.getString(Walls.LOCAL_SOUND_KEY)), wallTag.getString(Walls.VIDEO_KEY), wallTag.getString(Walls.AUDIO_KEY), wallTag.getFloat(Walls.VOLUME_KEY), wallTag.getBoolean(Walls.LIGHT_KEY));
+            Wall wall = new Wall(absCorners, dimension, ResourceLocation.parse(wallTag.getString(SavedWalls.LOCAL_SOUND_KEY)), wallTag.getString(SavedWalls.VIDEO_KEY), wallTag.getString(SavedWalls.AUDIO_KEY), wallTag.getFloat(SavedWalls.VOLUME_KEY), wallTag.getBoolean(SavedWalls.LIGHT_KEY));
 
-            Walls.get(level).update(wall);
+            SavedWalls.get(level).update(wall);
             NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(wall));
         }
     }
