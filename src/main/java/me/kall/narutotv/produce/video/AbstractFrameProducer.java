@@ -49,8 +49,6 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     private final Object waiter = new Object();
     private final AtomicBoolean isWaiting = new AtomicBoolean();
 
-    public @Nullable Runnable initCall;
-
     protected AbstractFrameProducer(@NotNull MediaArgs mediaArgs, int frameSize, int bufferSeconds) {
         this.mediaArgs = mediaArgs;
         this.frameSize = frameSize;
@@ -164,19 +162,11 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
                             if (audio != null) {
                                 audio.setOnInitTune(() -> {
-                                    if (this.initCall != null) {
-                                        this.initCall.run();
-                                        this.initCall = null;
-                                    }
                                     this.life.get().seekTo(seekTo);
                                     this.ready.set(true);
                                 });
                                 this.audio.set(audio);
                             } else {
-                                if (this.initCall != null) {
-                                    this.initCall.run();
-                                    this.initCall = null;
-                                }
                                 life.seekTo(seekTo);
                                 this.ready.set(true);
                             }

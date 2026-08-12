@@ -33,6 +33,8 @@ public abstract class AbstractTV<T> {
             if (this.video.off.get()) this.video.setup(seekTo);
 
             this.renderer.setup(this.mediaArgs, seekTo);
+            this.video.eager();
+            this.renderer.update(this.mediaArgs, this.video.fetch());
 
             this.isRunning = true;
         }

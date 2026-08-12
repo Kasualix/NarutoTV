@@ -1,6 +1,6 @@
 package me.kall.narutotv.produce;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +18,9 @@ public abstract class AbstractProducer {
     private final AtomicReference<InputStream> input = new AtomicReference<>();
 
     public void setup(double seekTo) {
+        List<String> command = this.setCommand(seekTo);
+        if (command == null) return;
+
         this.off.set(false);
 
         ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
@@ -29,7 +32,6 @@ public abstract class AbstractProducer {
         this.executor.set(executor);
 
         executor.submit(() -> {
-            List<String> command = this.setCommand(seekTo);
             try {
                 Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
                 this.process.set(process);
@@ -47,7 +49,7 @@ public abstract class AbstractProducer {
         });
     }
 
-    protected abstract @NotNull List<String> setCommand(double seekTo);
+    protected abstract @Nullable List<String> setCommand(double seekTo);
     protected abstract void forInput(InputStream input) throws IOException, InterruptedException;
 
     public void shutdown() {

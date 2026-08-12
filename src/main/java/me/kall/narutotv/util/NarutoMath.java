@@ -17,7 +17,7 @@ public final class NarutoMath {
             double topFromX, double topFromY, double topFromZ, float u3, float v3
     ) {}
 
-    private static final double OFFSET = 0.0005D;
+    private static final double OFFSET = 0.005D;
 
     @Contract("_, _ -> new")
     public static NarutoMath.@NotNull Coords computeCoords(@NotNull Wall wall, @NotNull Camera camera) {

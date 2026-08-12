@@ -45,6 +45,20 @@ public final class PosLighter implements LightAccessor {
         return this.blockLightMap[y * this.lightMapWidth + x] & 0xFF;
     }
 
+    @Override
+    public void setLightable(boolean lightable) {
+        this.wall.light = lightable;
+    }
+
+    @Override
+    public void checkLight() {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        for (int index = 0; index < this.blockLightMap.length; index++) {
+            ((LevelLightEngineAccessor)level.getLightEngine()).naruto$checkBlock(this.indexToBlock(index));
+        }
+    }
+
     public void updateLight(byte[] lightMap, int imageWidth, int imageHeight) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;

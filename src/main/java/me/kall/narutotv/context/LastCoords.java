@@ -21,7 +21,7 @@ public class LastCoords {
 
     private static final double SAME_SURFACE = 0.01D;
 
-    private static final Predicate<Object2IntMap.Entry<NarutoMath.Coords>> LIFE_TICK = entry -> {
+    private static final Predicate<Object2IntMap.Entry<NarutoMath.Coords>> TICK = entry -> {
         if (entry.setValue(entry.getIntValue() - 1) <= 1) {
             LastCoords.refresh(entry.getKey());
             return true;
@@ -39,7 +39,7 @@ public class LastCoords {
         if (event.phase == TickEvent.Phase.START && !DATA.isEmpty()) {
             synchronized (DATA) {
                 for (Object2IntMap<NarutoMath.Coords> coordsMap : DATA.values()) {
-                    coordsMap.object2IntEntrySet().removeIf(LIFE_TICK);
+                    coordsMap.object2IntEntrySet().removeIf(TICK);
                 }
 
                 DATA.values().removeIf(Object2IntMap::isEmpty);

@@ -13,13 +13,16 @@ import java.awt.Color;
 public class DoubleCheckScreen extends Screen {
     private @Nullable BooleanConsumer onChecked;
     private final Screen lastScreen;
-    private final String existing;
+    private final Component note;
+    private final String onTrue, onFalse;
 
-    public DoubleCheckScreen(@NotNull BooleanConsumer onChecked, @Nullable Screen lastScreen, String existing) {
-        super(AbstractNarutoScreen.SCREEN);
+    public DoubleCheckScreen(@NotNull BooleanConsumer onChecked, @Nullable Screen lastScreen, Component note, String onTrue, String onFalse) {
+        super(AbstractMediaScreen.SCREEN);
         this.onChecked = onChecked;
         this.lastScreen = lastScreen;
-        this.existing = existing;
+        this.note = note;
+        this.onTrue = onTrue;
+        this.onFalse = onFalse;
     }
 
     @Override
@@ -27,8 +30,8 @@ public class DoubleCheckScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
 
-        this.addRenderableWidget(Button.builder(Component.translatable("button.narutotv.existing"), button -> this.onDone(true)).bounds(centerX - AbstractNarutoScreen.BUTTON_WIDTH - 5, centerY, AbstractNarutoScreen.BUTTON_WIDTH, AbstractNarutoScreen.BUTTON_HEIGHT).build());
-        this.addRenderableWidget(Button.builder(Component.translatable("button.narutotv.replace"), button -> this.onDone(false)).bounds(centerX + 5, centerY, AbstractNarutoScreen.BUTTON_WIDTH, AbstractNarutoScreen.BUTTON_HEIGHT).build());
+        this.addRenderableWidget(Button.builder(Component.translatable(this.onTrue), button -> this.onDone(true)).bounds(centerX - AbstractMediaScreen.BUTTON_WIDTH - 5, centerY, AbstractMediaScreen.BUTTON_WIDTH, AbstractMediaScreen.BUTTON_HEIGHT).build());
+        this.addRenderableWidget(Button.builder(Component.translatable(this.onFalse), button -> this.onDone(false)).bounds(centerX + 5, centerY, AbstractMediaScreen.BUTTON_WIDTH, AbstractMediaScreen.BUTTON_HEIGHT).build());
     }
 
     @SuppressWarnings("DataFlowIssue")
@@ -44,6 +47,6 @@ public class DoubleCheckScreen extends Screen {
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.drawCenteredString(this.font, Component.translatable("note.narutotv.double_check", this.existing), this.width / 2, this.height / 2 - 50, Color.WHITE.getRGB());
+        guiGraphics.drawCenteredString(this.font, this.note, this.width / 2, this.height / 2 - 50, Color.YELLOW.getRGB());
     }
 }

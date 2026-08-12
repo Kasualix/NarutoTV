@@ -3,13 +3,11 @@ package me.kall.narutotv.screen;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.config.NarutoConfig;
+import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.override.GuiSceneControl;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -19,22 +17,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.List;
-
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
-public class NarutoSceneScreen extends AbstractNarutoScreen {
+public class NarutoSceneScreen extends AbstractMediaScreen {
     static final Component FADABLE = Component.translatable("checkbox.narutotv.fadable");
     static final Component MUTE_MUSIC = Component.translatable("checkbox.narutotv.mute_music");
-
     static final Component TICKS = Component.translatable("box.narutotv.ticks");
 
-    EditBox ticksBox;
+    private EditBox ticksBox;
 
-    Checkbox fadableCheck, muteMusicCheck;
+    private String video, audio;
 
-    String video, audio;
-
-    public NarutoSceneScreen(@Nullable Screen lastScreen, @NotNull MediaArgs mediaArgs) {
+    public NarutoSceneScreen(@Nullable net.minecraft.client.gui.screens.Screen lastScreen, @NotNull MediaArgs mediaArgs) {
         super(SCREEN, lastScreen);
         this.video = mediaArgs.absVideoPath();
         this.audio = mediaArgs.absAudioPath();
@@ -48,51 +41,47 @@ public class NarutoSceneScreen extends AbstractNarutoScreen {
     }
 
     @Override
-    protected void initWidgets() {
-        int centerX = this.width / 2;
-
-        this.videoBox = this.initEditBox(centerX, VIDEO, this.video);
-        this.audioBox = this.initEditBox(centerX, AUDIO, this.audio);
-        this.initTicksAndVolumeBoxes(centerX);
-
-        this.initMaxSizeBoxes(centerX);
-
-        this.initCheckboxes(centerX);
-        this.initRandomButton(centerX);
-        this.initSwapButton(centerX, GuiSceneControl::swap);
-        this.initConfirmButtons(centerX);
+    protected String initialVideoPath() {
+        return GamePaths.absConfig(this.video);
     }
 
-    void initTicksAndVolumeBoxes(int centerX) {
-        this.ticksBox = this.initHalfEditBox(centerX - BOX_WIDTH / 2, TICKS, String.valueOf(NarutoConfig.ticksBeforeFade()));
-        this.volumeBox = this.initHalfEditBox(centerX + 5, VOLUME, String.valueOf(NarutoConfig.volume()));
-        this.volumeBox.setFilter(NUMERIC);
-        this.currentY += BOX_HEIGHT + BOX_SPACING;
+    @Override
+    protected String initialAudioPath() {
+        return GamePaths.absConfig(this.audio);
     }
 
-    void initCheckboxes(int centerX) {
-        int fadableWidth = this.font.width(FADABLE) + 24;
-        int muteMusicWidth = this.font.width(MUTE_MUSIC) + 24;
+    @Override
+    protected void initWidgets(int centerX) {
+        AbstractMediaScreen.EditBoxPair ticksAndVolume = AbstractMediaScreen.EditBoxPair.of(this.addHalfBoxRow(centerX, TICKS, VOLUME, NUMERIC));
+        this.ticksBox = ticksAndVolume.left();
+        this.volumeBox = ticksAndVolume.right();
+        this.ticksBox.setMaxLength(this.font.width(String.valueOf(Integer.MAX_VALUE)));
+        this.ticksBox.setValue(String.valueOf(NarutoConfig.ticksBeforeFade()));
+        this.volumeBox.setMaxLength(this.font.width(String.valueOf(Integer.MAX_VALUE)));
+        this.volumeBox.setValue(String.valueOf(NarutoConfig.volume()));
+        this.bindLabel(TICKS, this.ticksBox);
+        this.bindLabel(VOLUME, this.volumeBox);
 
-        this.fadableCheck = new Checkbox(centerX - BUTTON_WIDTH - 5, this.currentY, fadableWidth, BUTTON_HEIGHT, FADABLE, NarutoConfig.fadable()) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                NarutoConfig.fadable(this.selected());
-            }
-        };
-        this.addRenderableWidget(this.fadableCheck);
+        AbstractMediaScreen.EditBoxPair sizeBoxes = AbstractMediaScreen.EditBoxPair.of(this.addHalfBoxRow(centerX, MAX_WIDTH, MAX_HEIGHT, NUMERIC));
+        this.maxWidthBox = sizeBoxes.left();
+        this.maxHeightBox = sizeBoxes.right();
+        this.maxWidthBox.setValue(String.valueOf(NarutoConfig.maxWidth()));
+        this.maxHeightBox.setValue(String.valueOf(NarutoConfig.maxHeight()));
+        this.bindLabel(MAX_WIDTH, this.maxWidthBox);
+        this.bindLabel(MAX_HEIGHT, this.maxHeightBox);
 
-        this.muteMusicCheck = new Checkbox(centerX + 5, this.currentY, muteMusicWidth, BUTTON_HEIGHT, MUTE_MUSIC, NarutoConfig.muteMusic()) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                NarutoConfig.muteMusic(this.selected());
-            }
-        };
-        this.addRenderableWidget(this.muteMusicCheck);
-
+        this.addImmediateCheckbox(centerX - BUTTON_WIDTH - 5, FADABLE, NarutoConfig.fadable(), NarutoConfig::fadable);
+        this.addImmediateCheckbox(centerX + 5, MUTE_MUSIC, NarutoConfig.muteMusic(), NarutoConfig::muteMusic);
         this.currentY += BUTTON_HEIGHT + 5;
+
+        this.addRandomSwapRow(centerX);
+        this.addRestartSwitchRow(centerX);
+        this.addConfirmRow(centerX);
+    }
+
+    @Override
+    protected boolean isCompatMode() {
+        return GuiSceneControl.isCompatMode();
     }
 
     @Override
@@ -137,29 +126,24 @@ public class NarutoSceneScreen extends AbstractNarutoScreen {
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        this.ticksBox.tick();
+    protected void swapAction() {
+        GuiSceneControl.swap();
     }
 
     @Override
-    protected void onTitles(@NotNull GuiGraphics guiGraphics, int centerX) {
-        guiGraphics.drawCenteredString(this.font, TICKS, this.ticksBox.getX() + this.ticksBox.getWidth() / 2, this.ticksBox.getY() - 12, 0xFFFFFF);
+    protected void restartAction() {
+        GuiSceneControl.active.shutdownEntire(true);
     }
 
     @Override
-    protected void onSwapNote(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, GuiSceneControl.isCompatMode() ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
-    }
-
-    @Override
-    protected void onClearFocused() {
-        if (this.ticksBox.isFocused()) this.ticksBox.setValue("");
+    protected void switchAction() {
+        NarutoConfig.enableGuiScreen(!NarutoConfig.enableGuiScreen());
+        GuiSceneControl.active.shutdownEntire(true);
     }
 
     @SubscribeEvent
     public static void tick(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.END) && GuiSceneControl.active.isRunning()) {
+        if (event.phase.equals(TickEvent.Phase.END)) {
             MediaArgs mediaArgs = GuiSceneControl.active.mediaArgs;
             if (mediaArgs == null) return;
 

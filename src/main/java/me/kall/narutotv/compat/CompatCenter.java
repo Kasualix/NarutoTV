@@ -1,6 +1,7 @@
 package me.kall.narutotv.compat;
 
 import net.minecraftforge.fml.loading.FMLLoader;
+import org.jetbrains.annotations.Contract;
 
 public class CompatCenter {
     public static final boolean HAS_SHADER_MOD = isLoaded("oculus") || isLoaded("iris");
@@ -10,6 +11,7 @@ public class CompatCenter {
         return COMPAT.shaderUsing();
     }
 
+    @Contract(pure = true)
     public static boolean hasShaderMod() {
         return HAS_SHADER_MOD;
     }

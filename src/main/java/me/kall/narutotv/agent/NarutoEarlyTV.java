@@ -4,6 +4,7 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.core.AbstractTV;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.system.RenderProps;
+import me.kall.narutotv.produce.util.LifetimeController;
 import me.kall.narutotv.renderer.BufferFrameRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +29,17 @@ public class NarutoEarlyTV extends AbstractTV<ByteBuffer> {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void render() {
+        super.render();
+        if (this.video != null) {
+            LifetimeController life = this.video.life();
+            if (life != null) {
+                RenderProps.markCost(life.sinceSetupSec());
+            }
+        }
     }
 
     @Override

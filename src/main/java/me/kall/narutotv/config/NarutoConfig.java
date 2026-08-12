@@ -4,12 +4,12 @@ import com.google.common.collect.Lists;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.util.JsonConfig;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class NarutoConfig {
     private static final JsonConfig CONFIG = JsonConfig.create(NarutoTV.MOD_ID, "1")
+            .put("enableGuiScreen", true)
             .put("displayers", Lists.newArrayList("minecraft:glass"))
             .put("screenBuilder", "minecraft:stick")
             .put("muteMusic", true)
@@ -24,6 +24,7 @@ public class NarutoConfig {
     private static final Set<String> displayers = CONFIG.getSet("displayers", String.class);
     private static final String builder = CONFIG.getString("screenBuilder");
 
+    private static boolean enableGuiScreen = CONFIG.getBoolean("enableGuiScreen");
     private static boolean muteMusic = CONFIG.getBoolean("muteMusic");
     private static boolean fadable = CONFIG.getBoolean("fadable");
     private static int ticksBeforeFade = CONFIG.getInt("ticksBeforeFade");
@@ -33,42 +34,61 @@ public class NarutoConfig {
 
     private static final String teleControl = CONFIG.getString("teleControlItem");
 
+
+    @Contract(pure = true)
+    public static boolean enableGuiScreen() {
+        return enableGuiScreen;
+    }
+
+    @Contract(pure = true)
     public static Set<String> displayers() {
         return displayers;
     }
 
-    @Contract(" -> new")
-    public static @NotNull String builder() {
+    @Contract(pure = true)
+    public static String builder() {
         return builder;
     }
 
+    @Contract(pure = true)
     public static boolean fadable() {
         return fadable;
     }
 
+    @Contract(pure = true)
     public static int ticksBeforeFade() {
         return ticksBeforeFade;
     }
 
+    @Contract(pure = true)
     public static boolean muteMusic() {
         return muteMusic;
     }
 
+    @Contract(pure = true)
     public static float volume() {
         return volume;
     }
 
-    @Contract(" -> new")
-    public static @NotNull String teleControl() {
+    @Contract(pure = true)
+    public static String teleControl() {
         return teleControl;
     }
 
+    @Contract(pure = true)
     public static int maxWidth() {
         return maxWidth;
     }
 
+    @Contract(pure = true)
     public static int maxHeight() {
         return maxHeight;
+    }
+
+    public static void enableGuiScreen(boolean enableGuiScreen) {
+        if (NarutoConfig.enableGuiScreen == enableGuiScreen) return;
+        NarutoConfig.enableGuiScreen = enableGuiScreen;
+        CONFIG.put("enableGuiScreen", enableGuiScreen).saveToFile();
     }
 
     public static void fadable(boolean fadable) {

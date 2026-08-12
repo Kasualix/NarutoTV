@@ -120,6 +120,10 @@ public class ClientWalls {
         return CompatCenter.shaderUsing();
     }
 
+    public static boolean isEmpty() {
+        return DATA.isEmpty();
+    }
+
     public static void swap() {
         boolean isCompatMode = ClientWalls.isCompatMode();
 

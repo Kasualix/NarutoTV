@@ -4,6 +4,10 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.data.world.cape.ClientCapes;
 import me.kall.narutotv.data.world.wall.ClientWalls;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -14,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 public class ShaderDetection {
     private static boolean last;
     private static int interval;
+
+    private static final Component SHADER_COMPAT = Component.translatable("message.narutotv.shader").withStyle(ChatFormatting.YELLOW);
 
     @SubscribeEvent
     public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
@@ -27,9 +33,24 @@ public class ShaderDetection {
 
             boolean current = CompatCenter.shaderUsing();
             if (current != last) {
-                ClientWalls.setCompatMode();
-                ClientCapes.setCompatMode();
+                boolean changed = false;
+
+                if (!ClientWalls.isEmpty()) {
+                    ClientWalls.setCompatMode();
+                    changed = true;
+                }
+
+                if (!ClientCapes.isEmpty()) {
+                    ClientCapes.setCompatMode();
+                    changed = true;
+                }
+
+                if (changed) {
+                    LocalPlayer player = Minecraft.getInstance().player;
+                    if (player != null) player.displayClientMessage(SHADER_COMPAT, false);
+                }
             }
+
             last = current;
         }
     }

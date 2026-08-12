@@ -70,6 +70,10 @@ public class ClientCapes {
         return CompatCenter.shaderUsing();
     }
 
+    public static boolean isEmpty() {
+        return DATA.isEmpty();
+    }
+
     public static void swap() {
         boolean isCompatMode = ClientCapes.isCompatMode();
 

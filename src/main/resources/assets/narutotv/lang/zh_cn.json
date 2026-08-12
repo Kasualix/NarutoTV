@@ -4,6 +4,8 @@
   "button.narutotv.random": "随机",
   "button.narutotv.swap": "切换",
   "button.narutotv.clean": "清理方块",
+  "button.narutotv.restart": "重启",
+  "button.narutotv.switch": "开关",
 
   "button.narutotv.existing": "使用已有文件",
   "button.narutotv.replace": "取代已有文件",
@@ -32,6 +34,7 @@
   "tooltip.narutotv.swap.universal": "注意：世界中的所有方块屏幕都受此选项影响。",
   "tooltip.narutotv.swap.compat": "不建议在性能模式下使用光影，否则视频可能无法正常渲染。",
   "tooltip.narutotv.type": "仅允许小写字母、数字、_ - . /",
+  "tooltip.narutotv.light": "根据当前帧的图像让方块屏幕发光。",
 
   "mode.narutotv.compatibility": "当前：兼容模式",
   "mode.narutotv.performance": "当前：性能模式",
@@ -43,7 +46,14 @@
   "message.narutotv.corner.none": "未能根据底角[%s]和[%s]找到完整的矩形方块屏幕。请检查你的建筑。",
   "message.narutotv.corner.success": "成功基于底角[%s]和[%s]构建出矩形方块屏幕！",
 
-  "invoker.narutotv.video": "视频",
+  "message.narutotv.shader": "检测到光影开启。所有方块屏幕和披风播放的视频已切换到兼容模式。",
+
+  "invoker.narutotv.gui_scene": "视频GUI屏幕",
   "invoker.narutotv.gui_scene.tooltip": "为屏幕背景切换播放此视频文件。",
-  "invoker.narutotv.wall.tooltip": "为你视线内最近的视频方块屏幕切换播放此视频文件。"
+
+  "invoker.narutotv.wall": "视频方块屏幕",
+  "invoker.narutotv.wall.tooltip": "为你视线内最近的视频方块屏幕切换播放此视频文件。",
+
+  "invoker.narutotv.cape": "视频皮肤",
+  "invoker.narutotv.cape.tooltip": "将视频文件作为披风播放"
 }

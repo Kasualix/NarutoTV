@@ -196,6 +196,16 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         public int getLight(BlockPos pos) {
             return this.posLighter.getLight(pos);
         }
+
+        @Override
+        public void setLightable(boolean lightable) {
+            this.posLighter.setLightable(lightable);
+        }
+
+        @Override
+        public void checkLight() {
+            this.posLighter.checkLight();
+        }
     }
 
     public static final class Cape extends ImageFrameRenderer {
@@ -215,9 +225,8 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         public void render() {
             PoseStack poseStack = RenderCaptured.poseStack();
             MultiBufferSource bufferSource = RenderCaptured.bufferSource();
-            Camera camera = RenderCaptured.camera();
 
-            if (poseStack == null || bufferSource == null || camera == null || this.textureLocation == null || this.dynamicTexture == null) return;
+            if (poseStack == null || bufferSource == null || this.textureLocation == null || this.dynamicTexture == null) return;
 
             VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(this.textureLocation));
             Matrix4f pose = poseStack.last().pose();

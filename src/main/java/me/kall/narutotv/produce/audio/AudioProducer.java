@@ -1,9 +1,8 @@
 package me.kall.narutotv.produce.audio;
 
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.produce.AbstractProducer;
 import me.kall.narutotv.data.system.AppProps;
-import org.jetbrains.annotations.NotNull;
+import me.kall.narutotv.produce.AbstractProducer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.lwjgl.openal.*;
@@ -47,8 +46,8 @@ public final class AudioProducer extends AbstractProducer {
     }
 
     @Override
-    protected @Unmodifiable @NotNull List<String> setCommand(double seekTo) {
-        return List.of(AppProps.ffmpegPath(), "-accurate_seek", "-ss", String.valueOf(seekTo + this.mediaArgs.audioStartSec()), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-");
+    protected @Nullable @Unmodifiable List<String> setCommand(double seekTo) {
+        return this.mediaArgs.withoutAudio() ? null : List.of(AppProps.ffmpegPath(), "-accurate_seek", "-ss", String.valueOf(seekTo + this.mediaArgs.audioStartSec()), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-");
     }
 
     @Override

@@ -4,6 +4,8 @@
   "button.narutotv.random": "Random",
   "button.narutotv.swap": "Swap",
   "button.narutotv.clean": "Clean Blocks",
+  "button.narutotv.restart": "Restart",
+  "button.narutotv.switch": "Switch",
 
   "button.narutotv.existing": "Use Existing",
   "button.narutotv.replace": "Replace Existing",
@@ -32,6 +34,7 @@
   "tooltip.narutotv.swap.universal": "Note that all the block screens in your world are affected by this option.",
   "tooltip.narutotv.swap.compat": "Using shaders under performance mode is not suggested as your videos may not be rendered properly.",
   "tooltip.narutotv.type": "Only lowercase letters, digits, and _ - . /",
+  "tooltip.narutotv.light": "Emit light from the video block wall based on its current frame image.",
 
   "mode.narutotv.compatibility": "Current: Compatibility Mode",
   "mode.narutotv.performance": "Current: Performance Mode",
@@ -43,8 +46,10 @@
   "message.narutotv.corner.none": "Failed to find complete rectangle block screen for bottom corners [%s] and [%s]. Check what you build.",
   "message.narutotv.corner.success": "Rectangle block screen for bottom corners [%s] and [%s] is built successfully!",
 
+  "message.narutotv.shader": "Shader detected. All the video block walls and capes are set to compat mode.",
+
   "invoker.narutotv.gui_scene": "Video Gui Screen",
-  "invoker.narutotv.gui_scene.tooltip": "Play the video file on the current gui screen background.",
+  "invoker.narutotv.gui_scene.tooltip": "Switch the video file on the current gui screen background.",
 
   "invoker.narutotv.wall": "Video Block Wall",
   "invoker.narutotv.wall.tooltip": "Play the video file on the nearest block media wall you are looking at.",

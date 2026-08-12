@@ -41,6 +41,14 @@ public abstract class WallTV<T> extends AbstractTV<T> {
         return ((LightAccessor)this.renderer).getLight(pos);
     }
 
+    public void setLight(boolean light) {
+        ((LightAccessor)this.renderer).setLightable(light);
+    }
+
+    public void checkLight() {
+        ((LightAccessor)this.renderer).checkLight();
+    }
+
     @Override
     public boolean isRunnable() {
         Minecraft minecraft = Minecraft.getInstance();

@@ -13,9 +13,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 
-import static me.kall.narutotv.screen.AbstractNarutoScreen.BOX_HEIGHT;
-import static me.kall.narutotv.screen.AbstractNarutoScreen.BOX_WIDTH;
-
 public class NameSetScreen extends Screen {
     static final Component NAME = Component.translatable("box.narutotv.name");
     static final Component TYPE = Component.translatable("tooltip.narutotv.type");
@@ -28,7 +25,7 @@ public class NameSetScreen extends Screen {
     EditBox nameBox;
 
     public NameSetScreen(@NotNull Consumer<String> nameAction, @Nullable Screen lastScreen) {
-        super(AbstractNarutoScreen.SCREEN);
+        super(AbstractMediaScreen.SCREEN);
         this.nameAction = nameAction;
         this.lastScreen = lastScreen;
     }
@@ -37,7 +34,7 @@ public class NameSetScreen extends Screen {
     public void init() {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
-        this.nameBox = new EditBox(this.font, centerX - BOX_WIDTH / 2, centerY, BOX_WIDTH, BOX_HEIGHT, NAME);
+        this.nameBox = new EditBox(this.font, centerX - AbstractMediaScreen.BOX_WIDTH / 2, centerY, AbstractMediaScreen.BOX_WIDTH, AbstractMediaScreen.BOX_HEIGHT, NAME);
         this.nameBox.setMaxLength(Integer.MAX_VALUE);
         this.addRenderableWidget(this.nameBox);
     }
@@ -72,5 +69,6 @@ public class NameSetScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().setScreen(this.lastScreen);
+        super.onClose();
     }
 }

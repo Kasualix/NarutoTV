@@ -12,6 +12,10 @@ public record MediaArgs(String absVideoPath, String absAudioPath, int channelCou
         this(absVideoPath, "", 0, 0, 0, fps, width, height, duration, videoStartSec, 0D);
     }
 
+    public boolean withoutAudio() {
+        return this.channelCount == 0 || this.sampleRate == 0 || this.openALFormat == 0 || this.absVideoPath.isBlank();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

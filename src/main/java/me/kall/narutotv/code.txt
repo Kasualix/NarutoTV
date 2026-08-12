@@ -103,6 +103,7 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.core.AbstractTV;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.system.RenderProps;
+import me.kall.narutotv.produce.util.LifetimeController;
 import me.kall.narutotv.renderer.BufferFrameRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,6 +128,17 @@ public class NarutoEarlyTV extends AbstractTV<ByteBuffer> {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void render() {
+        super.render();
+        if (this.video != null) {
+            LifetimeController life = this.video.life();
+            if (life != null) {
+                RenderProps.markCost(life.sinceSetupSec());
+            }
+        }
     }
 
     @Override
@@ -409,6 +421,10 @@ public record MediaArgs(String absVideoPath, String absAudioPath, int channelCou
         this(absVideoPath, "", 0, 0, 0, fps, width, height, duration, videoStartSec, 0D);
     }
 
+    public boolean withoutAudio() {
+        return this.channelCount == 0 || this.sampleRate == 0 || this.openALFormat == 0 || this.absVideoPath.isBlank();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -676,9 +692,6 @@ public class YtDlp {
     public static final String VIDEO_DOWNLOADING_FILE = "video-downloading.txt";
     public static final String AUDIO_DOWNLOADING_FILE = "audio-downloading.txt";
 
-    private static final String VIDEO_DOWNLOADED_FILE = "video-downloaded.txt";
-    private static final String AUDIO_DOWNLOADED_FILE = "audio-downloaded.txt";
-
     private static final ExecutorService DOWNLOADER = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "NarutoDownloadThread");
         thread.setDaemon(true);
@@ -711,8 +724,8 @@ public class YtDlp {
             if (!audioSuccess || !videoSuccess) return null;
 
             try {
-                Files.move(videoDownloading, outputDir.resolve(VIDEO_DOWNLOADED_FILE));
-                Files.move(audioDownloading, outputDir.resolve(AUDIO_DOWNLOADED_FILE));
+                Files.move(videoDownloading, outputDir.resolve("video-downloaded.txt"));
+                Files.move(audioDownloading, outputDir.resolve("audio-downloaded.txt"));
             } catch (Throwable throwable) {
                 System.err.println("Exception validating downloaded source url. Output directory: " + outputDir);
                 throwable.printStackTrace(System.err);
@@ -728,6 +741,7 @@ public class YtDlp {
 package me.kall.narutotv.compat;
 
 import net.minecraftforge.fml.loading.FMLLoader;
+import org.jetbrains.annotations.Contract;
 
 public class CompatCenter {
     public static final boolean HAS_SHADER_MOD = isLoaded("oculus") || isLoaded("iris");
@@ -737,6 +751,7 @@ public class CompatCenter {
         return COMPAT.shaderUsing();
     }
 
+    @Contract(pure = true)
     public static boolean hasShaderMod() {
         return HAS_SHADER_MOD;
     }
@@ -772,12 +787,12 @@ import com.google.common.collect.Lists;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.util.JsonConfig;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class NarutoConfig {
     private static final JsonConfig CONFIG = JsonConfig.create(NarutoTV.MOD_ID, "1")
+            .put("enableGuiScreen", true)
             .put("displayers", Lists.newArrayList("minecraft:glass"))
             .put("screenBuilder", "minecraft:stick")
             .put("muteMusic", true)
@@ -792,6 +807,7 @@ public class NarutoConfig {
     private static final Set<String> displayers = CONFIG.getSet("displayers", String.class);
     private static final String builder = CONFIG.getString("screenBuilder");
 
+    private static boolean enableGuiScreen = CONFIG.getBoolean("enableGuiScreen");
     private static boolean muteMusic = CONFIG.getBoolean("muteMusic");
     private static boolean fadable = CONFIG.getBoolean("fadable");
     private static int ticksBeforeFade = CONFIG.getInt("ticksBeforeFade");
@@ -801,42 +817,61 @@ public class NarutoConfig {
 
     private static final String teleControl = CONFIG.getString("teleControlItem");
 
+
+    @Contract(pure = true)
+    public static boolean enableGuiScreen() {
+        return enableGuiScreen;
+    }
+
+    @Contract(pure = true)
     public static Set<String> displayers() {
         return displayers;
     }
 
-    @Contract(" -> new")
-    public static @NotNull String builder() {
+    @Contract(pure = true)
+    public static String builder() {
         return builder;
     }
 
+    @Contract(pure = true)
     public static boolean fadable() {
         return fadable;
     }
 
+    @Contract(pure = true)
     public static int ticksBeforeFade() {
         return ticksBeforeFade;
     }
 
+    @Contract(pure = true)
     public static boolean muteMusic() {
         return muteMusic;
     }
 
+    @Contract(pure = true)
     public static float volume() {
         return volume;
     }
 
-    @Contract(" -> new")
-    public static @NotNull String teleControl() {
+    @Contract(pure = true)
+    public static String teleControl() {
         return teleControl;
     }
 
+    @Contract(pure = true)
     public static int maxWidth() {
         return maxWidth;
     }
 
+    @Contract(pure = true)
     public static int maxHeight() {
         return maxHeight;
+    }
+
+    public static void enableGuiScreen(boolean enableGuiScreen) {
+        if (NarutoConfig.enableGuiScreen == enableGuiScreen) return;
+        NarutoConfig.enableGuiScreen = enableGuiScreen;
+        CONFIG.put("enableGuiScreen", enableGuiScreen).saveToFile();
     }
 
     public static void fadable(boolean fadable) {
@@ -959,7 +994,7 @@ public class LastCoords {
 
     private static final double SAME_SURFACE = 0.01D;
 
-    private static final Predicate<Object2IntMap.Entry<NarutoMath.Coords>> LIFE_TICK = entry -> {
+    private static final Predicate<Object2IntMap.Entry<NarutoMath.Coords>> TICK = entry -> {
         if (entry.setValue(entry.getIntValue() - 1) <= 1) {
             LastCoords.refresh(entry.getKey());
             return true;
@@ -977,7 +1012,7 @@ public class LastCoords {
         if (event.phase == TickEvent.Phase.START && !DATA.isEmpty()) {
             synchronized (DATA) {
                 for (Object2IntMap<NarutoMath.Coords> coordsMap : DATA.values()) {
-                    coordsMap.object2IntEntrySet().removeIf(LIFE_TICK);
+                    coordsMap.object2IntEntrySet().removeIf(TICK);
                 }
 
                 DATA.values().removeIf(Object2IntMap::isEmpty);
@@ -1188,6 +1223,10 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.data.world.cape.ClientCapes;
 import me.kall.narutotv.data.world.wall.ClientWalls;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -1198,6 +1237,8 @@ import org.jetbrains.annotations.NotNull;
 public class ShaderDetection {
     private static boolean last;
     private static int interval;
+
+    private static final Component SHADER_COMPAT = Component.translatable("message.narutotv.shader").withStyle(ChatFormatting.YELLOW);
 
     @SubscribeEvent
     public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
@@ -1211,9 +1252,24 @@ public class ShaderDetection {
 
             boolean current = CompatCenter.shaderUsing();
             if (current != last) {
-                ClientWalls.setCompatMode();
-                ClientCapes.setCompatMode();
+                boolean changed = false;
+
+                if (!ClientWalls.isEmpty()) {
+                    ClientWalls.setCompatMode();
+                    changed = true;
+                }
+
+                if (!ClientCapes.isEmpty()) {
+                    ClientCapes.setCompatMode();
+                    changed = true;
+                }
+
+                if (changed) {
+                    LocalPlayer player = Minecraft.getInstance().player;
+                    if (player != null) player.displayClientMessage(SHADER_COMPAT, false);
+                }
             }
+
             last = current;
         }
     }
@@ -1255,6 +1311,8 @@ public abstract class AbstractTV<T> {
             if (this.video.off.get()) this.video.setup(seekTo);
 
             this.renderer.setup(this.mediaArgs, seekTo);
+            this.video.eager();
+            this.renderer.update(this.mediaArgs, this.video.fetch());
 
             this.isRunning = true;
         }
@@ -1421,8 +1479,7 @@ import java.util.Spliterator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
-import static me.kall.narutotv.app.YtDlp.AUDIO_DOWNLOADING_FILE;
-import static me.kall.narutotv.app.YtDlp.VIDEO_DOWNLOADING_FILE;
+import static me.kall.narutotv.app.YtDlp.*;
 
 public class Sources {
     private static final String VIDEO_FILE_NAME = "video";
@@ -1547,8 +1604,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RenderProps {
     private static final String SHUTDOWN = "narutotv.shutdown";
-    private static final String EARLY_START = "narutotv.start";
-    private static final String EARLY_END = "narutotv.end";
+    private static final String EARLY_COST = "narutotv.cost";
     private static final String INITIAL_MEDIA = "narutotv.initial";
     private static final String GPU_ACCEL = "narutotv.accel";
 
@@ -1562,26 +1618,13 @@ public class RenderProps {
         return System.getProperty(SHUTDOWN) != null;
     }
 
-    public static void markStart() {
-        if (System.getProperty(EARLY_START) == null) System.setProperty(EARLY_START, String.valueOf(System.nanoTime()));
-    }
-
-    public static void markEnd() {
-        System.setProperty(EARLY_END, String.valueOf(System.nanoTime()));
+    public static void markCost(double cost) {
+        System.setProperty(EARLY_COST, Double.toString(cost));
     }
 
     public static double earlyCost() {
-        String startStr = System.getProperty(EARLY_START);
-        String endStr = System.getProperty(EARLY_END);
-
-        if (endStr != null && startStr != null) {
-            System.clearProperty(EARLY_END);
-            System.clearProperty(EARLY_START);
-
-            return ((double) Long.parseLong(endStr) - (double) Long.parseLong(startStr)) / nano2Sec();
-        }
-
-        return 0D;
+        String earlyCost = System.getProperty(EARLY_COST);
+        return earlyCost == null ? 0D : Double.parseDouble(earlyCost);
     }
 
     public static void saveInit(MediaArgs mediaArgs) {
@@ -1712,6 +1755,10 @@ public class ClientCapes {
             return value.getSecond().renderer instanceof ImageFrameRenderer;
         }
         return CompatCenter.shaderUsing();
+    }
+
+    public static boolean isEmpty() {
+        return DATA.isEmpty();
     }
 
     public static void swap() {
@@ -2031,6 +2078,10 @@ public class ClientWalls {
             for (WallTV<?> tv : walls.values()) return tv.renderer instanceof ImageFrameRenderer;
         }
         return CompatCenter.shaderUsing();
+    }
+
+    public static boolean isEmpty() {
+        return DATA.isEmpty();
     }
 
     public static void swap() {
@@ -2913,7 +2964,9 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.screen.DoubleCheckScreen;
 import me.kall.narutotv.screen.NameSetScreen;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -2937,7 +2990,7 @@ public abstract class VideoDropInvoker implements Invoker {
             Path target = directory.resolve("video." + FileNameUtils.getExtension(absVideoPath));
 
             if (Files.exists(target)) {
-                minecraft.setScreen(new DoubleCheckScreen(useExisting -> this.forPath(useExisting ? target::toString : () -> copyVideo(absVideoPath, target, directory)), minecraft.screen, name));
+                minecraft.setScreen(new DoubleCheckScreen(useExisting -> this.forPath(useExisting ? target::toString : () -> copyVideo(absVideoPath, target, directory)), minecraft.screen, Component.translatable("note.narutotv.double_check", name).withStyle(ChatFormatting.YELLOW), "button.narutotv.existing", "button.narutotv.replace"));
             } else {
                 this.forPath(() -> copyVideo(absVideoPath, target, directory));
             }
@@ -3177,6 +3230,7 @@ import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
 import me.kall.narutotv.produce.util.LifetimeController;
+import me.kall.narutotv.produce.video.AbstractFrameProducer;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
@@ -3192,12 +3246,11 @@ public abstract class MixinMinecraft {
     @WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;initRenderer(IZ)V", remap = false))
     private void initGuiScene(int i, boolean bl, @NotNull Operation<Void> original) {
         original.call(i, bl);
-        RenderProps.markEnd();
         GuiSceneControl.init();
-        if (GuiSceneControl.active.video != null) {
-            GuiSceneControl.active.video.eager();
-            GuiSceneControl.active.video.initCall = RenderProps::shutdown;
-        }
+        RenderProps.shutdown();
+
+        AbstractFrameProducer<?> video = GuiSceneControl.active.video;
+        if (video != null) video.eager();
     }
 
     @Inject(method = "runTick", at = @At("TAIL"))
@@ -3224,6 +3277,8 @@ public abstract class MixinMinecraft {
 package me.kall.narutotv.mixin.context;
 
 import me.kall.narutotv.data.world.wall.ClientWalls;
+import me.kall.narutotv.produce.util.LifetimeController;
+import me.kall.narutotv.produce.video.AbstractFrameProducer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ResourceLoadStateTracker;
 import org.spongepowered.asm.mixin.Mixin;
@@ -3235,7 +3290,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinResourceLoadStateTracker {
     @Inject(method = "finishReload", at = @At("TAIL"))
     private void onFinishReload(CallbackInfo ci) {
-        Minecraft.getInstance().execute(() -> ClientWalls.forEach(tv -> tv.shutdownEntire(true)));
+        Minecraft.getInstance().execute(() -> ClientWalls.forEach(tv -> {
+            double seekTo = 0D;
+            AbstractFrameProducer<?> video = tv.video;
+            if (video != null) {
+                LifetimeController life = video.life();
+                if (life != null) seekTo = life.sinceSetupSec();
+            }
+            tv.shutdownEntire(true);
+            tv.setup(seekTo);
+        }));
     }
 }
 
@@ -4167,7 +4231,10 @@ import java.util.Objects;
 
 public class Client {
     public static void removeWall(Wall wall) {
-        ClientWalls.remove(wall).ifPresent(WallTV.DEATH);
+        ClientWalls.remove(wall).ifPresent(tv -> {
+            WallTV.DEATH.accept(tv);
+            tv.checkLight();
+        });
     }
 
     public static void configWall(Wall wall) {
@@ -4836,6 +4903,7 @@ public abstract class GuiSceneTV<T> extends AbstractTV<T> {
 package me.kall.narutotv.override;
 
 import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.config.NarutoConfig;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -4848,7 +4916,7 @@ import java.util.function.BooleanSupplier;
 public final class OverrideCenter {
     private static final OverrideCenter INSTANCE = new OverrideCenter();
 
-    private final BooleanSupplier overridable = () -> GuiSceneControl.active.isRunnable();
+    private final BooleanSupplier overridable = () -> GuiSceneControl.active.isRunnable() && NarutoConfig.enableGuiScreen();
     private final Runnable task = () -> GuiSceneControl.active.render();
 
     private boolean tickConsumed = false;
@@ -4886,7 +4954,7 @@ public final class OverrideCenter {
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\produce\AbstractProducer.java =====
 package me.kall.narutotv.produce;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -4904,6 +4972,9 @@ public abstract class AbstractProducer {
     private final AtomicReference<InputStream> input = new AtomicReference<>();
 
     public void setup(double seekTo) {
+        List<String> command = this.setCommand(seekTo);
+        if (command == null) return;
+
         this.off.set(false);
 
         ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
@@ -4915,7 +4986,6 @@ public abstract class AbstractProducer {
         this.executor.set(executor);
 
         executor.submit(() -> {
-            List<String> command = this.setCommand(seekTo);
             try {
                 Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
                 this.process.set(process);
@@ -4933,7 +5003,7 @@ public abstract class AbstractProducer {
         });
     }
 
-    protected abstract @NotNull List<String> setCommand(double seekTo);
+    protected abstract @Nullable List<String> setCommand(double seekTo);
     protected abstract void forInput(InputStream input) throws IOException, InterruptedException;
 
     public void shutdown() {
@@ -4962,9 +5032,8 @@ public abstract class AbstractProducer {
 package me.kall.narutotv.produce.audio;
 
 import me.kall.narutotv.app.data.MediaArgs;
-import me.kall.narutotv.produce.AbstractProducer;
 import me.kall.narutotv.data.system.AppProps;
-import org.jetbrains.annotations.NotNull;
+import me.kall.narutotv.produce.AbstractProducer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.lwjgl.openal.*;
@@ -5008,8 +5077,8 @@ public final class AudioProducer extends AbstractProducer {
     }
 
     @Override
-    protected @Unmodifiable @NotNull List<String> setCommand(double seekTo) {
-        return List.of(AppProps.ffmpegPath(), "-accurate_seek", "-ss", String.valueOf(seekTo + this.mediaArgs.audioStartSec()), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-");
+    protected @Nullable @Unmodifiable List<String> setCommand(double seekTo) {
+        return this.mediaArgs.withoutAudio() ? null : List.of(AppProps.ffmpegPath(), "-accurate_seek", "-ss", String.valueOf(seekTo + this.mediaArgs.audioStartSec()), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-");
     }
 
     @Override
@@ -5330,8 +5399,6 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     private final Object waiter = new Object();
     private final AtomicBoolean isWaiting = new AtomicBoolean();
 
-    public @Nullable Runnable initCall;
-
     protected AbstractFrameProducer(@NotNull MediaArgs mediaArgs, int frameSize, int bufferSeconds) {
         this.mediaArgs = mediaArgs;
         this.frameSize = frameSize;
@@ -5445,19 +5512,11 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
 
                             if (audio != null) {
                                 audio.setOnInitTune(() -> {
-                                    if (this.initCall != null) {
-                                        this.initCall.run();
-                                        this.initCall = null;
-                                    }
                                     this.life.get().seekTo(seekTo);
                                     this.ready.set(true);
                                 });
                                 this.audio.set(audio);
                             } else {
-                                if (this.initCall != null) {
-                                    this.initCall.run();
-                                    this.initCall = null;
-                                }
                                 life.seekTo(seekTo);
                                 this.ready.set(true);
                             }
@@ -5876,12 +5935,6 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
                     """;
             return new GuiGLEngine(fragmentSource, vertexSource, mediaArgs);
         }
-
-        @Override
-        public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<ByteBuffer> frame) {
-            RenderProps.markStart();
-            super.update(mediaArgs, frame);
-        }
     }
 
     public static final class Gui extends BufferFrameRenderer {
@@ -5998,6 +6051,16 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         @Override
         public int getLight(BlockPos pos) {
             return this.posLighter.getLight(pos);
+        }
+
+        @Override
+        public void setLightable(boolean lightable) {
+            this.posLighter.setLightable(lightable);
+        }
+
+        @Override
+        public void checkLight() {
+            this.posLighter.checkLight();
         }
     }
 
@@ -6823,6 +6886,16 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         public int getLight(BlockPos pos) {
             return this.posLighter.getLight(pos);
         }
+
+        @Override
+        public void setLightable(boolean lightable) {
+            this.posLighter.setLightable(lightable);
+        }
+
+        @Override
+        public void checkLight() {
+            this.posLighter.checkLight();
+        }
     }
 
     public static final class Cape extends ImageFrameRenderer {
@@ -6842,9 +6915,8 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
         public void render() {
             PoseStack poseStack = RenderCaptured.poseStack();
             MultiBufferSource bufferSource = RenderCaptured.bufferSource();
-            Camera camera = RenderCaptured.camera();
 
-            if (poseStack == null || bufferSource == null || camera == null || this.textureLocation == null || this.dynamicTexture == null) return;
+            if (poseStack == null || bufferSource == null || this.textureLocation == null || this.dynamicTexture == null) return;
 
             VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(this.textureLocation));
             Matrix4f pose = poseStack.last().pose();
@@ -6858,33 +6930,28 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
     }
 }
 
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\screen\AbstractNarutoScreen.java =====
+// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\screen\AbstractMediaScreen.java =====
 package me.kall.narutotv.screen;
 
-import me.kall.narutotv.config.NarutoConfig;
+import com.google.common.collect.Lists;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public abstract class AbstractNarutoScreen extends Screen {
+@SuppressWarnings({"SameParameterValue", "DataFlowIssue"})
+public abstract class AbstractMediaScreen extends Screen {
     static final Component SCREEN = Component.translatable("screen.narutotv.gui.title");
-
-    protected static final Component RANDOM = Component.translatable("button.narutotv.random");
-    protected static final Component SWAP = Component.translatable("button.narutotv.swap");
-
-    protected static final Component RANDOM_TOOLTIP = Component.translatable("tooltip.narutotv.random");
-    protected static final Component SWAP_TOOLTIP = Component.translatable("tooltip.narutotv.swap");
 
     protected static final Component VIDEO = Component.translatable("box.narutotv.video");
     protected static final Component AUDIO = Component.translatable("box.narutotv.audio");
@@ -6895,38 +6962,152 @@ public abstract class AbstractNarutoScreen extends Screen {
     protected static final Component COMPATIBILITY = Component.translatable("mode.narutotv.compatibility").withStyle(ChatFormatting.GREEN);
     protected static final Component PERFORMANCE = Component.translatable("mode.narutotv.performance").withStyle(ChatFormatting.RED);
 
-    static final int BOX_WIDTH = 200, BOX_HEIGHT = 20, BOX_SPACING = 18;
-    static final int BUTTON_WIDTH = 80, BUTTON_HEIGHT = 20, BUTTON_SPACING = 5;
+    protected static final Component RANDOM = Component.translatable("button.narutotv.random");
+    protected static final Component SWAP = Component.translatable("button.narutotv.swap");
+    protected static final Component RANDOM_TOOLTIP = Component.translatable("tooltip.narutotv.random");
+    protected static final Component SWAP_TOOLTIP = Component.translatable("tooltip.narutotv.swap");
+
+    protected static final int BOX_WIDTH = 200, BOX_HEIGHT = 20, BOX_SPACING = 18;
+    protected static final int BUTTON_WIDTH = 80, BUTTON_HEIGHT = 20, BUTTON_SPACING = 5;
 
     protected static final Predicate<String> NUMERIC = string -> string.matches("-?\\d*\\.?\\d*");
 
     protected final @Nullable Screen lastScreen;
 
-    protected EditBox videoBox, audioBox, volumeBox;
-    protected EditBox maxWidthBox, maxHeightBox;
-    protected Button randomButton, swapButton, yesButton, noButton;
+    protected EditBox videoBox, audioBox, volumeBox, maxWidthBox, maxHeightBox;
+    protected Button randomButton, swapButton, yesButton, noButton, restartButton, switchButton;
 
     protected int currentY;
+    protected int offset;
 
-    private int offset;
+    private final List<LabelBinding> labelBindings = new ArrayList<>();
 
-    protected AbstractNarutoScreen(Component title, @Nullable Screen lastScreen) {
+    protected AbstractMediaScreen(Component title, @Nullable Screen lastScreen) {
         super(title);
         this.lastScreen = lastScreen;
     }
 
     @Override
-    protected void init() {
+    protected final void init() {
         this.offset = 0;
         this.currentY = 25;
-        this.initWidgets();
+        this.labelBindings.clear();
+
+        int centerX = this.width / 2;
+
+        this.videoBox = this.addFullBox(centerX, VIDEO, null);
+        this.videoBox.setValue(this.initialVideoPath());
+        this.bindLabel(VIDEO, this.videoBox);
+
+        this.audioBox = this.addFullBox(centerX, AUDIO, null);
+        this.audioBox.setValue(this.initialAudioPath());
+        this.bindLabel(AUDIO, this.audioBox);
+
+        this.initWidgets(centerX);
+
         this.offset = this.clampOffset();
     }
 
-    protected abstract void initWidgets();
+    protected abstract void initWidgets(int centerX);
+
+    protected abstract String initialVideoPath();
+    protected abstract String initialAudioPath();
+
+    protected EditBox addFullBox(int centerX, Component label, Predicate<String> filter) {
+        EditBox box = new EditBox(this.font, centerX - BOX_WIDTH / 2, this.currentY, BOX_WIDTH, BOX_HEIGHT, label);
+        box.setMaxLength(Integer.MAX_VALUE);
+        if (filter != null) box.setFilter(filter);
+        this.addRenderableWidget(box);
+        this.currentY += BOX_HEIGHT + BOX_SPACING;
+        return box;
+    }
+
+    protected EditBox[] addHalfBoxRow(int centerX, Component firstLabel, Component secLabel, Predicate<String> filter) {
+        EditBox left = new EditBox(this.font, centerX - BOX_WIDTH / 2, this.currentY, BOX_WIDTH / 2 - 5, BOX_HEIGHT, firstLabel);
+        left.setMaxLength(Integer.MAX_VALUE);
+        left.setFilter(filter);
+        this.addRenderableWidget(left);
+
+        EditBox right = new EditBox(this.font, centerX + 5, this.currentY, BOX_WIDTH / 2 - 5, BOX_HEIGHT, secLabel);
+        right.setMaxLength(Integer.MAX_VALUE);
+        right.setFilter(filter);
+        this.addRenderableWidget(right);
+
+        this.currentY += BOX_HEIGHT + BOX_SPACING;
+        return new EditBox[]{left, right};
+    }
+
+    protected Checkbox[] addCheckboxRow(int centerX, Component leftLabel, boolean leftSelected, Component rightLabel, boolean rightSelected) {
+        int leftWidth = this.font.width(leftLabel) + 24;
+        int rightWidth = this.font.width(rightLabel) + 24;
+
+        Checkbox left = new Checkbox(centerX - 5 - leftWidth, this.currentY, leftWidth, BUTTON_HEIGHT, leftLabel, leftSelected);
+        this.addRenderableWidget(left);
+
+        Checkbox right = new Checkbox(centerX + 5, this.currentY, rightWidth, BUTTON_HEIGHT, rightLabel, rightSelected);
+        this.addRenderableWidget(right);
+
+        this.currentY += BUTTON_HEIGHT + 5;
+        return new Checkbox[]{left, right};
+    }
+
+    protected void addImmediateCheckbox(int x, Component label, boolean selected, Consumer<Boolean> onChange) {
+        int width = this.font.width(label) + 24;
+        Checkbox box = new Checkbox(x, this.currentY, width, BUTTON_HEIGHT, label, selected) {
+            @Override
+            public void onPress() {
+                super.onPress();
+                onChange.accept(this.selected());
+            }
+        };
+        this.addRenderableWidget(box);
+    }
+
+    protected void addRandomSwapRow(int centerX) {
+        this.randomButton = Button.builder(RANDOM, button -> this.onRandom()).bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT).tooltip(Tooltip.create(RANDOM_TOOLTIP)).build();
+        this.addRenderableWidget(this.randomButton);
+
+        this.swapButton = Button.builder(SWAP, button -> this.swapAction()).bounds(centerX + 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT).build();
+        this.addRenderableWidget(this.swapButton);
+
+        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
+    }
+
+    protected void addRestartSwitchRow(int centerX) {
+        this.restartButton = Button.builder(Component.translatable("button.narutotv.restart"), button -> this.restartAction()).bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT).build();
+        this.addRenderableWidget(this.restartButton);
+
+        this.switchButton = Button.builder(Component.translatable("button.narutotv.switch"), button -> this.switchAction()).bounds(centerX + 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT).build();
+        this.addRenderableWidget(this.switchButton);
+
+        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
+    }
+
+    protected void addFullRow(Component label, Runnable action, Tooltip tooltip) {
+        int centerX = this.width / 2;
+        Button.Builder builder = Button.builder(label, button -> action.run()).bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH * 2 + 10, BUTTON_HEIGHT);
+        if (tooltip != null) builder.tooltip(tooltip);
+        Button button = builder.build();
+        this.addRenderableWidget(button);
+        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
+    }
+
+    protected void addConfirmRow(int centerX) {
+        this.yesButton = Button.builder(Component.translatable("gui.yes"), button -> this.onDone()).bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT).build();
+        this.addRenderableWidget(this.yesButton);
+
+        this.noButton = Button.builder(Component.translatable("gui.no"), button -> this.onClose()).bounds(centerX + 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT).build();
+        this.addRenderableWidget(this.noButton);
+
+        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
+    }
+
+    protected void bindLabel(Component label, AbstractWidget widget) {
+        this.labelBindings.add(new LabelBinding(label, widget));
+    }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public final boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         int lastOffset = this.offset;
         this.offset -= (int) (delta * 20D);
         this.offset = this.clampOffset();
@@ -6934,87 +7115,18 @@ public abstract class AbstractNarutoScreen extends Screen {
         int deltaY = lastOffset - this.offset;
         if (delta != 0) {
             for (Renderable renderable : this.renderables) {
-                if (renderable instanceof AbstractWidget widget) widget.setY(widget.getY() + deltaY);
+                if (renderable instanceof AbstractWidget widget) {
+                    widget.setY(widget.getY() + deltaY);
+                }
             }
         }
 
         return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
-    private int clampOffset() {
+    protected int clampOffset() {
         return Math.max(0, Math.min(this.offset, Math.max(0, this.currentY - this.height + 10)));
     }
-
-    protected EditBox initEditBox(int centerX, Component label, String initialValue) {
-        EditBox box = new EditBox(this.font, centerX - BOX_WIDTH / 2, this.currentY, BOX_WIDTH, BOX_HEIGHT, label);
-        box.setMaxLength(Integer.MAX_VALUE);
-        box.setValue(initialValue);
-        this.addRenderableWidget(box);
-        this.currentY += BOX_HEIGHT + BOX_SPACING;
-        return box;
-    }
-
-    protected EditBox initHalfEditBox(int x, Component label, String initialValue) {
-        EditBox box = new EditBox(this.font, x, this.currentY, halfBoxWidth(), BOX_HEIGHT, label);
-        box.setMaxLength(Integer.MAX_VALUE);
-        box.setValue(initialValue);
-        this.addRenderableWidget(box);
-        return box;
-    }
-
-    protected static int halfBoxWidth() {
-        return BOX_WIDTH / 2 - 5;
-    }
-
-    protected void initMaxSizeBoxes(int centerX) {
-        int halfWidth = halfBoxWidth();
-
-        this.maxWidthBox = new EditBox(this.font, centerX - BOX_WIDTH / 2, this.currentY, halfWidth, BOX_HEIGHT, MAX_WIDTH);
-        this.maxWidthBox.setMaxLength(Integer.MAX_VALUE);
-        this.maxWidthBox.setValue(String.valueOf(NarutoConfig.maxWidth()));
-        this.maxWidthBox.setFilter(NUMERIC);
-        this.addRenderableWidget(this.maxWidthBox);
-
-        this.maxHeightBox = new EditBox(this.font, centerX + 5, this.currentY, halfWidth, BOX_HEIGHT, MAX_HEIGHT);
-        this.maxHeightBox.setMaxLength(Integer.MAX_VALUE);
-        this.maxHeightBox.setValue(String.valueOf(NarutoConfig.maxHeight()));
-        this.maxHeightBox.setFilter(NUMERIC);
-        this.addRenderableWidget(this.maxHeightBox);
-
-        this.currentY += BOX_HEIGHT + BOX_SPACING;
-    }
-
-    protected void initRandomButton(int centerX) {
-        this.randomButton = Button.builder(RANDOM, button -> this.onRandom())
-                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT)
-                .build();
-        this.addRenderableWidget(this.randomButton);
-    }
-
-    protected void initSwapButton(int centerX, Runnable onSwap) {
-        this.swapButton = Button.builder(SWAP, button -> onSwap.run())
-                .bounds(centerX + 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT)
-                .build();
-        this.addRenderableWidget(this.swapButton);
-        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
-    }
-
-    protected void initConfirmButtons(int centerX) {
-        this.yesButton = Button.builder(Component.translatable("gui.yes"), button -> this.onDone())
-                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT)
-                .build();
-        this.addRenderableWidget(this.yesButton);
-
-        this.noButton = Button.builder(Component.translatable("gui.no"), button -> this.onClose())
-                .bounds(centerX + 5, this.currentY, BUTTON_WIDTH, BUTTON_HEIGHT)
-                .build();
-        this.addRenderableWidget(this.noButton);
-        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
-    }
-
-    protected abstract void onRandom();
-
-    protected abstract void onDone();
 
     @Override
     public void tick() {
@@ -7029,43 +7141,49 @@ public abstract class AbstractNarutoScreen extends Screen {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        int centerX = this.width / 2;
+        Font font = this.font;
+        for (LabelBinding binding : this.labelBindings) {
+            int centerX = binding.widget.getX() + binding.widget.getWidth() / 2;
+            guiGraphics.drawCenteredString(font, binding.label, centerX, binding.widget.getY() - 12, 0xFFFFFF);
+        }
 
-        guiGraphics.drawCenteredString(this.font, VIDEO, centerX, this.videoBox.getY() - 12, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, AUDIO, centerX, this.audioBox.getY() - 12, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, VOLUME, this.volumeBox.getX() + this.volumeBox.getWidth() / 2, this.volumeBox.getY() - 12, 0xFFFFFF);
-
-        guiGraphics.drawCenteredString(this.font, MAX_WIDTH, this.maxWidthBox.getX() + this.maxWidthBox.getWidth() / 2, this.maxWidthBox.getY() - 12, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, MAX_HEIGHT, this.maxHeightBox.getX() + this.maxHeightBox.getWidth() / 2, this.maxHeightBox.getY() - 12, 0xFFFFFF);
-
-        this.onTitles(guiGraphics, centerX);
-
-        if (this.randomButton.isHovered()) guiGraphics.renderTooltip(this.font, RANDOM_TOOLTIP, mouseX, mouseY);
-        if (this.swapButton.isHovered()) this.onSwapNote(guiGraphics, mouseX, mouseY);
-
-        long window = this.getMinecraft().getWindow().getWindow();
-
-        boolean shift = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-        boolean mouseRight = GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_RIGHT) == GLFW.GLFW_PRESS;
-
-        if (shift && mouseRight) {
-            if (this.videoBox.isFocused()) this.videoBox.setValue("");
-            if (this.audioBox.isFocused()) this.audioBox.setValue("");
-            this.onClearFocused();
+        if (this.swapButton.isMouseOver(mouseX, mouseY)) {
+            List<Component> lines = this.swapTooltipLines();
+            lines.add(this.isCompatMode() ? COMPATIBILITY : PERFORMANCE);
+            guiGraphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
         }
     }
 
-    protected void onTitles(GuiGraphics guiGraphics, int centerX) {}
-
-    protected void onSwapNote(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.renderTooltip(this.font, SWAP_TOOLTIP, mouseX, mouseY);
+    protected List<Component> swapTooltipLines() {
+        return Lists.newArrayList(SWAP_TOOLTIP);
     }
 
-    protected void onClearFocused() {}
+    protected abstract boolean isCompatMode();
+
+    protected abstract void onRandom();
+    protected abstract void onDone();
+    protected abstract void swapAction();
+    protected abstract void restartAction();
+    protected abstract void switchAction();
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
 
     @Override
     public void onClose() {
-        Minecraft.getInstance().setScreen(this.lastScreen);
+        this.minecraft.setScreen(this.lastScreen);
+        super.onClose();
+    }
+
+    private record LabelBinding(Component label, AbstractWidget widget) {}
+
+    protected record EditBoxPair(EditBox left, EditBox right) {
+        @Contract("_ -> new")
+        static @NotNull EditBoxPair of(EditBox @NotNull [] pair) {
+            return new EditBoxPair(pair[0], pair[1]);
+        }
     }
 }
 
@@ -7085,13 +7203,16 @@ import java.awt.Color;
 public class DoubleCheckScreen extends Screen {
     private @Nullable BooleanConsumer onChecked;
     private final Screen lastScreen;
-    private final String existing;
+    private final Component note;
+    private final String onTrue, onFalse;
 
-    public DoubleCheckScreen(@NotNull BooleanConsumer onChecked, @Nullable Screen lastScreen, String existing) {
-        super(AbstractNarutoScreen.SCREEN);
+    public DoubleCheckScreen(@NotNull BooleanConsumer onChecked, @Nullable Screen lastScreen, Component note, String onTrue, String onFalse) {
+        super(AbstractMediaScreen.SCREEN);
         this.onChecked = onChecked;
         this.lastScreen = lastScreen;
-        this.existing = existing;
+        this.note = note;
+        this.onTrue = onTrue;
+        this.onFalse = onFalse;
     }
 
     @Override
@@ -7099,8 +7220,8 @@ public class DoubleCheckScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
 
-        this.addRenderableWidget(Button.builder(Component.translatable("button.narutotv.existing"), button -> this.onDone(true)).bounds(centerX - AbstractNarutoScreen.BUTTON_WIDTH - 5, centerY, AbstractNarutoScreen.BUTTON_WIDTH, AbstractNarutoScreen.BUTTON_HEIGHT).build());
-        this.addRenderableWidget(Button.builder(Component.translatable("button.narutotv.replace"), button -> this.onDone(false)).bounds(centerX + 5, centerY, AbstractNarutoScreen.BUTTON_WIDTH, AbstractNarutoScreen.BUTTON_HEIGHT).build());
+        this.addRenderableWidget(Button.builder(Component.translatable(this.onTrue), button -> this.onDone(true)).bounds(centerX - AbstractMediaScreen.BUTTON_WIDTH - 5, centerY, AbstractMediaScreen.BUTTON_WIDTH, AbstractMediaScreen.BUTTON_HEIGHT).build());
+        this.addRenderableWidget(Button.builder(Component.translatable(this.onFalse), button -> this.onDone(false)).bounds(centerX + 5, centerY, AbstractMediaScreen.BUTTON_WIDTH, AbstractMediaScreen.BUTTON_HEIGHT).build());
     }
 
     @SuppressWarnings("DataFlowIssue")
@@ -7116,7 +7237,7 @@ public class DoubleCheckScreen extends Screen {
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.drawCenteredString(this.font, Component.translatable("note.narutotv.double_check", this.existing), this.width / 2, this.height / 2 - 50, Color.WHITE.getRGB());
+        guiGraphics.drawCenteredString(this.font, this.note, this.width / 2, this.height / 2 - 50, Color.YELLOW.getRGB());
     }
 }
 
@@ -7136,9 +7257,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 
-import static me.kall.narutotv.screen.AbstractNarutoScreen.BOX_HEIGHT;
-import static me.kall.narutotv.screen.AbstractNarutoScreen.BOX_WIDTH;
-
 public class NameSetScreen extends Screen {
     static final Component NAME = Component.translatable("box.narutotv.name");
     static final Component TYPE = Component.translatable("tooltip.narutotv.type");
@@ -7151,7 +7269,7 @@ public class NameSetScreen extends Screen {
     EditBox nameBox;
 
     public NameSetScreen(@NotNull Consumer<String> nameAction, @Nullable Screen lastScreen) {
-        super(AbstractNarutoScreen.SCREEN);
+        super(AbstractMediaScreen.SCREEN);
         this.nameAction = nameAction;
         this.lastScreen = lastScreen;
     }
@@ -7160,7 +7278,7 @@ public class NameSetScreen extends Screen {
     public void init() {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
-        this.nameBox = new EditBox(this.font, centerX - BOX_WIDTH / 2, centerY, BOX_WIDTH, BOX_HEIGHT, NAME);
+        this.nameBox = new EditBox(this.font, centerX - AbstractMediaScreen.BOX_WIDTH / 2, centerY, AbstractMediaScreen.BOX_WIDTH, AbstractMediaScreen.BOX_HEIGHT, NAME);
         this.nameBox.setMaxLength(Integer.MAX_VALUE);
         this.addRenderableWidget(this.nameBox);
     }
@@ -7195,6 +7313,7 @@ public class NameSetScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().setScreen(this.lastScreen);
+        super.onClose();
     }
 }
 
@@ -7204,13 +7323,11 @@ package me.kall.narutotv.screen;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.config.NarutoConfig;
+import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.override.GuiSceneControl;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -7220,22 +7337,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.List;
-
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
-public class NarutoSceneScreen extends AbstractNarutoScreen {
+public class NarutoSceneScreen extends AbstractMediaScreen {
     static final Component FADABLE = Component.translatable("checkbox.narutotv.fadable");
     static final Component MUTE_MUSIC = Component.translatable("checkbox.narutotv.mute_music");
-
     static final Component TICKS = Component.translatable("box.narutotv.ticks");
 
-    EditBox ticksBox;
+    private EditBox ticksBox;
 
-    Checkbox fadableCheck, muteMusicCheck;
+    private String video, audio;
 
-    String video, audio;
-
-    public NarutoSceneScreen(@Nullable Screen lastScreen, @NotNull MediaArgs mediaArgs) {
+    public NarutoSceneScreen(@Nullable net.minecraft.client.gui.screens.Screen lastScreen, @NotNull MediaArgs mediaArgs) {
         super(SCREEN, lastScreen);
         this.video = mediaArgs.absVideoPath();
         this.audio = mediaArgs.absAudioPath();
@@ -7249,51 +7361,47 @@ public class NarutoSceneScreen extends AbstractNarutoScreen {
     }
 
     @Override
-    protected void initWidgets() {
-        int centerX = this.width / 2;
-
-        this.videoBox = this.initEditBox(centerX, VIDEO, this.video);
-        this.audioBox = this.initEditBox(centerX, AUDIO, this.audio);
-        this.initTicksAndVolumeBoxes(centerX);
-
-        this.initMaxSizeBoxes(centerX);
-
-        this.initCheckboxes(centerX);
-        this.initRandomButton(centerX);
-        this.initSwapButton(centerX, GuiSceneControl::swap);
-        this.initConfirmButtons(centerX);
+    protected String initialVideoPath() {
+        return GamePaths.absConfig(this.video);
     }
 
-    void initTicksAndVolumeBoxes(int centerX) {
-        this.ticksBox = this.initHalfEditBox(centerX - BOX_WIDTH / 2, TICKS, String.valueOf(NarutoConfig.ticksBeforeFade()));
-        this.volumeBox = this.initHalfEditBox(centerX + 5, VOLUME, String.valueOf(NarutoConfig.volume()));
-        this.volumeBox.setFilter(NUMERIC);
-        this.currentY += BOX_HEIGHT + BOX_SPACING;
+    @Override
+    protected String initialAudioPath() {
+        return GamePaths.absConfig(this.audio);
     }
 
-    void initCheckboxes(int centerX) {
-        int fadableWidth = this.font.width(FADABLE) + 24;
-        int muteMusicWidth = this.font.width(MUTE_MUSIC) + 24;
+    @Override
+    protected void initWidgets(int centerX) {
+        AbstractMediaScreen.EditBoxPair ticksAndVolume = AbstractMediaScreen.EditBoxPair.of(this.addHalfBoxRow(centerX, TICKS, VOLUME, NUMERIC));
+        this.ticksBox = ticksAndVolume.left();
+        this.volumeBox = ticksAndVolume.right();
+        this.ticksBox.setMaxLength(this.font.width(String.valueOf(Integer.MAX_VALUE)));
+        this.ticksBox.setValue(String.valueOf(NarutoConfig.ticksBeforeFade()));
+        this.volumeBox.setMaxLength(this.font.width(String.valueOf(Integer.MAX_VALUE)));
+        this.volumeBox.setValue(String.valueOf(NarutoConfig.volume()));
+        this.bindLabel(TICKS, this.ticksBox);
+        this.bindLabel(VOLUME, this.volumeBox);
 
-        this.fadableCheck = new Checkbox(centerX - BUTTON_WIDTH - 5, this.currentY, fadableWidth, BUTTON_HEIGHT, FADABLE, NarutoConfig.fadable()) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                NarutoConfig.fadable(this.selected());
-            }
-        };
-        this.addRenderableWidget(this.fadableCheck);
+        AbstractMediaScreen.EditBoxPair sizeBoxes = AbstractMediaScreen.EditBoxPair.of(this.addHalfBoxRow(centerX, MAX_WIDTH, MAX_HEIGHT, NUMERIC));
+        this.maxWidthBox = sizeBoxes.left();
+        this.maxHeightBox = sizeBoxes.right();
+        this.maxWidthBox.setValue(String.valueOf(NarutoConfig.maxWidth()));
+        this.maxHeightBox.setValue(String.valueOf(NarutoConfig.maxHeight()));
+        this.bindLabel(MAX_WIDTH, this.maxWidthBox);
+        this.bindLabel(MAX_HEIGHT, this.maxHeightBox);
 
-        this.muteMusicCheck = new Checkbox(centerX + 5, this.currentY, muteMusicWidth, BUTTON_HEIGHT, MUTE_MUSIC, NarutoConfig.muteMusic()) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                NarutoConfig.muteMusic(this.selected());
-            }
-        };
-        this.addRenderableWidget(this.muteMusicCheck);
-
+        this.addImmediateCheckbox(centerX - BUTTON_WIDTH - 5, FADABLE, NarutoConfig.fadable(), NarutoConfig::fadable);
+        this.addImmediateCheckbox(centerX + 5, MUTE_MUSIC, NarutoConfig.muteMusic(), NarutoConfig::muteMusic);
         this.currentY += BUTTON_HEIGHT + 5;
+
+        this.addRandomSwapRow(centerX);
+        this.addRestartSwitchRow(centerX);
+        this.addConfirmRow(centerX);
+    }
+
+    @Override
+    protected boolean isCompatMode() {
+        return GuiSceneControl.isCompatMode();
     }
 
     @Override
@@ -7338,29 +7446,24 @@ public class NarutoSceneScreen extends AbstractNarutoScreen {
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        this.ticksBox.tick();
+    protected void swapAction() {
+        GuiSceneControl.swap();
     }
 
     @Override
-    protected void onTitles(@NotNull GuiGraphics guiGraphics, int centerX) {
-        guiGraphics.drawCenteredString(this.font, TICKS, this.ticksBox.getX() + this.ticksBox.getWidth() / 2, this.ticksBox.getY() - 12, 0xFFFFFF);
+    protected void restartAction() {
+        GuiSceneControl.active.shutdownEntire(true);
     }
 
     @Override
-    protected void onSwapNote(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, GuiSceneControl.isCompatMode() ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
-    }
-
-    @Override
-    protected void onClearFocused() {
-        if (this.ticksBox.isFocused()) this.ticksBox.setValue("");
+    protected void switchAction() {
+        NarutoConfig.enableGuiScreen(!NarutoConfig.enableGuiScreen());
+        GuiSceneControl.active.shutdownEntire(true);
     }
 
     @SubscribeEvent
     public static void tick(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.END) && GuiSceneControl.active.isRunning()) {
+        if (event.phase.equals(TickEvent.Phase.END)) {
             MediaArgs mediaArgs = GuiSceneControl.active.mediaArgs;
             if (mediaArgs == null) return;
 
@@ -7377,11 +7480,10 @@ public class NarutoSceneScreen extends AbstractNarutoScreen {
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\screen\NarutoWorldScreen.java =====
 package me.kall.narutotv.screen;
 
-
+import com.google.common.collect.Lists;
 import me.kall.narutotv.app.FFmpeg;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.config.NarutoConfig;
-import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.wall.ClientWalls;
@@ -7389,16 +7491,16 @@ import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallCleanPacket;
 import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
-import me.kall.narutotv.produce.util.LifetimeController;
-import me.kall.narutotv.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.util.AudioZipGenerator;
+import me.kall.narutotv.world.WallTV;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -7406,7 +7508,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class NarutoWorldScreen extends AbstractNarutoScreen {
+public class NarutoWorldScreen extends AbstractMediaScreen {
     static final Component LOCAL_SOUND = Component.translatable("checkbox.narutotv.local_sound");
     static final Component LIGHT = Component.translatable("checkbox.narutotv.light");
 
@@ -7416,57 +7518,70 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     static final Component SWAP_TOOLTIP_UNIVERSAL = Component.translatable("tooltip.narutotv.swap.universal");
     static final Component SWAP_TOOLTIP_COMPAT = Component.translatable("tooltip.narutotv.swap.compat");
 
+    static final Component LIGHT_TOOLTIP = Component.translatable("tooltip.narutotv.light");
+
     final Wall wall;
 
     Checkbox localSoundCheck, lightCheck;
 
-    Button cleanButton;
-
     final AtomicBoolean doing = new AtomicBoolean();
 
     public NarutoWorldScreen(@Nullable Screen lastScreen, Wall wall) {
-        super(AbstractNarutoScreen.SCREEN, lastScreen);
+        super(SCREEN, lastScreen);
         this.wall = wall;
     }
 
     @Override
-    protected void initWidgets() {
-        int centerX = this.width / 2;
-
-        this.videoBox = this.initEditBox(centerX, VIDEO, GamePaths.absConfig(this.wall.video));
-        this.audioBox = this.initEditBox(centerX, AUDIO, GamePaths.absConfig(this.wall.audio));
-        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(this.wall.volume));
-        this.volumeBox.setFilter(NUMERIC);
-
-        this.initMaxSizeBoxes(centerX);
-
-        this.initCheckboxes(centerX);
-
-        this.initRandomButton(centerX);
-        this.initSwapButton(centerX, ClientWalls::swap);
-        this.initCleanButton(centerX);
-        this.initConfirmButtons(centerX);
+    protected String initialVideoPath() {
+        return GamePaths.absConfig(this.wall.video);
     }
 
-    void initCheckboxes(int centerX) {
-        int localSoundWidth = this.font.width(LOCAL_SOUND) + 24;
-        int lightWidth = this.font.width(LIGHT) + 24;
-
-        this.localSoundCheck = new Checkbox(centerX - 5 - localSoundWidth, this.currentY, localSoundWidth, BUTTON_HEIGHT, LOCAL_SOUND, this.wall.hasLocalSound());
-        this.addRenderableWidget(this.localSoundCheck);
-
-        this.lightCheck = new Checkbox(centerX + 5, this.currentY, lightWidth, BUTTON_HEIGHT, LIGHT, this.wall.light);
-        this.addRenderableWidget(this.lightCheck);
-
-        this.currentY += BUTTON_HEIGHT + 5;
+    @Override
+    protected String initialAudioPath() {
+        return GamePaths.absConfig(this.wall.audio);
     }
 
-    void initCleanButton(int centerX) {
-        this.cleanButton = Button.builder(CLEAN, button -> NarutoPackets.INSTANCE.sendToServer(new WallCleanPacket(this.wall)))
-                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH * 2 + 10, BUTTON_HEIGHT)
-                .build();
-        this.addRenderableWidget(this.cleanButton);
-        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
+    @Override
+    protected void initWidgets(int centerX) {
+        this.volumeBox = this.addFullBox(centerX, VOLUME, NUMERIC);
+        this.volumeBox.setValue(String.valueOf(this.wall.volume));
+        this.bindLabel(VOLUME, this.volumeBox);
+
+        AbstractMediaScreen.EditBoxPair sizeBoxes = AbstractMediaScreen.EditBoxPair.of(this.addHalfBoxRow(centerX, MAX_WIDTH, MAX_HEIGHT, NUMERIC));
+        this.maxWidthBox = sizeBoxes.left();
+        this.maxHeightBox = sizeBoxes.right();
+        this.maxWidthBox.setValue(String.valueOf(NarutoConfig.maxWidth()));
+        this.maxHeightBox.setValue(String.valueOf(NarutoConfig.maxHeight()));
+        this.bindLabel(MAX_WIDTH, this.maxWidthBox);
+        this.bindLabel(MAX_HEIGHT, this.maxHeightBox);
+
+        Checkbox[] checks = this.addCheckboxRow(centerX, LOCAL_SOUND, this.wall.hasLocalSound(), LIGHT, this.wall.light);
+        this.localSoundCheck = checks[0];
+        this.lightCheck = checks[1];
+
+        this.addRandomSwapRow(centerX);
+        this.addRestartSwitchRow(centerX);
+        this.addFullRow(CLEAN, () -> NarutoPackets.INSTANCE.sendToServer(new WallCleanPacket(this.wall)), Tooltip.create(CLEAN_TOOLTIP));
+        this.addConfirmRow(centerX);
+    }
+
+    @Override
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        if (this.lightCheck.isMouseOver(mouseX, mouseY)) {
+            guiGraphics.renderTooltip(this.font, LIGHT_TOOLTIP, mouseX, mouseY);
+        }
+    }
+
+    @Override
+    protected List<Component> swapTooltipLines() {
+        return Lists.newArrayList(SWAP_TOOLTIP, SWAP_TOOLTIP_UNIVERSAL, SWAP_TOOLTIP_COMPAT);
+    }
+
+    @Override
+    protected boolean isCompatMode() {
+        return ClientWalls.isCompatMode();
     }
 
     @Override
@@ -7480,6 +7595,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     protected void onDone() {
         if (this.doing.get()) return;
         this.doing.set(true);
+
         String absVideoBox = this.videoBox.getValue();
         String absAudioBox = this.audioBox.getValue();
         boolean localSoundCheck = this.localSoundCheck.selected();
@@ -7513,8 +7629,10 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
 
         if ((volumeChanged || lightChanged) && !sourceChanged && !localSoundChanged && !sizeChanged) {
             this.wall.volume = newVolume;
-            this.wall.light = lightCheck;
             renderer.setVolume(newVolume);
+            this.wall.light = lightCheck;
+            renderer.setLight(lightCheck);
+            if (!lightCheck) renderer.checkLight();
             NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
             this.doing.set(false);
             this.onClose();
@@ -7523,12 +7641,6 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
 
         NarutoConfig.maxWidth(maxWidthBox);
         NarutoConfig.maxHeight(maxHeightBox);
-
-        AbstractFrameProducer<?> video = renderer.video;
-        if (video != null) {
-            LifetimeController life = video.life();
-            if (life != null) life.pause();
-        }
 
         NarutoWorldScreen.getAudioFuture(localSoundCheck, absAudioBox)
                 .whenCompleteAsync((converted, throwable) -> {
@@ -7545,6 +7657,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
                 }, this.minecraft);
     }
 
+    @Contract("_, _ -> !null")
     private static CompletableFuture<@Nullable String> getAudioFuture(boolean localSound, String absAudioPath) {
         return localSound ? FFmpeg.toMonoOgg(absAudioPath) : CompletableFuture.completedFuture(absAudioPath);
     }
@@ -7569,27 +7682,32 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
         this.onClose();
     }
 
+    @Override
+    protected void restartAction() {
+        WallTV<?> tv = ClientWalls.get(this.wall);
+        if (tv == null) return;
+        tv.shutdownEntire(true);
+    }
+
+    @Override
+    protected void switchAction() {
+        if (ClientWalls.get(this.wall) != null) {
+            ClientWalls.remove(this.wall).ifPresent(WallTV.DEATH);
+        } else {
+            ClientWalls.add(this.wall).ifPresent(WallTV.DEATH);
+        }
+    }
+
+    @Override
+    protected void swapAction() {
+        ClientWalls.swap();
+    }
+
     public static void sync(String video, String audio) {
         if (Minecraft.getInstance().screen instanceof NarutoWorldScreen screen) {
             if (screen.videoBox != null) screen.videoBox.setValue(video);
             if (screen.audioBox != null) screen.audioBox.setValue(audio);
         }
-    }
-
-    @Override
-    protected void onSwapNote(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, SWAP_TOOLTIP_UNIVERSAL, SWAP_TOOLTIP_COMPAT, ClientWalls.isCompatMode() ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
-    }
-
-    @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        if (this.cleanButton.isHovered()) guiGraphics.renderTooltip(this.font, CLEAN_TOOLTIP, mouseX, mouseY);
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }
 
@@ -8208,7 +8326,7 @@ public final class NarutoMath {
             double topFromX, double topFromY, double topFromZ, float u3, float v3
     ) {}
 
-    private static final double OFFSET = 0.0005D;
+    private static final double OFFSET = 0.005D;
 
     @Contract("_, _ -> new")
     public static NarutoMath.@NotNull Coords computeCoords(@NotNull Wall wall, @NotNull Camera camera) {
@@ -8762,6 +8880,8 @@ import net.minecraft.core.BlockPos;
 
 public interface LightAccessor {
     int getLight(BlockPos pos);
+    void setLightable(boolean lightable);
+    void checkLight();
 }
 
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\world\light\PosLighter.java =====
@@ -8810,6 +8930,20 @@ public final class PosLighter implements LightAccessor {
         }
         if (x < 0 || x >= this.lightMapWidth || y < 0 || y >= this.lightMapHeight) return 0;
         return this.blockLightMap[y * this.lightMapWidth + x] & 0xFF;
+    }
+
+    @Override
+    public void setLightable(boolean lightable) {
+        this.wall.light = lightable;
+    }
+
+    @Override
+    public void checkLight() {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        for (int index = 0; index < this.blockLightMap.length; index++) {
+            ((LevelLightEngineAccessor)level.getLightEngine()).naruto$checkBlock(this.indexToBlock(index));
+        }
     }
 
     public void updateLight(byte[] lightMap, int imageWidth, int imageHeight) {
@@ -8910,6 +9044,14 @@ public abstract class WallTV<T> extends AbstractTV<T> {
 
     public int getLight(BlockPos pos) {
         return ((LightAccessor)this.renderer).getLight(pos);
+    }
+
+    public void setLight(boolean light) {
+        ((LightAccessor)this.renderer).setLightable(light);
+    }
+
+    public void checkLight() {
+        ((LightAccessor)this.renderer).checkLight();
     }
 
     @Override

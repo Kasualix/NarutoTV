@@ -1,6 +1,7 @@
 package me.kall.narutotv.override;
 
 import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.config.NarutoConfig;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -13,7 +14,7 @@ import java.util.function.BooleanSupplier;
 public final class OverrideCenter {
     private static final OverrideCenter INSTANCE = new OverrideCenter();
 
-    private final BooleanSupplier overridable = () -> GuiSceneControl.active.isRunnable();
+    private final BooleanSupplier overridable = () -> GuiSceneControl.active.isRunnable() && NarutoConfig.enableGuiScreen();
     private final Runnable task = () -> GuiSceneControl.active.render();
 
     private boolean tickConsumed = false;

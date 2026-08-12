@@ -157,12 +157,6 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
                     """;
             return new GuiGLEngine(fragmentSource, vertexSource, mediaArgs);
         }
-
-        @Override
-        public void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<ByteBuffer> frame) {
-            RenderProps.markStart();
-            super.update(mediaArgs, frame);
-        }
     }
 
     public static final class Gui extends BufferFrameRenderer {
@@ -279,6 +273,16 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         @Override
         public int getLight(BlockPos pos) {
             return this.posLighter.getLight(pos);
+        }
+
+        @Override
+        public void setLightable(boolean lightable) {
+            this.posLighter.setLightable(lightable);
+        }
+
+        @Override
+        public void checkLight() {
+            this.posLighter.checkLight();
         }
     }
 

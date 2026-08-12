@@ -5,8 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RenderProps {
     private static final String SHUTDOWN = "narutotv.shutdown";
-    private static final String EARLY_START = "narutotv.start";
-    private static final String EARLY_END = "narutotv.end";
+    private static final String EARLY_COST = "narutotv.cost";
     private static final String INITIAL_MEDIA = "narutotv.initial";
     private static final String GPU_ACCEL = "narutotv.accel";
 
@@ -20,26 +19,13 @@ public class RenderProps {
         return System.getProperty(SHUTDOWN) != null;
     }
 
-    public static void markStart() {
-        if (System.getProperty(EARLY_START) == null) System.setProperty(EARLY_START, String.valueOf(System.nanoTime()));
-    }
-
-    public static void markEnd() {
-        System.setProperty(EARLY_END, String.valueOf(System.nanoTime()));
+    public static void markCost(double cost) {
+        System.setProperty(EARLY_COST, Double.toString(cost));
     }
 
     public static double earlyCost() {
-        String startStr = System.getProperty(EARLY_START);
-        String endStr = System.getProperty(EARLY_END);
-
-        if (endStr != null && startStr != null) {
-            System.clearProperty(EARLY_END);
-            System.clearProperty(EARLY_START);
-
-            return ((double) Long.parseLong(endStr) - (double) Long.parseLong(startStr)) / nano2Sec();
-        }
-
-        return 0D;
+        String earlyCost = System.getProperty(EARLY_COST);
+        return earlyCost == null ? 0D : Double.parseDouble(earlyCost);
     }
 
     public static void saveInit(MediaArgs mediaArgs) {

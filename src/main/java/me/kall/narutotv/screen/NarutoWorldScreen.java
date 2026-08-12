@@ -1,10 +1,9 @@
 package me.kall.narutotv.screen;
 
-
+import com.google.common.collect.Lists;
 import me.kall.narutotv.app.FFmpeg;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.config.NarutoConfig;
-import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.wall.ClientWalls;
@@ -12,16 +11,16 @@ import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallCleanPacket;
 import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
-import me.kall.narutotv.produce.util.LifetimeController;
-import me.kall.narutotv.produce.video.AbstractFrameProducer;
 import me.kall.narutotv.util.AudioZipGenerator;
+import me.kall.narutotv.world.WallTV;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class NarutoWorldScreen extends AbstractNarutoScreen {
+public class NarutoWorldScreen extends AbstractMediaScreen {
     static final Component LOCAL_SOUND = Component.translatable("checkbox.narutotv.local_sound");
     static final Component LIGHT = Component.translatable("checkbox.narutotv.light");
 
@@ -39,57 +38,70 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     static final Component SWAP_TOOLTIP_UNIVERSAL = Component.translatable("tooltip.narutotv.swap.universal");
     static final Component SWAP_TOOLTIP_COMPAT = Component.translatable("tooltip.narutotv.swap.compat");
 
+    static final Component LIGHT_TOOLTIP = Component.translatable("tooltip.narutotv.light");
+
     final Wall wall;
 
     Checkbox localSoundCheck, lightCheck;
 
-    Button cleanButton;
-
     final AtomicBoolean doing = new AtomicBoolean();
 
     public NarutoWorldScreen(@Nullable Screen lastScreen, Wall wall) {
-        super(AbstractNarutoScreen.SCREEN, lastScreen);
+        super(SCREEN, lastScreen);
         this.wall = wall;
     }
 
     @Override
-    protected void initWidgets() {
-        int centerX = this.width / 2;
-
-        this.videoBox = this.initEditBox(centerX, VIDEO, GamePaths.absConfig(this.wall.video));
-        this.audioBox = this.initEditBox(centerX, AUDIO, GamePaths.absConfig(this.wall.audio));
-        this.volumeBox = this.initEditBox(centerX, VOLUME, String.valueOf(this.wall.volume));
-        this.volumeBox.setFilter(NUMERIC);
-
-        this.initMaxSizeBoxes(centerX);
-
-        this.initCheckboxes(centerX);
-
-        this.initRandomButton(centerX);
-        this.initSwapButton(centerX, ClientWalls::swap);
-        this.initCleanButton(centerX);
-        this.initConfirmButtons(centerX);
+    protected String initialVideoPath() {
+        return GamePaths.absConfig(this.wall.video);
     }
 
-    void initCheckboxes(int centerX) {
-        int localSoundWidth = this.font.width(LOCAL_SOUND) + 24;
-        int lightWidth = this.font.width(LIGHT) + 24;
-
-        this.localSoundCheck = new Checkbox(centerX - 5 - localSoundWidth, this.currentY, localSoundWidth, BUTTON_HEIGHT, LOCAL_SOUND, this.wall.hasLocalSound());
-        this.addRenderableWidget(this.localSoundCheck);
-
-        this.lightCheck = new Checkbox(centerX + 5, this.currentY, lightWidth, BUTTON_HEIGHT, LIGHT, this.wall.light);
-        this.addRenderableWidget(this.lightCheck);
-
-        this.currentY += BUTTON_HEIGHT + 5;
+    @Override
+    protected String initialAudioPath() {
+        return GamePaths.absConfig(this.wall.audio);
     }
 
-    void initCleanButton(int centerX) {
-        this.cleanButton = Button.builder(CLEAN, button -> NarutoPackets.INSTANCE.sendToServer(new WallCleanPacket(this.wall)))
-                .bounds(centerX - BUTTON_WIDTH - 5, this.currentY, BUTTON_WIDTH * 2 + 10, BUTTON_HEIGHT)
-                .build();
-        this.addRenderableWidget(this.cleanButton);
-        this.currentY += BUTTON_HEIGHT + BUTTON_SPACING;
+    @Override
+    protected void initWidgets(int centerX) {
+        this.volumeBox = this.addFullBox(centerX, VOLUME, NUMERIC);
+        this.volumeBox.setValue(String.valueOf(this.wall.volume));
+        this.bindLabel(VOLUME, this.volumeBox);
+
+        AbstractMediaScreen.EditBoxPair sizeBoxes = AbstractMediaScreen.EditBoxPair.of(this.addHalfBoxRow(centerX, MAX_WIDTH, MAX_HEIGHT, NUMERIC));
+        this.maxWidthBox = sizeBoxes.left();
+        this.maxHeightBox = sizeBoxes.right();
+        this.maxWidthBox.setValue(String.valueOf(NarutoConfig.maxWidth()));
+        this.maxHeightBox.setValue(String.valueOf(NarutoConfig.maxHeight()));
+        this.bindLabel(MAX_WIDTH, this.maxWidthBox);
+        this.bindLabel(MAX_HEIGHT, this.maxHeightBox);
+
+        Checkbox[] checks = this.addCheckboxRow(centerX, LOCAL_SOUND, this.wall.hasLocalSound(), LIGHT, this.wall.light);
+        this.localSoundCheck = checks[0];
+        this.lightCheck = checks[1];
+
+        this.addRandomSwapRow(centerX);
+        this.addRestartSwitchRow(centerX);
+        this.addFullRow(CLEAN, () -> NarutoPackets.INSTANCE.sendToServer(new WallCleanPacket(this.wall)), Tooltip.create(CLEAN_TOOLTIP));
+        this.addConfirmRow(centerX);
+    }
+
+    @Override
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        if (this.lightCheck.isMouseOver(mouseX, mouseY)) {
+            guiGraphics.renderTooltip(this.font, LIGHT_TOOLTIP, mouseX, mouseY);
+        }
+    }
+
+    @Override
+    protected List<Component> swapTooltipLines() {
+        return Lists.newArrayList(SWAP_TOOLTIP, SWAP_TOOLTIP_UNIVERSAL, SWAP_TOOLTIP_COMPAT);
+    }
+
+    @Override
+    protected boolean isCompatMode() {
+        return ClientWalls.isCompatMode();
     }
 
     @Override
@@ -103,6 +115,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
     protected void onDone() {
         if (this.doing.get()) return;
         this.doing.set(true);
+
         String absVideoBox = this.videoBox.getValue();
         String absAudioBox = this.audioBox.getValue();
         boolean localSoundCheck = this.localSoundCheck.selected();
@@ -136,8 +149,10 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
 
         if ((volumeChanged || lightChanged) && !sourceChanged && !localSoundChanged && !sizeChanged) {
             this.wall.volume = newVolume;
-            this.wall.light = lightCheck;
             renderer.setVolume(newVolume);
+            this.wall.light = lightCheck;
+            renderer.setLight(lightCheck);
+            if (!lightCheck) renderer.checkLight();
             NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
             this.doing.set(false);
             this.onClose();
@@ -146,12 +161,6 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
 
         NarutoConfig.maxWidth(maxWidthBox);
         NarutoConfig.maxHeight(maxHeightBox);
-
-        AbstractFrameProducer<?> video = renderer.video;
-        if (video != null) {
-            LifetimeController life = video.life();
-            if (life != null) life.pause();
-        }
 
         NarutoWorldScreen.getAudioFuture(localSoundCheck, absAudioBox)
                 .whenCompleteAsync((converted, throwable) -> {
@@ -168,6 +177,7 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
                 }, this.minecraft);
     }
 
+    @Contract("_, _ -> !null")
     private static CompletableFuture<@Nullable String> getAudioFuture(boolean localSound, String absAudioPath) {
         return localSound ? FFmpeg.toMonoOgg(absAudioPath) : CompletableFuture.completedFuture(absAudioPath);
     }
@@ -192,26 +202,31 @@ public class NarutoWorldScreen extends AbstractNarutoScreen {
         this.onClose();
     }
 
+    @Override
+    protected void restartAction() {
+        WallTV<?> tv = ClientWalls.get(this.wall);
+        if (tv == null) return;
+        tv.shutdownEntire(true);
+    }
+
+    @Override
+    protected void switchAction() {
+        if (ClientWalls.get(this.wall) != null) {
+            ClientWalls.remove(this.wall).ifPresent(WallTV.DEATH);
+        } else {
+            ClientWalls.add(this.wall).ifPresent(WallTV.DEATH);
+        }
+    }
+
+    @Override
+    protected void swapAction() {
+        ClientWalls.swap();
+    }
+
     public static void sync(String video, String audio) {
         if (Minecraft.getInstance().screen instanceof NarutoWorldScreen screen) {
             if (screen.videoBox != null) screen.videoBox.setValue(video);
             if (screen.audioBox != null) screen.audioBox.setValue(audio);
         }
-    }
-
-    @Override
-    protected void onSwapNote(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.renderComponentTooltip(this.font, List.of(SWAP_TOOLTIP, SWAP_TOOLTIP_UNIVERSAL, SWAP_TOOLTIP_COMPAT, ClientWalls.isCompatMode() ? COMPATIBILITY : PERFORMANCE), mouseX, mouseY);
-    }
-
-    @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        if (this.cleanButton.isHovered()) guiGraphics.renderTooltip(this.font, CLEAN_TOOLTIP, mouseX, mouseY);
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }

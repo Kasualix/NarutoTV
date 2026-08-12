@@ -20,7 +20,10 @@ import java.util.Objects;
 
 public class Client {
     public static void removeWall(Wall wall) {
-        ClientWalls.remove(wall).ifPresent(WallTV.DEATH);
+        ClientWalls.remove(wall).ifPresent(tv -> {
+            WallTV.DEATH.accept(tv);
+            tv.checkLight();
+        });
     }
 
     public static void configWall(Wall wall) {
