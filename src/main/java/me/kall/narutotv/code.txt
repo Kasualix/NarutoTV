@@ -926,7 +926,6 @@ import me.kall.narutotv.core.AbstractTV;
 import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
-import me.kall.narutotv.produce.util.LifetimeController;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -948,24 +947,9 @@ public class GpuAccel {
 
             RenderProps.turnAccel(!now);
 
-            ClientWalls.forEach(tv -> {
-                if (tv.video != null) {
-                    LifetimeController life = tv.video.life();
-                    if (life != null) {
-                        tv.shutdownEntire(true);
-                        tv.setup(life.sinceSetupSec());
-                    }
-                }
-            });
+            ClientWalls.forEach(AbstractTV::restartSince);
 
-            AbstractTV<?> tv = GuiSceneControl.active;
-            if (tv.video != null) {
-                LifetimeController life = tv.video.life();
-                if (life != null) {
-                    tv.shutdownEntire(true);
-                    tv.setup(life.sinceSetupSec());
-                }
-            }
+            GuiSceneControl.active.restartSince();
         }
     }
 }
@@ -1422,6 +1406,17 @@ public abstract class AbstractTV<T> {
             this.prefetched.thenAccept(AbstractFrameProducer::shutdown);
             this.prefetched = null;
         }
+    }
+
+    public void restartSince() {
+        double seekTo = 0D;
+        if (this.video != null) {
+            LifetimeController life = this.video.life();
+            if (life != null) seekTo = life.sinceSetupSec();
+        }
+
+        this.shutdownEntire(true);
+        this.setup(seekTo);
     }
 }
 
@@ -3874,6 +3869,23 @@ public class ExtrasInit implements IMixinConfigPlugin {
     @Override public void postApply(String s, ClassNode classNode, String s1, IMixinInfo iMixinInfo) {}
 }
 
+// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\qol\MixinGameRules.java =====
+package me.kall.narutotv.mixin.qol;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.world.level.GameRules;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
+@Mixin(GameRules.class)
+public abstract class MixinGameRules {
+    @WrapOperation(method = "<clinit>", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/GameRules;register(Ljava/lang/String;Lnet/minecraft/world/level/GameRules$Category;Lnet/minecraft/world/level/GameRules$Type;)Lnet/minecraft/world/level/GameRules$Key;"))
+    private static <T extends GameRules.Value<T>> GameRules.Key<T> modifyInitialBlockLimit(String name, GameRules.Category category, GameRules.Type<T> type, Operation<GameRules.Key<T>> original) {
+        return original.call(name, category, !name.equals("commandModificationBlockLimit") ? type: GameRules.IntegerValue.create(99999999));
+    }
+}
+
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\sound\ChannelAccessor.java =====
 package me.kall.narutotv.mixin.sound;
 
@@ -3988,8 +4000,8 @@ public abstract class MixinCapeLayer {
     }
 }
 
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\MixinIForgeBlockState.java =====
-package me.kall.narutotv.mixin.world;
+// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\light\MixinIForgeBlockState.java =====
+package me.kall.narutotv.mixin.world.light;
 
 import me.kall.narutotv.world.WallTV;
 import me.kall.narutotv.data.world.wall.ClientWalls;
@@ -4010,15 +4022,15 @@ public interface MixinIForgeBlockState {
     @Overwrite(remap = false)
     default int getLightEmission(BlockGetter level, BlockPos pos) {
         if (level instanceof ClientLevel clientLevel) {
-            WallTV<?> renderer = ClientWalls.get(clientLevel.dimension().location(), pos.asLong());
-            if (renderer != null && renderer.isRunning() && renderer.wall.light) return renderer.getLight(pos);
+            WallTV<?> tv = ClientWalls.get(clientLevel.dimension().location(), pos.asLong());
+            if (tv != null && tv.isRunning() && tv.wall.light) return tv.getLight(pos);
         }
         return ((BlockState)this).getBlock().getLightEmission(((BlockState)this), level, pos);
     }
 }
 
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\MixinLevelLightEngine.java =====
-package me.kall.narutotv.mixin.world;
+// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\light\MixinLevelLightEngine.java =====
+package me.kall.narutotv.mixin.world.light;
 
 import me.kall.narutotv.world.light.PosLighter;
 import net.minecraft.world.level.lighting.LevelLightEngine;
@@ -4038,26 +4050,6 @@ public class MixinLevelLightEngine implements PosLighter.LevelLightEngineAccesso
     public void naruto$checkBlock(long pos) {
         if (this.blockEngine != null) ((PosLighter.LightEngineAccessor)this.blockEngine).naruto$checkBlock(pos);
         if (this.skyEngine != null) ((PosLighter.LightEngineAccessor)this.skyEngine).naruto$checkBlock(pos);
-    }
-}
-
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\MixinLightEngine.java =====
-package me.kall.narutotv.mixin.world;
-
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import me.kall.narutotv.world.light.PosLighter;
-import net.minecraft.world.level.lighting.LightEngine;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-
-@Mixin(LightEngine.class)
-public class MixinLightEngine implements PosLighter.LightEngineAccessor {
-    @Shadow @Final private LongOpenHashSet blockNodesToCheck;
-
-    @Override
-    public void naruto$checkBlock(long pos) {
-        this.blockNodesToCheck.add(pos);
     }
 }
 

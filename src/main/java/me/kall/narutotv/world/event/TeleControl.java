@@ -27,7 +27,6 @@ public class TeleControl {
         if (!RegistryEntry.get(player.getMainHandItem()).toString().equals(NarutoConfig.teleControl())) return;
         if (!player.isShiftKeyDown()) return;
 
-
         Wall target = ClientWalls.getNearest(level.dimension().location(), player);
 
         if (target != null) minecraft.setScreen(new NarutoWorldScreen(minecraft.screen, target));

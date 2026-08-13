@@ -5,7 +5,6 @@ import me.kall.narutotv.core.AbstractTV;
 import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
-import me.kall.narutotv.produce.util.LifetimeController;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -27,24 +26,9 @@ public class GpuAccel {
 
             RenderProps.turnAccel(!now);
 
-            ClientWalls.forEach(tv -> {
-                if (tv.video != null) {
-                    LifetimeController life = tv.video.life();
-                    if (life != null) {
-                        tv.shutdownEntire(true);
-                        tv.setup(life.sinceSetupSec());
-                    }
-                }
-            });
+            ClientWalls.forEach(AbstractTV::restartSince);
 
-            AbstractTV<?> tv = GuiSceneControl.active;
-            if (tv.video != null) {
-                LifetimeController life = tv.video.life();
-                if (life != null) {
-                    tv.shutdownEntire(true);
-                    tv.setup(life.sinceSetupSec());
-                }
-            }
+            GuiSceneControl.active.restartSince();
         }
     }
 }

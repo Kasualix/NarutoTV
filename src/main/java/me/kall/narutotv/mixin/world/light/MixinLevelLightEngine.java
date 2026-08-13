@@ -1,4 +1,4 @@
-package me.kall.narutotv.mixin.world;
+package me.kall.narutotv.mixin.world.light;
 
 import me.kall.narutotv.world.light.PosLighter;
 import net.minecraft.world.level.lighting.LevelLightEngine;

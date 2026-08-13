@@ -29,12 +29,12 @@
     "sound.ChannelAccessor",
     "sound.MixinOptions",
     "sound.MixinSoundEngine",
-    "world.MixinIForgeBlockState",
-    "world.MixinLevelLightEngine",
-    "world.MixinLightEngine",
+    "world.light.MixinIForgeBlockState",
+    "world.light.MixinLevelLightEngine",
     "world.cape.MixinCapeLayer"
   ],
   "mixins": [
+    "qol.MixinGameRules",
     "world.MixinServerLevel",
     "world.structure.MixinStructureTemplate"
   ]

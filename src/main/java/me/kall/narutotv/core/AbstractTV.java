@@ -145,4 +145,15 @@ public abstract class AbstractTV<T> {
             this.prefetched = null;
         }
     }
+
+    public void restartSince() {
+        double seekTo = 0D;
+        if (this.video != null) {
+            LifetimeController life = this.video.life();
+            if (life != null) seekTo = life.sinceSetupSec();
+        }
+
+        this.shutdownEntire(true);
+        this.setup(seekTo);
+    }
 }
