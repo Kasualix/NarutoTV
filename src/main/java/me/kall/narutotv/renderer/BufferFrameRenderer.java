@@ -33,8 +33,9 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
     }
 
     @Override
-    public void setup(@NotNull MediaArgs mediaArgs, double seekTo) {
+    public void setup(@NotNull MediaArgs mediaArgs, double seekTo, boolean ready) {
         this.engine = this.initGLEngine(mediaArgs);
+        if (ready) return;
         this.update(mediaArgs, null);
     }
 

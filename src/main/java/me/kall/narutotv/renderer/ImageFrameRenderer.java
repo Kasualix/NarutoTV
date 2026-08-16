@@ -46,12 +46,13 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
     }
 
     @Override
-    public void setup(@NotNull MediaArgs mediaArgs, double seekTo) {
+    public void setup(@NotNull MediaArgs mediaArgs, double seekTo, boolean ready) {
         this.dynamicTexture = new DynamicTexture(mediaArgs.width(), mediaArgs.height(), false);
         this.textureLocation = this.setLocation();
         Minecraft.getInstance().getTextureManager().register(this.textureLocation, this.dynamicTexture);
         Fadable.setUnfadable(this.textureLocation, true);
 
+        if (ready) return;
         try (NativeImage loading = initLoading(mediaArgs.width(), mediaArgs.height())) {
             this.dynamicTexture.setPixels(loading);
             this.dynamicTexture.upload();
