@@ -2,6 +2,7 @@ package me.kall.narutotv.screen;
 
 import com.google.common.collect.Lists;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
@@ -169,7 +170,7 @@ public abstract class AbstractMediaScreen extends Screen {
 
     @Override
     public final boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        double delta = Math.sqrt((scrollX - mouseX) * (scrollY - mouseY));
+        double delta = scrollY == 0.0 && Minecraft.ON_OSX ? scrollX : scrollY;
         int lastOffset = this.offset;
         this.offset -= (int) (delta * 20D);
         this.offset = this.clampOffset();
@@ -187,9 +188,8 @@ public abstract class AbstractMediaScreen extends Screen {
     }
 
     protected int clampOffset() {
-        return Math.max(0, Math.clamp(this.currentY - this.height + 10, 0, this.offset));
+        return Math.clamp(this.offset, 0, Math.max(0, this.currentY - this.height + 10));
     }
-
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {

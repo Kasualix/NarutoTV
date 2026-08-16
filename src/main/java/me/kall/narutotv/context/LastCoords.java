@@ -91,8 +91,8 @@ public class LastCoords {
         double toProjY = pointY - factor * normalY - bottomFromY;
         double toProjZ = pointZ - factor * normalZ - bottomFromZ;
 
-        double paramU = Math.max(0, Math.min(1, (toProjX * edgeBottomX + toProjY * edgeBottomY + toProjZ * edgeBottomZ) / (edgeBottomX * edgeBottomX + edgeBottomY * edgeBottomY + edgeBottomZ * edgeBottomZ)));
-        double paramV = Math.max(0, Math.min(1, (toProjX * edgeSideX   + toProjY * edgeSideY   + toProjZ * edgeSideZ)   / (edgeSideX   * edgeSideX   + edgeSideY   * edgeSideY   + edgeSideZ   * edgeSideZ)));
+        double paramU = Math.clamp((toProjX * edgeBottomX + toProjY * edgeBottomY + toProjZ * edgeBottomZ) / (edgeBottomX * edgeBottomX + edgeBottomY * edgeBottomY + edgeBottomZ * edgeBottomZ), 0, 1);
+        double paramV = Math.clamp((toProjX * edgeSideX + toProjY * edgeSideY + toProjZ * edgeSideZ) / (edgeSideX * edgeSideX + edgeSideY * edgeSideY + edgeSideZ * edgeSideZ), 0, 1);
 
         double xDistSq = Mth.square(pointX - (bottomFromX + paramU * edgeBottomX + paramV * edgeSideX));
         double yDistSq = Mth.square(pointY - (bottomFromY + paramU * edgeBottomY + paramV * edgeSideY));

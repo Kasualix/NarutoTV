@@ -87,22 +87,30 @@ public class JsonConfig {
             return (T) n;
         }
         if (type.isEnum()) return (T) Enum.valueOf((Class<Enum>) type, String.valueOf(value));
-        if (Map.class.isAssignableFrom(type) && value instanceof Map) return (T) value;
-        if (List.class.isAssignableFrom(type) && value instanceof List) return (T) value;
-        if (value instanceof Map) {
-            try {
-                T instance = type.getDeclaredConstructor().newInstance();
-                Map<String, Object> map = (Map<String, Object>) value;
-                for (Field field : type.getDeclaredFields()) {
-                    if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
-                    if (!map.containsKey(field.getName())) continue;
-                    field.setAccessible(true);
-                    field.set(instance, fromJsonValue(map.get(field.getName()), field.getType()));
-                }
-                return instance;
-            } catch (ReflectiveOperationException e) {
-                throw new RuntimeException("Failed to map JSON object to " + type.getName() + " (needs a no-arg constructor)", e);
+        switch (value) {
+            case Map ignored when Map.class.isAssignableFrom(type) -> {
+                return (T) value;
             }
+            case List ignored when List.class.isAssignableFrom(type) -> {
+                return (T) value;
+            }
+            case Map ignored -> {
+                try {
+                    T instance = type.getDeclaredConstructor().newInstance();
+                    Map<String, Object> map = (Map<String, Object>) value;
+                    for (Field field : type.getDeclaredFields()) {
+                        if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))
+                            continue;
+                        if (!map.containsKey(field.getName())) continue;
+                        field.setAccessible(true);
+                        field.set(instance, fromJsonValue(map.get(field.getName()), field.getType()));
+                    }
+                    return instance;
+                } catch (ReflectiveOperationException e) {
+                    throw new RuntimeException("Failed to map JSON object to " + type.getName() + " (needs a no-arg constructor)", e);
+                }
+            }
+            default -> {}
         }
         throw new IllegalArgumentException("Cannot convert " + value + " to " + type.getName());
     }
@@ -399,8 +407,8 @@ public class JsonConfig {
             boolean isFloating = false;
             if (pos < s.length() && peek() == '.') {
                 isFloating = true;
-                pos++;
-                while (pos < s.length() && Character.isDigit(peek())) pos++;
+                do pos++;
+                while (pos < s.length() && Character.isDigit(peek()));
             }
             if (pos < s.length() && (peek() == 'e' || peek() == 'E')) {
                 isFloating = true;

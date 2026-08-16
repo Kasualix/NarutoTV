@@ -25,7 +25,7 @@ public class SavedCapes extends SavedData {
     public final Map<UUID, String> data = new Object2ObjectOpenHashMap<>();
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.Provider registries) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider registries) {
         CompoundTag list = new CompoundTag();
         for (Map.Entry<UUID, String> entry : this.data.entrySet()) {
             list.putString(entry.getKey().toString(), entry.getValue());
