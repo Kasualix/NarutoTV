@@ -1,8 +1,7 @@
 package me.kall.narutotv.mixin.world.structure;
 
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.wall.SavedWalls;
-import me.kall.narutotv.network.NarutoPackets;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.packet.wall.WallLifePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
@@ -17,7 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -91,7 +90,7 @@ public abstract class MixinStructureTemplate {
             Wall wall = new Wall(absCorners, dimension, ResourceLocation.parse(wallTag.getString(SavedWalls.LOCAL_SOUND_KEY)), wallTag.getString(SavedWalls.VIDEO_KEY), wallTag.getString(SavedWalls.AUDIO_KEY), wallTag.getFloat(SavedWalls.VOLUME_KEY), wallTag.getBoolean(SavedWalls.LIGHT_KEY));
 
             SavedWalls.get(level).update(wall);
-            NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(wall));
+            PacketDistributor.sendToAllPlayers(new WallLifePacket(wall));
         }
     }
 }

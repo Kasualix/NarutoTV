@@ -10,10 +10,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.packs.resources.ReloadInstance;
 import net.minecraft.util.Mth;
-import net.minecraftforge.client.loading.ForgeLoadingOverlay;
-import net.minecraftforge.fml.earlydisplay.DisplayWindow;
-import net.minecraftforge.fml.loading.progress.ProgressMeter;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.fml.earlydisplay.DisplayWindow;
+import net.neoforged.fml.loading.progress.ProgressMeter;
+import net.neoforged.neoforge.client.loading.NeoForgeLoadingOverlay;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,14 +21,14 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-@Mixin(ForgeLoadingOverlay.class)
+@Mixin(NeoForgeLoadingOverlay.class)
 public abstract class MixinForgeLoadingOverlay {
     @Shadow(remap = false) @Final private Minecraft minecraft;
     @Shadow(remap = false) @Final private ReloadInstance reload;
     @Shadow(remap = false) @Final private Consumer<Optional<Throwable>> onFinish;
     @Shadow(remap = false) @Final private DisplayWindow displayWindow;
-    @Shadow(remap = false) @Final private ProgressMeter progress;
     @Shadow(remap = false) private long fadeOutStart;
+    @Shadow(remap = false) @Final private ProgressMeter progressMeter;
 
     @WrapMethod(method = "render")
     private void renderOverride(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, Operation<Void> original) {
@@ -38,7 +37,7 @@ public abstract class MixinForgeLoadingOverlay {
 
             Minecraft minecraft = this.minecraft;
             ReloadInstance reload = this.reload;
-            ProgressMeter progress = this.progress;
+            ProgressMeter progress = this.progressMeter;
             long fadeOutStart = this.fadeOutStart;
 
             progress.setAbsolute(Mth.clamp((int) (reload.getActualProgress() * 100F), 0, 100));
@@ -47,7 +46,7 @@ public abstract class MixinForgeLoadingOverlay {
 
             this.override$processOverlay(guiGraphics, mouseX, mouseY, partialTick, minecraft, fadeOutTimer);
 
-            if (fadeOutStart == -1L && reload.isDone()) this.override$finalize(minecraft, reload, progress);
+            if (fadeOutStart == -1L && reload.isDone()) this.override$finalize(minecraft, reload);
         } else {
             original.call(guiGraphics, mouseX, mouseY, partialTick);
         }
@@ -64,14 +63,14 @@ public abstract class MixinForgeLoadingOverlay {
         displayWindow.render(0xFF);
 
         if (fadeOutTimer >= 2.0F) {
+            this.progressMeter.complete();
             minecraft.setOverlay(null);
             displayWindow.close();
         }
     }
 
     @Unique
-    private void override$finalize(Minecraft minecraft, ReloadInstance reload, @NotNull ProgressMeter progress) {
-        progress.complete();
+    private void override$finalize(Minecraft minecraft, ReloadInstance reload) {
         this.fadeOutStart = Util.getMillis();
 
         Consumer<Optional<Throwable>> onFinish = this.onFinish;

@@ -15,13 +15,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -31,16 +30,14 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.Set;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public final class PasteListener {
     private static final Set<String> DOWNLOADING = new ObjectOpenHashSet<>();
 
     private static final Logger LOGGER = LogManager.getLogger(PasteListener.class);
 
     @SubscribeEvent
-    public static void listen(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-
+    public static void listen(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         long window = minecraft.getWindow().getWindow();
 

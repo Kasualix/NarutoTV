@@ -14,6 +14,7 @@ import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import me.kall.narutotv.screen.NarutoWorldScreen;
 import me.kall.narutotv.util.AudioZipGenerator;
 import net.minecraft.client.Minecraft;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -64,7 +65,7 @@ public class Client {
         wall.video = GamePaths.relConfig(mediaArgs.absVideoPath());
         wall.audio = GamePaths.relConfig(mediaArgs.absAudioPath());
 
-        NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(wall));
+        PacketDistributor.sendToServer(new WallUpdatePacket(wall));
     }
 
     public static void syncWalls(@NotNull ObjectCollection<ObjectOpenHashSet<Wall>> walls) {

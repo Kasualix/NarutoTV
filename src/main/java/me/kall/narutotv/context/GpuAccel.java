@@ -6,20 +6,17 @@ import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class GpuAccel {
     private static boolean last = false;
 
     @SubscribeEvent
-    public static void detect(TickEvent.@NotNull ClientTickEvent event) {
-        if (!event.phase.equals(TickEvent.Phase.END)) return;
-
+    public static void detect(ClientTickEvent.Post event) {
         boolean now = Minecraft.getInstance().level != null;
         if (now != last) {
             last = now;

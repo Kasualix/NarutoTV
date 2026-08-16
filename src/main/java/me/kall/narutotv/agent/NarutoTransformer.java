@@ -12,7 +12,7 @@ import java.security.ProtectionDomain;
 public class NarutoTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain domain, byte[] classFileBuffer) {
-        if ("net/minecraftforge/fml/earlydisplay/DisplayWindow".equals(className)) {
+        if ("net/neoforged/fml/earlydisplay/DisplayWindow".equals(className)) {
             try {
                 ClassReader classReader = new ClassReader(classFileBuffer);
                 ClassNode classNode = new ClassNode();
@@ -37,7 +37,7 @@ public class NarutoTransformer implements ClassFileTransformer {
             }
         }
 
-        if ("net/minecraftforge/fml/earlydisplay/RenderElement".equals(className)) {
+        if ("net/neoforged/fml/earlydisplay/RenderElement".equals(className)) {
             try {
                 ClassReader classReader = new ClassReader(classFileBuffer);
                 ClassNode classNode = new ClassNode();
@@ -108,8 +108,8 @@ public class NarutoTransformer implements ClassFileTransformer {
             replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false));
             replacement.add(new InsnNode(Opcodes.DUP));
             replacement.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            replacement.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraftforge/fml/earlydisplay/DisplayWindow", "font", "Lnet/minecraftforge/fml/earlydisplay/SimpleFont;"));
-            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/minecraftforge/fml/earlydisplay/RenderElement", "progressBars", "(Lnet/minecraftforge/fml/earlydisplay/SimpleFont;)Lnet/minecraftforge/fml/earlydisplay/RenderElement;", false));
+            replacement.add(new FieldInsnNode(Opcodes.GETFIELD, "net/neoforged/fml/earlydisplay/DisplayWindow", "font", "Lnet/neoforged/fml/earlydisplay/SimpleFont;"));
+            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/neoforged/fml/earlydisplay/RenderElement", "progressBars", "(Lnet/neoforged/fml/earlydisplay/SimpleFont;)Lnet/neoforged/fml/earlydisplay/RenderElement;", false));
             replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true));
             replacement.add(new InsnNode(Opcodes.POP));
 

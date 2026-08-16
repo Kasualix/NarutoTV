@@ -2,12 +2,11 @@ package me.kall.narutotv.network.packet.base;
 
 import me.kall.narutotv.data.world.wall.Wall;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
-public abstract class WallPacket {
+public abstract class WallPacket implements CustomPacketPayload {
     protected final Wall wall;
 
     public WallPacket(Wall wall) {
@@ -28,5 +27,5 @@ public abstract class WallPacket {
         buffer.writeBoolean(this.wall.light);
     }
 
-    public abstract void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier);
+    public abstract void handle(@NotNull IPayloadContext contextSupplier);
 }

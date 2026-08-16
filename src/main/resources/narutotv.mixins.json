@@ -1,7 +1,6 @@
 {
   "required": true,
   "package": "me.kall.narutotv.mixin",
-  "plugin": "me.kall.narutotv.mixin.plugin.ExtrasInit",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "injectors": {
@@ -17,15 +16,10 @@
     "fade.MixinFont",
     "fade.MixinGuiGraphics",
     "fade.MixinStringRenderOutput",
-    "override.element.MixinAbstractSelectionList",
     "override.element.MixinPanoramaRenderer",
-    "override.element.MixinScrollPanel",
     "override.overlay.MixinForgeLoadingOverlay",
     "override.overlay.MixinLoadingOverlay",
-    "override.screen.MixinCreateWorldScreen",
     "override.screen.MixinScreen",
-    "override.screen.MixinTitleScreen",
-    "override.screen.MixinWinScreen",
     "sound.ChannelAccessor",
     "sound.MixinOptions",
     "sound.MixinSoundEngine",

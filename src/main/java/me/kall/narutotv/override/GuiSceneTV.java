@@ -4,13 +4,13 @@ import com.mojang.blaze3d.platform.NativeImage;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.config.NarutoConfig;
 import me.kall.narutotv.core.AbstractTV;
+import me.kall.narutotv.data.file.Sources;
+import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.renderer.BufferFrameRenderer;
 import me.kall.narutotv.renderer.FrameRenderer;
 import me.kall.narutotv.renderer.ImageFrameRenderer;
-import me.kall.narutotv.data.file.Sources;
-import me.kall.narutotv.data.system.RenderProps;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
+import net.minecraft.client.gui.screens.GenericMessageScreen;
 import net.minecraft.client.gui.screens.LoadingOverlay;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.WinScreen;
@@ -27,7 +27,7 @@ public abstract class GuiSceneTV<T> extends AbstractTV<T> {
     public boolean isRunnable() {
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = minecraft.screen;
-        if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
+        if (screen instanceof WinScreen || screen instanceof GenericMessageScreen) return true;
         if (minecraft.getOverlay() instanceof LoadingOverlay && minecraft.level == null) return true;
         if (minecraft.level != null) {
             this.shutdownEntire(false);

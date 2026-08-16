@@ -20,18 +20,18 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientWalls {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Wall, WallTV<?>>> DATA = new Object2ObjectOpenHashMap<>();
     private static final Object2ObjectMap<ResourceLocation, Long2ObjectMap<WallTV<?>>> POSITION_CACHE = new Object2ObjectOpenHashMap<>();
@@ -41,7 +41,7 @@ public class ClientWalls {
     }
 
     public static @Nullable Wall getNearest(ResourceLocation dimension, @NotNull Player player) {
-        float partialTick = Minecraft.getInstance().getPartialTick();
+        float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
         Vec3 eye = player.getEyePosition(partialTick);
         Vec3 view = player.getViewVector(partialTick);
         var tvs = ClientWalls.getIn(dimension);

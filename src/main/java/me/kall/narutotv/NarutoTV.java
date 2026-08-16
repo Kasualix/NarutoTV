@@ -1,6 +1,6 @@
 package me.kall.narutotv;
 
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.fml.common.Mod;
 import org.jetbrains.annotations.Contract;
 
 import java.util.concurrent.ExecutorService;

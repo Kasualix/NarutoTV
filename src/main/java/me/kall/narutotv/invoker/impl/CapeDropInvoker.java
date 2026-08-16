@@ -6,12 +6,12 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.world.cape.Cape;
 import me.kall.narutotv.data.world.cape.ClientCapes;
-import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.cape.CapeUpdatePacket;
 import me.kall.narutotv.world.CapeTV;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -40,7 +40,7 @@ public class CapeDropInvoker extends VideoDropInvoker {
         UUID uuid = player.getUUID();
         String path = GamePaths.relConfig(mediaArgs.absVideoPath());
         ClientCapes.add(new Cape(uuid, path)).ifPresent(CapeTV.DEATH);
-        NarutoPackets.INSTANCE.sendToServer(new CapeUpdatePacket(uuid, path));
+        PacketDistributor.sendToServer(new CapeUpdatePacket(uuid, path));
     }
 
     @Override

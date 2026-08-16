@@ -1,37 +1,46 @@
 package me.kall.narutotv.network;
 
-import me.kall.duplicationless.network.Networker;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.network.packet.base.WallPacket;
 import me.kall.narutotv.network.packet.cape.CapeSyncPacket;
 import me.kall.narutotv.network.packet.cape.CapeUpdatePacket;
 import me.kall.narutotv.network.packet.wall.*;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class NarutoPackets {
-    public static final SimpleChannel INSTANCE = Networker.create(NarutoTV.MOD_ID, "1");
     public static final Logger LOGGER = LogManager.getLogger(NarutoPackets.class);
-    private static int id = 0;
+
+    public static final Type<WallLifePacket> WALL_LIFE_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_life"));
+    public static final Type<WallCleanPacket> WALL_CLEAN_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_clean"));
+    public static final Type<WallDeathPacket> WALL_DEATH_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_death"));
+    public static final Type<WallSyncPacket> WALL_SYNC_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_sync"));
+    public static final Type<WallUpdatePacket> WALL_UPDATE_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_update"));
+    public static final Type<WallConfigPacket> WALL_CONFIG_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_config"));
+
+    public static final Type<CapeSyncPacket> CAPE_SYNC_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "cape_sync"));
+    public static final Type<CapeUpdatePacket> CAPE_UPDATE_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "cape_update"));
 
     @SubscribeEvent
-    public static void setup(@NotNull FMLCommonSetupEvent event) {
-        event.enqueueWork(() -> {
-            INSTANCE.registerMessage(id++, WallLifePacket.class, WallPacket::encode, WallLifePacket::new, WallLifePacket::handle);
-            INSTANCE.registerMessage(id++, WallCleanPacket.class, WallPacket::encode, WallCleanPacket::new, WallCleanPacket::handle);
-            INSTANCE.registerMessage(id++, WallDeathPacket.class, WallPacket::encode, WallDeathPacket::new, WallDeathPacket::handle);
-            INSTANCE.registerMessage(id++, WallSyncPacket.class, WallSyncPacket::encode, WallSyncPacket::new, WallSyncPacket::handle);
-            INSTANCE.registerMessage(id++, WallUpdatePacket.class, WallPacket::encode, WallUpdatePacket::new, WallUpdatePacket::handle);
-            INSTANCE.registerMessage(id++, WallConfigPacket.class, WallPacket::encode, WallConfigPacket::new, WallConfigPacket::handle);
+    public static void setup(@NotNull RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("1");
 
-            INSTANCE.registerMessage(id++, CapeSyncPacket.class, CapeSyncPacket::encode, CapeSyncPacket::new, CapeSyncPacket::handle);
-            INSTANCE.registerMessage(id++, CapeUpdatePacket.class, CapeUpdatePacket::encode, CapeUpdatePacket::new, CapeUpdatePacket::handle);
-        });
+        registrar.playToClient(WALL_LIFE_PACKET_TYPE, CustomPacketPayload.codec(WallLifePacket::encode, WallLifePacket::new), WallLifePacket::handle);
+        registrar.playToServer(WALL_CLEAN_PACKET_TYPE, CustomPacketPayload.codec(WallCleanPacket::encode, WallCleanPacket::new), WallCleanPacket::handle);
+        registrar.playToClient(WALL_DEATH_PACKET_TYPE, CustomPacketPayload.codec(WallDeathPacket::encode, WallDeathPacket::new), WallDeathPacket::handle);
+        registrar.playToClient(WALL_SYNC_PACKET_TYPE, CustomPacketPayload.codec(WallSyncPacket::encode, WallSyncPacket::new), WallSyncPacket::handle);
+        registrar.playBidirectional(WALL_UPDATE_PACKET_TYPE, CustomPacketPayload.codec(WallUpdatePacket::encode, WallUpdatePacket::new), WallUpdatePacket::handle);
+        registrar.playToClient(WALL_CONFIG_PACKET_TYPE, CustomPacketPayload.codec(WallConfigPacket::encode, WallConfigPacket::new), WallConfigPacket::handle);
+
+        registrar.playToClient(CAPE_SYNC_PACKET_TYPE, CustomPacketPayload.codec(CapeSyncPacket::encode, CapeSyncPacket::new), CapeSyncPacket::handle);
+        registrar.playBidirectional(CAPE_UPDATE_PACKET_TYPE, CustomPacketPayload.codec(CapeUpdatePacket::encode, CapeUpdatePacket::new), CapeUpdatePacket::handle);
     }
 }

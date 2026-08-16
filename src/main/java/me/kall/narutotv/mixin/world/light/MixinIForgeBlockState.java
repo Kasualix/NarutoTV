@@ -6,11 +6,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.extensions.IForgeBlockState;
+import net.neoforged.neoforge.common.extensions.IBlockStateExtension;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(IForgeBlockState.class)
+@Mixin(IBlockStateExtension.class)
 public interface MixinIForgeBlockState {
     /**
      * @author Kall

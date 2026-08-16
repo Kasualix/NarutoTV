@@ -19,8 +19,8 @@ public record MediaArgs(String absVideoPath, String absAudioPath, int channelCou
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof MediaArgs that)) return false;
-        return this.channelCount == that.channelCount && this.sampleRate == that.sampleRate && this.openALFormat == that.openALFormat && Double.compare(that.fps, this.fps) == 0 && this.width == that.width && this.height == that.height && Double.compare(that.duration, this.duration) == 0 && Objects.equals(this.absVideoPath, that.absVideoPath) && Objects.equals(this.absAudioPath, that.absAudioPath) && Double.compare(this.videoStartSec, that.videoStartSec) == 0 && Double.compare(this.audioStartSec, that.audioStartSec) == 0;
+        if (!(o instanceof MediaArgs(String videoPath, String audioPath, int count, int rate, int alFormat, double fps1, int width1, int height1, double duration1, double startSec, double sec))) return false;
+        return this.channelCount == count && this.sampleRate == rate && this.openALFormat == alFormat && Double.compare(fps1, this.fps) == 0 && this.width == width1 && this.height == height1 && Double.compare(duration1, this.duration) == 0 && Objects.equals(this.absVideoPath, videoPath) && Objects.equals(this.absAudioPath, audioPath) && Double.compare(this.videoStartSec, startSec) == 0 && Double.compare(this.audioStartSec, sec) == 0;
     }
 
     @Override

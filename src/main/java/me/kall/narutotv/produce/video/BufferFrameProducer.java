@@ -65,7 +65,7 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
         byte[] lightMap = new byte[ySize];
         for (int i = 0; i < ySize; i++) {
             int y = frame.get(i) & 0xFF;
-            int light = Math.min(15, Math.max(0, (int) Math.round(y / 255.0 * 15)));
+            int light = Math.clamp((int) Math.round(y / 255.0 * 15), 0, 15);
             lightMap[i] = (byte) light;
         }
 

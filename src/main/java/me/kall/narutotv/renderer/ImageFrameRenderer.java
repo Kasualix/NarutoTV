@@ -26,11 +26,10 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryUtil;
 
@@ -167,14 +166,14 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
             Camera camera = RenderCaptured.camera();
             if (poseStack == null || bufferSource == null || camera == null || this.textureLocation == null || this.dynamicTexture == null) return;
 
+            PoseStack.Pose normal = poseStack.last();
             Matrix4f pose = poseStack.last().pose();
-            Matrix3f normal = poseStack.last().normal();
             RenderType renderType = RenderType.entityTranslucent(this.textureLocation);
             VertexConsumer consumer = bufferSource.getBuffer(renderType);
 
             NarutoMath.Coords coords = NarutoMath.computeCoords(this.wall, camera);
 
-            MinecraftForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
+            NeoForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
 
             vertex(consumer, pose, normal, coords.bottomFromX(), coords.bottomFromY(), coords.bottomFromZ(), coords.u0(), coords.v0(), coords.normalX(), coords.normalY(), coords.normalZ());
             vertex(consumer, pose, normal, coords.bottomToX(), coords.bottomToY(), coords.bottomToZ(), coords.u1(), coords.v1(), coords.normalX(), coords.normalY(), coords.normalZ());
@@ -182,14 +181,13 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
             vertex(consumer, pose, normal, coords.topFromX(), coords.topFromY(), coords.topFromZ(), coords.u3(), coords.v3(), coords.normalX(), coords.normalY(), coords.normalZ());
         }
 
-        private static void vertex(@NotNull VertexConsumer consumer, Matrix4f pose, Matrix3f normal, double x, double y, double z, float u, float v, double normalX, double normalY, double normalZ) {
-            consumer.vertex(pose, (float) x, (float) y, (float) z)
-                    .color(255, 255, 255, 255)
-                    .uv(u, v)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY)
-                    .uv2(LightTexture.FULL_BRIGHT)
-                    .normal(normal, (float) normalX, (float) normalY, (float) normalZ)
-                    .endVertex();
+        private static void vertex(@NotNull VertexConsumer consumer, Matrix4f pose, PoseStack.Pose normal, double x, double y, double z, float u, float v, double normalX, double normalY, double normalZ) {
+            consumer.addVertex(pose, (float) x, (float) y, (float) z)
+                    .setColor(255, 255, 255, 255)
+                    .setUv(u, v)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(LightTexture.FULL_BRIGHT)
+                    .setNormal(normal, (float) normalX, (float) normalY, (float) normalZ);
         }
 
         @Override
@@ -211,7 +209,6 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
     public static final class Cape extends ImageFrameRenderer {
         private final me.kall.narutotv.data.world.cape.Cape cape;
         public Cape(me.kall.narutotv.data.world.cape.Cape cape) {
-
             this.cape = cape;
         }
 
@@ -230,12 +227,12 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
 
             VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(this.textureLocation));
             Matrix4f pose = poseStack.last().pose();
-            Matrix3f normal = poseStack.last().normal();
+            PoseStack.Pose normal = poseStack.last();
 
-            consumer.vertex(pose, -0.3125F, 0.01F, 0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
-            consumer.vertex(pose, -0.3125F, 1.01F, 0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
-            consumer.vertex(pose, +0.3125F, 1.01F, 0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
-            consumer.vertex(pose, +0.3125F, 0.01F, 0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
+            consumer.addVertex(pose, -0.3125F, 0.01F, 0.01F).setColor(255, 255, 255, 255).setUv(0.0F, 0.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
+            consumer.addVertex(pose, -0.3125F, 1.01F, 0.01F).setColor(255, 255, 255, 255).setUv(0.0F, 1.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
+            consumer.addVertex(pose, +0.3125F, 1.01F, 0.01F).setColor(255, 255, 255, 255).setUv(1.0F, 1.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
+            consumer.addVertex(pose, +0.3125F, 0.01F, 0.01F).setColor(255, 255, 255, 255).setUv(1.0F, 0.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
         }
     }
 }

@@ -9,15 +9,15 @@ import me.kall.narutotv.override.GuiSceneControl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class NarutoSceneScreen extends AbstractMediaScreen {
     static final Component FADABLE = Component.translatable("checkbox.narutotv.fadable");
     static final Component MUTE_MUSIC = Component.translatable("checkbox.narutotv.mute_music");
@@ -142,17 +142,15 @@ public class NarutoSceneScreen extends AbstractMediaScreen {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.END)) {
-            MediaArgs mediaArgs = GuiSceneControl.active.mediaArgs;
-            if (mediaArgs == null) return;
+    public static void tick(ClientTickEvent.Post event) {
+        MediaArgs mediaArgs = GuiSceneControl.active.mediaArgs;
+        if (mediaArgs == null) return;
 
-            Minecraft minecraft = Minecraft.getInstance();
-            long window = minecraft.getWindow().getWindow();
+        Minecraft minecraft = Minecraft.getInstance();
+        long window = minecraft.getWindow().getWindow();
 
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_F12) != GLFW.GLFW_PRESS || minecraft.screen instanceof NarutoSceneScreen) return;
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_F12) != GLFW.GLFW_PRESS || minecraft.screen instanceof NarutoSceneScreen) return;
 
-            minecraft.setScreen(new NarutoSceneScreen(minecraft.screen, mediaArgs));
-        }
+        minecraft.setScreen(new NarutoSceneScreen(minecraft.screen, mediaArgs));
     }
 }

@@ -2,7 +2,7 @@ package me.kall.narutotv.world.api;
 
 import me.kall.narutotv.util.NarutoMath;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 public class RenderCoordsEvent extends Event {
     public final NarutoMath.Coords coords;

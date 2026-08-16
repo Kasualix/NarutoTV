@@ -219,7 +219,7 @@ import java.security.ProtectionDomain;
 public class NarutoTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain domain, byte[] classFileBuffer) {
-        if ("net/minecraftforge/fml/earlydisplay/DisplayWindow".equals(className)) {
+        if ("net/neoforged/fml/earlydisplay/DisplayWindow".equals(className)) {
             try {
                 ClassReader classReader = new ClassReader(classFileBuffer);
                 ClassNode classNode = new ClassNode();
@@ -244,7 +244,7 @@ public class NarutoTransformer implements ClassFileTransformer {
             }
         }
 
-        if ("net/minecraftforge/fml/earlydisplay/RenderElement".equals(className)) {
+        if ("net/neoforged/fml/earlydisplay/RenderElement".equals(className)) {
             try {
                 ClassReader classReader = new ClassReader(classFileBuffer);
                 ClassNode classNode = new ClassNode();
@@ -315,8 +315,8 @@ public class NarutoTransformer implements ClassFileTransformer {
             replacement.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false));
             replacement.add(new InsnNode(Opcodes.DUP));
             replacement.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            replacement.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraftforge/fml/earlydisplay/DisplayWindow", "font", "Lnet/minecraftforge/fml/earlydisplay/SimpleFont;"));
-            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/minecraftforge/fml/earlydisplay/RenderElement", "progressBars", "(Lnet/minecraftforge/fml/earlydisplay/SimpleFont;)Lnet/minecraftforge/fml/earlydisplay/RenderElement;", false));
+            replacement.add(new FieldInsnNode(Opcodes.GETFIELD, "net/neoforged/fml/earlydisplay/DisplayWindow", "font", "Lnet/neoforged/fml/earlydisplay/SimpleFont;"));
+            replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/neoforged/fml/earlydisplay/RenderElement", "progressBars", "(Lnet/neoforged/fml/earlydisplay/SimpleFont;)Lnet/neoforged/fml/earlydisplay/RenderElement;", false));
             replacement.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true));
             replacement.add(new InsnNode(Opcodes.POP));
 
@@ -428,8 +428,8 @@ public record MediaArgs(String absVideoPath, String absAudioPath, int channelCou
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof MediaArgs that)) return false;
-        return this.channelCount == that.channelCount && this.sampleRate == that.sampleRate && this.openALFormat == that.openALFormat && Double.compare(that.fps, this.fps) == 0 && this.width == that.width && this.height == that.height && Double.compare(that.duration, this.duration) == 0 && Objects.equals(this.absVideoPath, that.absVideoPath) && Objects.equals(this.absAudioPath, that.absAudioPath) && Double.compare(this.videoStartSec, that.videoStartSec) == 0 && Double.compare(this.audioStartSec, that.audioStartSec) == 0;
+        if (!(o instanceof MediaArgs(String videoPath, String audioPath, int count, int rate, int alFormat, double fps1, int width1, int height1, double duration1, double startSec, double sec))) return false;
+        return this.channelCount == count && this.sampleRate == rate && this.openALFormat == alFormat && Double.compare(fps1, this.fps) == 0 && this.width == width1 && this.height == height1 && Double.compare(duration1, this.duration) == 0 && Objects.equals(this.absVideoPath, videoPath) && Objects.equals(this.absAudioPath, audioPath) && Double.compare(this.videoStartSec, startSec) == 0 && Double.compare(this.audioStartSec, sec) == 0;
     }
 
     @Override
@@ -740,7 +740,7 @@ public class YtDlp {
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\compat\CompatCenter.java =====
 package me.kall.narutotv.compat;
 
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLLoader;
 import org.jetbrains.annotations.Contract;
 
 public class CompatCenter {
@@ -927,20 +927,17 @@ import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.override.GuiSceneControl;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class GpuAccel {
     private static boolean last = false;
 
     @SubscribeEvent
-    public static void detect(TickEvent.@NotNull ClientTickEvent event) {
-        if (!event.phase.equals(TickEvent.Phase.END)) return;
-
+    public static void detect(ClientTickEvent.Post event) {
         boolean now = Minecraft.getInstance().level != null;
         if (now != last) {
             last = now;
@@ -964,15 +961,15 @@ import me.kall.narutotv.world.api.RenderCoordsEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class LastCoords {
     public static final Object2ObjectMap<ResourceLocation, Object2IntMap<NarutoMath.Coords>> DATA = new Object2ObjectOpenHashMap<>();
 
@@ -992,8 +989,8 @@ public class LastCoords {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && !DATA.isEmpty()) {
+    public static void tick(RenderFrameEvent.Pre event) {
+        if (!DATA.isEmpty()) {
             synchronized (DATA) {
                 for (Object2IntMap<NarutoMath.Coords> coordsMap : DATA.values()) {
                     coordsMap.object2IntEntrySet().removeIf(TICK);
@@ -1077,13 +1074,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -1093,16 +1089,14 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.Set;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public final class PasteListener {
     private static final Set<String> DOWNLOADING = new ObjectOpenHashSet<>();
 
     private static final Logger LOGGER = LogManager.getLogger(PasteListener.class);
 
     @SubscribeEvent
-    public static void listen(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-
+    public static void listen(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         long window = minecraft.getWindow().getWindow();
 
@@ -1211,13 +1205,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID, value = Dist.CLIENT)
 public class ShaderDetection {
     private static boolean last;
     private static int interval;
@@ -1225,8 +1218,8 @@ public class ShaderDetection {
     private static final Component SHADER_COMPAT = Component.translatable("message.narutotv.shader").withStyle(ChatFormatting.YELLOW);
 
     @SubscribeEvent
-    public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
-        if (CompatCenter.hasShaderMod() && event.phase.equals(TickEvent.Phase.START)) {
+    public static void tickClient(ClientTickEvent.Pre event) {
+        if (CompatCenter.hasShaderMod()) {
             if (interval >= 0) {
                 interval--;
                 return;
@@ -1692,10 +1685,10 @@ import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.produce.util.LifetimeController;
 import me.kall.narutotv.renderer.ImageFrameRenderer;
 import me.kall.narutotv.world.CapeTV;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1703,7 +1696,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientCapes {
     private static final Object2ObjectMap<UUID, Pair<Cape, CapeTV<?>>> DATA = new Object2ObjectOpenHashMap<>();
 
@@ -1802,22 +1795,22 @@ package me.kall.narutotv.data.world.cape;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.cape.CapeSyncPacket;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class SavedCapes extends SavedData {
     private static final String DATA_NAME = "NarutoSavedCapes";
     private static final String TAG_LIST = "VideoCapes";
@@ -1825,7 +1818,7 @@ public class SavedCapes extends SavedData {
     public final Map<UUID, String> data = new Object2ObjectOpenHashMap<>();
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag tag) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.Provider registries) {
         CompoundTag list = new CompoundTag();
         for (Map.Entry<UUID, String> entry : this.data.entrySet()) {
             list.putString(entry.getKey().toString(), entry.getValue());
@@ -1847,13 +1840,13 @@ public class SavedCapes extends SavedData {
     }
 
     public static @NotNull SavedCapes get(@NotNull ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(SavedCapes::load, SavedCapes::new, DATA_NAME);
+        return level.getDataStorage().computeIfAbsent(new Factory<>(SavedCapes::new, (tag, provider) -> load(tag)), DATA_NAME);
     }
 
     @SubscribeEvent
     public static void sync(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new CapeSyncPacket(SavedCapes.get(player.serverLevel()).data));
+            PacketDistributor.sendToPlayer(player, new CapeSyncPacket(SavedCapes.get(player.serverLevel()).data));
         }
     }
 }
@@ -1875,17 +1868,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.function.Predicate;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class Displayers extends ChunkData.BlockData {
     private final Object2ObjectMap<ResourceLocation, Long2ObjectMap<Set<Long>>> data = new Object2ObjectOpenHashMap<>();
 
@@ -1975,18 +1968,18 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientWalls {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<Wall, WallTV<?>>> DATA = new Object2ObjectOpenHashMap<>();
     private static final Object2ObjectMap<ResourceLocation, Long2ObjectMap<WallTV<?>>> POSITION_CACHE = new Object2ObjectOpenHashMap<>();
@@ -1996,7 +1989,7 @@ public class ClientWalls {
     }
 
     public static @Nullable Wall getNearest(ResourceLocation dimension, @NotNull Player player) {
-        float partialTick = Minecraft.getInstance().getPartialTick();
+        float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
         Vec3 eye = player.getEyePosition(partialTick);
         Vec3 view = player.getViewVector(partialTick);
         var tvs = ClientWalls.getIn(dimension);
@@ -2169,9 +2162,9 @@ package me.kall.narutotv.data.world.wall;
 
 import it.unimi.dsi.fastutil.objects.*;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallDeathPacket;
 import me.kall.narutotv.network.packet.wall.WallSyncPacket;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -2179,14 +2172,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class SavedWalls extends SavedData {
     private static final String SCREENS_KEY = "Walls";
     private static final String DIMENSION_KEY = "Dimension";
@@ -2233,7 +2226,7 @@ public class SavedWalls extends SavedData {
             if (next.borderInvolved().contains(position)) {
                 iterator.remove();
                 this.setDirty();
-                NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallDeathPacket(next));
+                PacketDistributor.sendToAllPlayers(new WallDeathPacket(next));
             }
         }
     }
@@ -2243,7 +2236,7 @@ public class SavedWalls extends SavedData {
     }
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag, HolderLookup.@NotNull Provider registries) {
         ListTag screensList = new ListTag();
         for (Object2ObjectMap.Entry<ResourceLocation, ObjectOpenHashSet<Wall>> entry : this.data.object2ObjectEntrySet()) {
             ResourceLocation dimension = entry.getKey();
@@ -2279,13 +2272,13 @@ public class SavedWalls extends SavedData {
     }
 
     public static @NotNull SavedWalls get(@NotNull ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(SavedWalls::load, SavedWalls::new, DATA_NAME);
+        return level.getDataStorage().computeIfAbsent(new Factory<>(SavedWalls::new, (tag, provider) -> load(tag)), DATA_NAME);
     }
 
     @SubscribeEvent
     public static void sync(PlayerEvent.@NotNull PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallSyncPacket(SavedWalls.get(player.serverLevel()).values()));
+            PacketDistributor.sendToPlayer(player, new WallSyncPacket(SavedWalls.get(player.serverLevel()).values()));
         }
     }
 }
@@ -2692,14 +2685,13 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class FadeCenter {
     private static final MousePos LAST_MOUSE = new MousePos();
 
@@ -2726,8 +2718,8 @@ public class FadeCenter {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.START) && NarutoConfig.fadable()) {
+    public static void tick(ClientTickEvent.Pre event) {
+        if (NarutoConfig.fadable()) {
             Minecraft minecraft = Minecraft.getInstance();
             MouseHandler mouseHandler = minecraft.mouseHandler;
 
@@ -2748,12 +2740,36 @@ public class FadeCenter {
     }
 
     @SubscribeEvent
-    public static void anyInput(InputEvent event) {
+    public static void anyInput(InputEvent.MouseButton.Pre event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.MouseButton.Post event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.MouseScrollingEvent event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.Key event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.InteractionKeyMappingTriggered event) {
+        onAnyInput();
+    }
+
+    private static void onAnyInput() {
         Minecraft.getInstance().execute(() -> stopTicks = 0);
     }
 
     @SubscribeEvent
-    public static void mouseInput(InputEvent.MouseButton event) {
+    public static void mouseInput(InputEvent.MouseButton.Pre event) {
         Minecraft.getInstance().execute(() -> fadeAlpha = 100);
     }
 
@@ -2791,12 +2807,12 @@ import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.world.cape.Cape;
 import me.kall.narutotv.data.world.cape.ClientCapes;
-import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.cape.CapeUpdatePacket;
 import me.kall.narutotv.world.CapeTV;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -2825,7 +2841,7 @@ public class CapeDropInvoker extends VideoDropInvoker {
         UUID uuid = player.getUUID();
         String path = GamePaths.relConfig(mediaArgs.absVideoPath());
         ClientCapes.add(new Cape(uuid, path)).ifPresent(CapeTV.DEATH);
-        NarutoPackets.INSTANCE.sendToServer(new CapeUpdatePacket(uuid, path));
+        PacketDistributor.sendToServer(new CapeUpdatePacket(uuid, path));
     }
 
     @Override
@@ -2962,7 +2978,7 @@ import me.kall.narutotv.screen.NameSetScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -2982,7 +2998,7 @@ public abstract class VideoDropInvoker implements Invoker {
         Minecraft minecraft = Minecraft.getInstance();
         minecraft.setScreen(new NameSetScreen(name -> {
             Path directory = this.copyTarget().resolve(name);
-            Path target = directory.resolve("video." + FileNameUtils.getExtension(absVideoPath));
+            Path target = directory.resolve("video." + FilenameUtils.getExtension(absVideoPath));
 
             if (Files.exists(target)) {
                 minecraft.setScreen(new DoubleCheckScreen(useExisting -> this.forPath(useExisting ? target::toString : () -> copyVideo(absVideoPath, target, directory)), minecraft.screen, Component.translatable("note.narutotv.double_check", name).withStyle(ChatFormatting.YELLOW), "button.narutotv.existing", "button.narutotv.replace"));
@@ -3033,12 +3049,12 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.invoker.impl.CapeDropInvoker;
 import me.kall.narutotv.invoker.impl.GuiSceneInvoker;
 import me.kall.narutotv.invoker.impl.LevelWallInvoker;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.jetbrains.annotations.NotNull;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = NarutoTV.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID, value = Dist.CLIENT)
 public final class NarutoInvokers {
     @SubscribeEvent
     public static void invokerRegistry(@NotNull InvokerRegistry event) {
@@ -3442,78 +3458,25 @@ public abstract class MixinStringRenderOutput {
     }
 }
 
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\override\element\MixinAbstractSelectionList.java =====
-package me.kall.narutotv.mixin.override.element;
-
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import me.kall.narutotv.override.OverrideCenter;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractSelectionList;
-import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-
-@Mixin(AbstractSelectionList.class)
-public abstract class MixinAbstractSelectionList {
-    @WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/AbstractSelectionList;renderBackground(Lnet/minecraft/client/gui/GuiGraphics;)V"))
-    private void skipRenderBackground(AbstractSelectionList<?> instance, GuiGraphics guiGraphics, @NotNull Operation<Void> original) {
-        if (OverrideCenter.getInstance().overridable()) {
-            OverrideCenter.getInstance().override();
-        } else {
-            original.call(instance, guiGraphics);
-        }
-    }
-
-    @WrapOperation(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/components/AbstractSelectionList;renderTopAndBottom:Z", opcode = Opcodes.GETFIELD))
-    private boolean skipRenderTopAndBottom(AbstractSelectionList<?> instance, Operation<Boolean> original) {
-        return !OverrideCenter.getInstance().overridable() && original.call(instance);
-    }
-
-    @WrapOperation(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/components/AbstractSelectionList;renderBackground:Z", opcode = Opcodes.GETFIELD))
-    private boolean skipRenderBackground(AbstractSelectionList<?> instance, Operation<Boolean> original) {
-        return !OverrideCenter.getInstance().overridable() && original.call(instance);
-    }
-}
-
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\override\element\MixinPanoramaRenderer.java =====
 package me.kall.narutotv.mixin.override.element;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import me.kall.narutotv.override.OverrideCenter;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.PanoramaRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(PanoramaRenderer.class)
 public abstract class MixinPanoramaRenderer {
     @WrapMethod(method = "render")
-    private void skipPanoramaRenderer(float deltaT, float alpha, Operation<Void> original) {
+    private void skipPanoramaRenderer(GuiGraphics guiGraphics, int width, int height, float fade, float partialTick, Operation<Void> original) {
         if (OverrideCenter.getInstance().overridable()) {
             OverrideCenter.getInstance().override();
         } else {
-            original.call(deltaT, alpha);
+            original.call(guiGraphics, width, height, fade, partialTick);
         }
-    }
-}
-
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\override\element\MixinScrollPanel.java =====
-package me.kall.narutotv.mixin.override.element;
-
-import me.kall.narutotv.override.OverrideCenter;
-import net.minecraftforge.client.gui.widget.ScrollPanel;
-import org.jetbrains.annotations.NotNull;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-@Mixin(value = ScrollPanel.class, remap = false)
-public abstract class MixinScrollPanel {
-    @Inject(method = "drawBackground", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShader(Ljava/util/function/Supplier;)V"), cancellable = true)
-    private void skipRenderDarkDirtBackground(@NotNull CallbackInfo ci) {
-        if (OverrideCenter.getInstance().overridable()) ci.cancel();
     }
 }
 
@@ -3530,10 +3493,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.packs.resources.ReloadInstance;
 import net.minecraft.util.Mth;
-import net.minecraftforge.client.loading.ForgeLoadingOverlay;
-import net.minecraftforge.fml.earlydisplay.DisplayWindow;
-import net.minecraftforge.fml.loading.progress.ProgressMeter;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.fml.earlydisplay.DisplayWindow;
+import net.neoforged.fml.loading.progress.ProgressMeter;
+import net.neoforged.neoforge.client.loading.NeoForgeLoadingOverlay;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -3542,14 +3504,14 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-@Mixin(ForgeLoadingOverlay.class)
+@Mixin(NeoForgeLoadingOverlay.class)
 public abstract class MixinForgeLoadingOverlay {
     @Shadow(remap = false) @Final private Minecraft minecraft;
     @Shadow(remap = false) @Final private ReloadInstance reload;
     @Shadow(remap = false) @Final private Consumer<Optional<Throwable>> onFinish;
     @Shadow(remap = false) @Final private DisplayWindow displayWindow;
-    @Shadow(remap = false) @Final private ProgressMeter progress;
     @Shadow(remap = false) private long fadeOutStart;
+    @Shadow(remap = false) @Final private ProgressMeter progressMeter;
 
     @WrapMethod(method = "render")
     private void renderOverride(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, Operation<Void> original) {
@@ -3558,7 +3520,7 @@ public abstract class MixinForgeLoadingOverlay {
 
             Minecraft minecraft = this.minecraft;
             ReloadInstance reload = this.reload;
-            ProgressMeter progress = this.progress;
+            ProgressMeter progress = this.progressMeter;
             long fadeOutStart = this.fadeOutStart;
 
             progress.setAbsolute(Mth.clamp((int) (reload.getActualProgress() * 100F), 0, 100));
@@ -3567,7 +3529,7 @@ public abstract class MixinForgeLoadingOverlay {
 
             this.override$processOverlay(guiGraphics, mouseX, mouseY, partialTick, minecraft, fadeOutTimer);
 
-            if (fadeOutStart == -1L && reload.isDone()) this.override$finalize(minecraft, reload, progress);
+            if (fadeOutStart == -1L && reload.isDone()) this.override$finalize(minecraft, reload);
         } else {
             original.call(guiGraphics, mouseX, mouseY, partialTick);
         }
@@ -3584,14 +3546,14 @@ public abstract class MixinForgeLoadingOverlay {
         displayWindow.render(0xFF);
 
         if (fadeOutTimer >= 2.0F) {
+            this.progressMeter.complete();
             minecraft.setOverlay(null);
             displayWindow.close();
         }
     }
 
     @Unique
-    private void override$finalize(Minecraft minecraft, ReloadInstance reload, @NotNull ProgressMeter progress) {
-        progress.complete();
+    private void override$finalize(Minecraft minecraft, ReloadInstance reload) {
         this.fadeOutStart = Util.getMillis();
 
         Consumer<Optional<Throwable>> onFinish = this.onFinish;
@@ -3723,150 +3685,25 @@ public abstract class MixinLoadingOverlay {
     }
 }
 
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\override\screen\MixinCreateWorldScreen.java =====
-package me.kall.narutotv.mixin.override.screen;
-
-import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import me.kall.narutotv.override.OverrideCenter;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
-import org.spongepowered.asm.mixin.Mixin;
-
-@Mixin(CreateWorldScreen.class)
-public abstract class MixinCreateWorldScreen {
-    @WrapMethod(method = "renderDirtBackground")
-    private void skipRenderDirtBackground(GuiGraphics guiGraphics, Operation<Void> original) {
-        if (OverrideCenter.getInstance().overridable()) {
-            OverrideCenter.getInstance().override();
-        } else {
-            original.call(guiGraphics);
-        }
-    }
-}
-
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\override\screen\MixinScreen.java =====
 package me.kall.narutotv.mixin.override.screen;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import me.kall.narutotv.fade.FadeCenter;
 import me.kall.narutotv.override.OverrideCenter;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.common.MinecraftForge;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.List;
 
 @Mixin(Screen.class)
 public abstract class MixinScreen {
-    @Shadow @Final public List<Renderable> renderables;
-
-    @Unique boolean narutotv$hidden = false;
-
-    @SuppressWarnings("UnstableApiUsage")
-    @WrapMethod(method = "renderDirtBackground")
-    private void skipRenderDirtBackground(GuiGraphics guiGraphics, Operation<Void> original) {
-        if (OverrideCenter.getInstance().overridable()) {
-            OverrideCenter.getInstance().override();
-            MinecraftForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered((Screen) (Object) this, guiGraphics));
-        } else {
-            original.call(guiGraphics);
-        }
-    }
-
-    @Inject(method = "render", at = @At("TAIL"))
-    private void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        boolean now = FadeCenter.isHidden();
-        if (now != this.narutotv$hidden) {
-            this.narutotv$hidden = now;
-            for (Renderable renderable : this.renderables) {
-                if (renderable instanceof EditBox editBox) editBox.setVisible(!this.narutotv$hidden);
-            }
-        }
-    }
-}
-
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\override\screen\MixinTitleScreen.java =====
-package me.kall.narutotv.mixin.override.screen;
-
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import me.kall.narutotv.override.OverrideCenter;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.resources.ResourceLocation;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-
-@Mixin(TitleScreen.class)
-public abstract class MixinTitleScreen {
-    @WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lnet/minecraft/resources/ResourceLocation;IIIIFFIIII)V"))
-    private void skipPanoramaBlit(GuiGraphics guiGraphics, ResourceLocation atlasLocation, int x, int y, int width, int height, float uOffset, float vOffset, int uWidth, int vHeight, int textureWidth, int textureHeight, Operation<Void> original) {
-        if (OverrideCenter.getInstance().overridable()) return;
-        original.call(guiGraphics, atlasLocation, x, y, width, height, uOffset, vOffset, uWidth, vHeight, textureWidth, textureHeight);
-    }
-}
-
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\override\screen\MixinWinScreen.java =====
-package me.kall.narutotv.mixin.override.screen;
-
-import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import me.kall.narutotv.override.OverrideCenter;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.WinScreen;
-import org.spongepowered.asm.mixin.Mixin;
-
-@Mixin(WinScreen.class)
-public abstract class MixinWinScreen {
-    @WrapMethod(method = "renderBg")
-    private void skipRenderBg(GuiGraphics guiGraphics, Operation<Void> original) {
+    @WrapMethod(method = "renderBlurredBackground")
+    private void override(float partialTick, Operation<Void> original) {
         if (OverrideCenter.getInstance().overridable()) {
             OverrideCenter.getInstance().override();
         } else {
-            original.call(guiGraphics);
+            original.call(partialTick);
         }
     }
-}
-
-// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\plugin\ExtrasInit.java =====
-package me.kall.narutotv.mixin.plugin;
-
-import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import org.objectweb.asm.tree.ClassNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-
-import java.util.List;
-import java.util.Set;
-
-public class ExtrasInit implements IMixinConfigPlugin {
-    @Override
-    public void onLoad(String s) {
-        MixinExtrasBootstrap.init();
-    }
-
-    @Override
-    public boolean shouldApplyMixin(String s, String s1) {
-        return true;
-    }
-
-    @Override public String getRefMapperConfig() { return ""; }
-    @Override public void acceptTargets(Set<String> set, Set<String> set1) {}
-    @Override public List<String> getMixins() { return List.of(); }
-    @Override public void preApply(String s, ClassNode classNode, String s1, IMixinInfo iMixinInfo) {}
-    @Override public void postApply(String s, ClassNode classNode, String s1, IMixinInfo iMixinInfo) {}
 }
 
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\qol\MixinGameRules.java =====
@@ -3875,13 +3712,14 @@ package me.kall.narutotv.mixin.qol;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.level.GameRules;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(GameRules.class)
 public abstract class MixinGameRules {
     @WrapOperation(method = "<clinit>", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/GameRules;register(Ljava/lang/String;Lnet/minecraft/world/level/GameRules$Category;Lnet/minecraft/world/level/GameRules$Type;)Lnet/minecraft/world/level/GameRules$Key;"))
-    private static <T extends GameRules.Value<T>> GameRules.Key<T> modifyInitialBlockLimit(String name, GameRules.Category category, GameRules.Type<T> type, Operation<GameRules.Key<T>> original) {
+    private static <T extends GameRules.Value<T>> GameRules.Key<T> modifyInitialBlockLimit(String name, GameRules.Category category, GameRules.Type<T> type, @NotNull Operation<GameRules.Key<T>> original) {
         return original.call(name, category, !name.equals("commandModificationBlockLimit") ? type: GameRules.IntegerValue.create(99999999));
     }
 }
@@ -4009,11 +3847,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.extensions.IForgeBlockState;
+import net.neoforged.neoforge.common.extensions.IBlockStateExtension;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(IForgeBlockState.class)
+@Mixin(IBlockStateExtension.class)
 public interface MixinIForgeBlockState {
     /**
      * @author Kall
@@ -4053,6 +3891,26 @@ public class MixinLevelLightEngine implements PosLighter.LevelLightEngineAccesso
     }
 }
 
+// =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\light\MixinLightEngine.java =====
+package me.kall.narutotv.mixin.world.light;
+
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import me.kall.narutotv.world.light.PosLighter;
+import net.minecraft.world.level.lighting.LightEngine;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+
+@Mixin(LightEngine.class)
+public class MixinLightEngine implements PosLighter.LightEngineAccessor {
+    @Shadow @Final private LongOpenHashSet blockNodesToCheck;
+
+    @Override
+    public void naruto$checkBlock(long pos) {
+        this.blockNodesToCheck.add(pos);
+    }
+}
+
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\MixinServerLevel.java =====
 package me.kall.narutotv.mixin.world;
 
@@ -4079,9 +3937,8 @@ public class MixinServerLevel implements Displayers.Cleaner {
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\mixin\world\structure\MixinStructureTemplate.java =====
 package me.kall.narutotv.mixin.world.structure;
 
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.wall.SavedWalls;
-import me.kall.narutotv.network.NarutoPackets;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.packet.wall.WallLifePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
@@ -4096,7 +3953,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -4170,7 +4027,7 @@ public abstract class MixinStructureTemplate {
             Wall wall = new Wall(absCorners, dimension, ResourceLocation.parse(wallTag.getString(SavedWalls.LOCAL_SOUND_KEY)), wallTag.getString(SavedWalls.VIDEO_KEY), wallTag.getString(SavedWalls.AUDIO_KEY), wallTag.getFloat(SavedWalls.VOLUME_KEY), wallTag.getBoolean(SavedWalls.LIGHT_KEY));
 
             SavedWalls.get(level).update(wall);
-            NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(wall));
+            PacketDistributor.sendToAllPlayers(new WallLifePacket(wall));
         }
     }
 }
@@ -4178,7 +4035,7 @@ public abstract class MixinStructureTemplate {
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\NarutoTV.java =====
 package me.kall.narutotv;
 
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.fml.common.Mod;
 import org.jetbrains.annotations.Contract;
 
 import java.util.concurrent.ExecutorService;
@@ -4217,6 +4074,7 @@ import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import me.kall.narutotv.screen.NarutoWorldScreen;
 import me.kall.narutotv.util.AudioZipGenerator;
 import net.minecraft.client.Minecraft;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -4267,7 +4125,7 @@ public class Client {
         wall.video = GamePaths.relConfig(mediaArgs.absVideoPath());
         wall.audio = GamePaths.relConfig(mediaArgs.absAudioPath());
 
-        NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(wall));
+        PacketDistributor.sendToServer(new WallUpdatePacket(wall));
     }
 
     public static void syncWalls(@NotNull ObjectCollection<ObjectOpenHashSet<Wall>> walls) {
@@ -4306,23 +4164,23 @@ public class Client {
 package me.kall.narutotv.network.impl;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.Displayers;
 import me.kall.narutotv.data.world.wall.SavedWalls;
-import me.kall.narutotv.network.NarutoPackets;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 public class Server {
-    public static void cleanWall(Wall wall, NetworkEvent.@NotNull Context context) {
-        ServerPlayer player = context.getSender();
-        if (player == null) return;
-        ServerLevel level = player.serverLevel();
+    public static void cleanWall(Wall wall, @NotNull IPayloadContext context) {
+        Player player = context.player();
+        if (!(player instanceof ServerPlayer)) return;
+        ServerLevel level = ((ServerPlayer) player).serverLevel();
 
         LongSet areaInvolved = wall.areaInvolved();
         LongSet borderInvolved = wall.borderInvolved();
@@ -4333,17 +4191,17 @@ public class Server {
         Displayers.Cleaner.setCleaning(level, false);
     }
 
-    public static void updateWall(Wall wall, NetworkEvent.@NotNull Context context) {
-        ServerPlayer player = context.getSender();
-        if (player == null) return;
-        ServerLevel level = player.serverLevel();
+    public static void updateWall(Wall wall, @NotNull IPayloadContext context) {
+        Player player = context.player();
+        if (!(player instanceof ServerPlayer)) return;
+        ServerLevel level = ((ServerPlayer) player).serverLevel();
 
         SavedWalls.get(level).update(wall);
 
         WallUpdatePacket packet = new WallUpdatePacket(wall);
         for (ServerPlayer other : level.getServer().getPlayerList().getPlayers()) {
             if (other.getUUID().equals(player.getUUID())) continue;
-            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> other), packet);
+            PacketDistributor.sendToPlayer(other, packet);
         }
     }
 }
@@ -4351,39 +4209,48 @@ public class Server {
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\network\NarutoPackets.java =====
 package me.kall.narutotv.network;
 
-import me.kall.duplicationless.network.Networker;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.network.packet.base.WallPacket;
 import me.kall.narutotv.network.packet.cape.CapeSyncPacket;
 import me.kall.narutotv.network.packet.cape.CapeUpdatePacket;
 import me.kall.narutotv.network.packet.wall.*;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class NarutoPackets {
-    public static final SimpleChannel INSTANCE = Networker.create(NarutoTV.MOD_ID, "1");
     public static final Logger LOGGER = LogManager.getLogger(NarutoPackets.class);
-    private static int id = 0;
+
+    public static final Type<WallLifePacket> WALL_LIFE_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_life"));
+    public static final Type<WallCleanPacket> WALL_CLEAN_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_clean"));
+    public static final Type<WallDeathPacket> WALL_DEATH_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_death"));
+    public static final Type<WallSyncPacket> WALL_SYNC_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_sync"));
+    public static final Type<WallUpdatePacket> WALL_UPDATE_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_update"));
+    public static final Type<WallConfigPacket> WALL_CONFIG_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "wall_config"));
+
+    public static final Type<CapeSyncPacket> CAPE_SYNC_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "cape_sync"));
+    public static final Type<CapeUpdatePacket> CAPE_UPDATE_PACKET_TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarutoTV.MOD_ID, "cape_update"));
 
     @SubscribeEvent
-    public static void setup(@NotNull FMLCommonSetupEvent event) {
-        event.enqueueWork(() -> {
-            INSTANCE.registerMessage(id++, WallLifePacket.class, WallPacket::encode, WallLifePacket::new, WallLifePacket::handle);
-            INSTANCE.registerMessage(id++, WallCleanPacket.class, WallPacket::encode, WallCleanPacket::new, WallCleanPacket::handle);
-            INSTANCE.registerMessage(id++, WallDeathPacket.class, WallPacket::encode, WallDeathPacket::new, WallDeathPacket::handle);
-            INSTANCE.registerMessage(id++, WallSyncPacket.class, WallSyncPacket::encode, WallSyncPacket::new, WallSyncPacket::handle);
-            INSTANCE.registerMessage(id++, WallUpdatePacket.class, WallPacket::encode, WallUpdatePacket::new, WallUpdatePacket::handle);
-            INSTANCE.registerMessage(id++, WallConfigPacket.class, WallPacket::encode, WallConfigPacket::new, WallConfigPacket::handle);
+    public static void setup(@NotNull RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("1");
 
-            INSTANCE.registerMessage(id++, CapeSyncPacket.class, CapeSyncPacket::encode, CapeSyncPacket::new, CapeSyncPacket::handle);
-            INSTANCE.registerMessage(id++, CapeUpdatePacket.class, CapeUpdatePacket::encode, CapeUpdatePacket::new, CapeUpdatePacket::handle);
-        });
+        registrar.playToClient(WALL_LIFE_PACKET_TYPE, CustomPacketPayload.codec(WallLifePacket::encode, WallLifePacket::new), WallLifePacket::handle);
+        registrar.playToServer(WALL_CLEAN_PACKET_TYPE, CustomPacketPayload.codec(WallCleanPacket::encode, WallCleanPacket::new), WallCleanPacket::handle);
+        registrar.playToClient(WALL_DEATH_PACKET_TYPE, CustomPacketPayload.codec(WallDeathPacket::encode, WallDeathPacket::new), WallDeathPacket::handle);
+        registrar.playToClient(WALL_SYNC_PACKET_TYPE, CustomPacketPayload.codec(WallSyncPacket::encode, WallSyncPacket::new), WallSyncPacket::handle);
+        registrar.playBidirectional(WALL_UPDATE_PACKET_TYPE, CustomPacketPayload.codec(WallUpdatePacket::encode, WallUpdatePacket::new), WallUpdatePacket::handle);
+        registrar.playToClient(WALL_CONFIG_PACKET_TYPE, CustomPacketPayload.codec(WallConfigPacket::encode, WallConfigPacket::new), WallConfigPacket::handle);
+
+        registrar.playToClient(CAPE_SYNC_PACKET_TYPE, CustomPacketPayload.codec(CapeSyncPacket::encode, CapeSyncPacket::new), CapeSyncPacket::handle);
+        registrar.playBidirectional(CAPE_UPDATE_PACKET_TYPE, CustomPacketPayload.codec(CapeUpdatePacket::encode, CapeUpdatePacket::new), CapeUpdatePacket::handle);
     }
 }
 
@@ -4392,12 +4259,11 @@ package me.kall.narutotv.network.packet.base;
 
 import me.kall.narutotv.data.world.wall.Wall;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
-public abstract class WallPacket {
+public abstract class WallPacket implements CustomPacketPayload {
     protected final Wall wall;
 
     public WallPacket(Wall wall) {
@@ -4418,7 +4284,7 @@ public abstract class WallPacket {
         buffer.writeBoolean(this.wall.light);
     }
 
-    public abstract void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier);
+    public abstract void handle(@NotNull IPayloadContext contextSupplier);
 }
 
 // =====D:\ModDev\NarutoTV\src\main\java\me\kall\narutotv\network\packet\cape\CapeSyncPacket.java =====
@@ -4427,16 +4293,17 @@ package me.kall.narutotv.network.packet.cape;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.kall.narutotv.data.world.cape.Cape;
 import me.kall.narutotv.data.world.cape.ClientCapes;
+import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.world.CapeTV;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Supplier;
 
-public class CapeSyncPacket {
+public class CapeSyncPacket implements CustomPacketPayload {
     private final Map<UUID, String> capes;
 
     public CapeSyncPacket(Map<UUID, String> capes) {
@@ -4458,9 +4325,13 @@ public class CapeSyncPacket {
         }
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        contextSupplier.get().setPacketHandled(true);
-        contextSupplier.get().enqueueWork(() -> this.capes.forEach((uuid, relPath) -> ClientCapes.add(new Cape(uuid, relPath)).ifPresent(CapeTV.DEATH)));
+    public void handle(@NotNull IPayloadContext context) {
+        context.enqueueWork(() -> this.capes.forEach((uuid, relPath) -> ClientCapes.add(new Cape(uuid, relPath)).ifPresent(CapeTV.DEATH)));
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.CAPE_SYNC_PACKET_TYPE;
     }
 }
 
@@ -4473,15 +4344,16 @@ import me.kall.narutotv.data.world.cape.SavedCapes;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.world.CapeTV;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
-import java.util.function.Supplier;
 
-public class CapeUpdatePacket {
+public class CapeUpdatePacket implements CustomPacketPayload {
     private final UUID player;
     private final String relPath;
 
@@ -4499,24 +4371,27 @@ public class CapeUpdatePacket {
         buffer.writeUtf(this.relPath);
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player == null) {
+            Player player = context.player();
+            if (!(player instanceof ServerPlayer)) {
                 ClientCapes.add(new Cape(this.player, this.relPath)).ifPresent(CapeTV.DEATH);
             } else {
-                SavedCapes.get(player.serverLevel()).add(this.player, this.relPath);
+                SavedCapes.get(((ServerPlayer) player).serverLevel()).add(this.player, this.relPath);
 
                 UUID excluded = player.getUUID();
 
-                for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
+                for (ServerPlayer other : ((ServerPlayer) player).server.getPlayerList().getPlayers()) {
                     if (other.getUUID().equals(excluded)) continue;
-                    NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> other), this);
+                    PacketDistributor.sendToPlayer(other, this);
                 }
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.CAPE_UPDATE_PACKET_TYPE;
     }
 }
 
@@ -4528,10 +4403,9 @@ import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Server;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 public class WallCleanPacket extends WallPacket {
     public WallCleanPacket(Wall wall) {
@@ -4543,9 +4417,7 @@ public class WallCleanPacket extends WallPacket {
     }
 
     @Override
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
                 Server.cleanWall(this.wall, context);
@@ -4553,6 +4425,11 @@ public class WallCleanPacket extends WallPacket {
                 NarutoPackets.LOGGER.error("Error handling ScreenCleanPacket", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_CLEAN_PACKET_TYPE;
     }
 }
 
@@ -4564,10 +4441,9 @@ import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 public class WallConfigPacket extends WallPacket {
     public WallConfigPacket(Wall wall) {
@@ -4579,9 +4455,7 @@ public class WallConfigPacket extends WallPacket {
     }
 
     @Override
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
                 Client.configWall(this.wall);
@@ -4589,6 +4463,11 @@ public class WallConfigPacket extends WallPacket {
                 NarutoPackets.LOGGER.error("Error handling ScreenGuiPacket.", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_CONFIG_PACKET_TYPE;
     }
 }
 
@@ -4600,10 +4479,9 @@ import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 public class WallDeathPacket extends WallPacket {
     public WallDeathPacket(Wall wall) {
@@ -4615,9 +4493,7 @@ public class WallDeathPacket extends WallPacket {
     }
 
     @Override
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
                 Client.removeWall(this.wall);
@@ -4625,6 +4501,11 @@ public class WallDeathPacket extends WallPacket {
                 NarutoPackets.LOGGER.error("Error handing ScreenDeathPacket", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_DEATH_PACKET_TYPE;
     }
 }
 
@@ -4636,10 +4517,9 @@ import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 public class WallLifePacket extends WallPacket {
     public WallLifePacket(Wall wall) {
@@ -4650,9 +4530,7 @@ public class WallLifePacket extends WallPacket {
         super(buffer);
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
                 Client.newWall(this.wall);
@@ -4660,6 +4538,11 @@ public class WallLifePacket extends WallPacket {
                 NarutoPackets.LOGGER.error("Error handing ScreenLifePacket", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_LIFE_PACKET_TYPE;
     }
 }
 
@@ -4673,13 +4556,12 @@ import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
-public class WallSyncPacket {
+public class WallSyncPacket implements CustomPacketPayload {
     private final ObjectCollection<ObjectOpenHashSet<Wall>> walls;
 
     public WallSyncPacket(ObjectCollection<ObjectOpenHashSet<Wall>> walls) {
@@ -4722,9 +4604,7 @@ public class WallSyncPacket {
         });
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
                 Client.syncWalls(this.walls);
@@ -4732,6 +4612,11 @@ public class WallSyncPacket {
                 NarutoPackets.LOGGER.error("Error handing ScreenSyncPacket", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_SYNC_PACKET_TYPE;
     }
 }
 
@@ -4744,11 +4629,10 @@ import me.kall.narutotv.network.impl.Client;
 import me.kall.narutotv.network.impl.Server;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 public class WallUpdatePacket extends WallPacket {
     public WallUpdatePacket(Wall wall) {
@@ -4760,12 +4644,10 @@ public class WallUpdatePacket extends WallPacket {
     }
 
     @Override
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
-                if (context.getDirection().equals(NetworkDirection.PLAY_TO_CLIENT)) {
+                if (!(context.player() instanceof ServerPlayer)) {
                     Client.updateWall(this.wall);
                 } else {
                     Server.updateWall(this.wall, context);
@@ -4774,6 +4656,11 @@ public class WallUpdatePacket extends WallPacket {
                 NarutoPackets.LOGGER.error("Error handling ScreenUpdatePacket", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_UPDATE_PACKET_TYPE;
     }
 }
 
@@ -4835,13 +4722,13 @@ import com.mojang.blaze3d.platform.NativeImage;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.config.NarutoConfig;
 import me.kall.narutotv.core.AbstractTV;
+import me.kall.narutotv.data.file.Sources;
+import me.kall.narutotv.data.system.RenderProps;
 import me.kall.narutotv.renderer.BufferFrameRenderer;
 import me.kall.narutotv.renderer.FrameRenderer;
 import me.kall.narutotv.renderer.ImageFrameRenderer;
-import me.kall.narutotv.data.file.Sources;
-import me.kall.narutotv.data.system.RenderProps;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
+import net.minecraft.client.gui.screens.GenericMessageScreen;
 import net.minecraft.client.gui.screens.LoadingOverlay;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.WinScreen;
@@ -4858,7 +4745,7 @@ public abstract class GuiSceneTV<T> extends AbstractTV<T> {
     public boolean isRunnable() {
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = minecraft.screen;
-        if (screen instanceof WinScreen || screen instanceof GenericDirtMessageScreen) return true;
+        if (screen instanceof WinScreen || screen instanceof GenericMessageScreen) return true;
         if (minecraft.getOverlay() instanceof LoadingOverlay && minecraft.level == null) return true;
         if (minecraft.level != null) {
             this.shutdownEntire(false);
@@ -4896,15 +4783,14 @@ package me.kall.narutotv.override;
 
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 
 import java.util.function.BooleanSupplier;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public final class OverrideCenter {
     private static final OverrideCenter INSTANCE = new OverrideCenter();
 
@@ -4936,10 +4822,8 @@ public final class OverrideCenter {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull RenderTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.START)) {
-            OverrideCenter.getInstance().setTickConsumed(false);
-        }
+    public static void tick(RenderFrameEvent.Pre event) {
+        OverrideCenter.getInstance().setTickConsumed(false);
     }
 }
 
@@ -5677,7 +5561,7 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
         byte[] lightMap = new byte[ySize];
         for (int i = 0; i < ySize; i++) {
             int y = frame.get(i) & 0xFF;
-            int light = Math.min(15, Math.max(0, (int) Math.round(y / 255.0 * 15)));
+            int light = Math.clamp((int) Math.round(y / 255.0 * 15), 0, 15);
             lightMap[i] = (byte) light;
         }
 
@@ -6547,11 +6431,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.context.RenderCaptured;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.util.NarutoMath;
 import me.kall.narutotv.world.api.RenderCoordsEvent;
-import me.kall.narutotv.data.world.wall.Wall;
 import net.minecraft.client.Camera;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
@@ -6606,7 +6490,7 @@ public class WorldGLEngine extends AbstractGLEngine {
 
         NarutoMath.Coords coords = NarutoMath.computeCoords(this.wall, camera);
 
-        MinecraftForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
+        NeoForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
 
         float[] vertexData = new float[]{
                 (float) coords.bottomFromX(), (float) coords.bottomFromY(), (float) coords.bottomFromZ(), coords.u0(), coords.v0(),
@@ -6708,11 +6592,10 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryUtil;
 
@@ -6849,14 +6732,14 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
             Camera camera = RenderCaptured.camera();
             if (poseStack == null || bufferSource == null || camera == null || this.textureLocation == null || this.dynamicTexture == null) return;
 
+            PoseStack.Pose normal = poseStack.last();
             Matrix4f pose = poseStack.last().pose();
-            Matrix3f normal = poseStack.last().normal();
             RenderType renderType = RenderType.entityTranslucent(this.textureLocation);
             VertexConsumer consumer = bufferSource.getBuffer(renderType);
 
             NarutoMath.Coords coords = NarutoMath.computeCoords(this.wall, camera);
 
-            MinecraftForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
+            NeoForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
 
             vertex(consumer, pose, normal, coords.bottomFromX(), coords.bottomFromY(), coords.bottomFromZ(), coords.u0(), coords.v0(), coords.normalX(), coords.normalY(), coords.normalZ());
             vertex(consumer, pose, normal, coords.bottomToX(), coords.bottomToY(), coords.bottomToZ(), coords.u1(), coords.v1(), coords.normalX(), coords.normalY(), coords.normalZ());
@@ -6864,14 +6747,13 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
             vertex(consumer, pose, normal, coords.topFromX(), coords.topFromY(), coords.topFromZ(), coords.u3(), coords.v3(), coords.normalX(), coords.normalY(), coords.normalZ());
         }
 
-        private static void vertex(@NotNull VertexConsumer consumer, Matrix4f pose, Matrix3f normal, double x, double y, double z, float u, float v, double normalX, double normalY, double normalZ) {
-            consumer.vertex(pose, (float) x, (float) y, (float) z)
-                    .color(255, 255, 255, 255)
-                    .uv(u, v)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY)
-                    .uv2(LightTexture.FULL_BRIGHT)
-                    .normal(normal, (float) normalX, (float) normalY, (float) normalZ)
-                    .endVertex();
+        private static void vertex(@NotNull VertexConsumer consumer, Matrix4f pose, PoseStack.Pose normal, double x, double y, double z, float u, float v, double normalX, double normalY, double normalZ) {
+            consumer.addVertex(pose, (float) x, (float) y, (float) z)
+                    .setColor(255, 255, 255, 255)
+                    .setUv(u, v)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(LightTexture.FULL_BRIGHT)
+                    .setNormal(normal, (float) normalX, (float) normalY, (float) normalZ);
         }
 
         @Override
@@ -6893,7 +6775,6 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
     public static final class Cape extends ImageFrameRenderer {
         private final me.kall.narutotv.data.world.cape.Cape cape;
         public Cape(me.kall.narutotv.data.world.cape.Cape cape) {
-
             this.cape = cape;
         }
 
@@ -6912,12 +6793,12 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
 
             VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(this.textureLocation));
             Matrix4f pose = poseStack.last().pose();
-            Matrix3f normal = poseStack.last().normal();
+            PoseStack.Pose normal = poseStack.last();
 
-            consumer.vertex(pose, -0.3125F, 0.01F, 0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
-            consumer.vertex(pose, -0.3125F, 1.01F, 0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
-            consumer.vertex(pose, +0.3125F, 1.01F, 0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
-            consumer.vertex(pose, +0.3125F, 0.01F, 0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, 0F, 0F, -1F).endVertex();
+            consumer.addVertex(pose, -0.3125F, 0.01F, 0.01F).setColor(255, 255, 255, 255).setUv(0.0F, 0.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
+            consumer.addVertex(pose, -0.3125F, 1.01F, 0.01F).setColor(255, 255, 255, 255).setUv(0.0F, 1.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
+            consumer.addVertex(pose, +0.3125F, 1.01F, 0.01F).setColor(255, 255, 255, 255).setUv(1.0F, 1.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
+            consumer.addVertex(pose, +0.3125F, 0.01F, 0.01F).setColor(255, 255, 255, 255).setUv(1.0F, 0.0F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(normal, 0F, 0F, -1F);
         }
     }
 }
@@ -7033,10 +6914,10 @@ public abstract class AbstractMediaScreen extends Screen {
         int leftWidth = this.font.width(leftLabel) + 24;
         int rightWidth = this.font.width(rightLabel) + 24;
 
-        Checkbox left = new Checkbox(centerX - 5 - leftWidth, this.currentY, leftWidth, BUTTON_HEIGHT, leftLabel, leftSelected);
+        Checkbox left = Checkbox.builder(leftLabel, this.font).pos(centerX - 5 - leftWidth, this.currentY).maxWidth(leftWidth).selected(leftSelected).build();
         this.addRenderableWidget(left);
 
-        Checkbox right = new Checkbox(centerX + 5, this.currentY, rightWidth, BUTTON_HEIGHT, rightLabel, rightSelected);
+        Checkbox right = Checkbox.builder(rightLabel, this.font).pos(centerX + 5, this.currentY).maxWidth(rightWidth).selected(rightSelected).build();
         this.addRenderableWidget(right);
 
         this.currentY += BUTTON_HEIGHT + 5;
@@ -7045,13 +6926,7 @@ public abstract class AbstractMediaScreen extends Screen {
 
     protected void addImmediateCheckbox(int x, Component label, boolean selected, Consumer<Boolean> onChange) {
         int width = this.font.width(label) + 24;
-        Checkbox box = new Checkbox(x, this.currentY, width, BUTTON_HEIGHT, label, selected) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                onChange.accept(this.selected());
-            }
-        };
+        Checkbox box = Checkbox.builder(label, this.font).pos(x, this.currentY).maxWidth(width).selected(selected).onValueChange((checkbox, value) -> onChange.accept(checkbox.selected())).build();
         this.addRenderableWidget(box);
     }
 
@@ -7099,7 +6974,8 @@ public abstract class AbstractMediaScreen extends Screen {
     }
 
     @Override
-    public final boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public final boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        double delta = Math.sqrt((scrollX - mouseX) * (scrollY - mouseY));
         int lastOffset = this.offset;
         this.offset -= (int) (delta * 20D);
         this.offset = this.clampOffset();
@@ -7113,24 +6989,17 @@ public abstract class AbstractMediaScreen extends Screen {
             }
         }
 
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     protected int clampOffset() {
-        return Math.max(0, Math.min(this.offset, Math.max(0, this.currentY - this.height + 10)));
+        return Math.max(0, Math.clamp(this.currentY - this.height + 10, 0, this.offset));
     }
 
-    @Override
-    public void tick() {
-        super.tick();
-        this.renderables.forEach(renderable -> {
-            if (renderable instanceof EditBox editBox) editBox.tick();
-        });
-    }
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         Font font = this.font;
@@ -7227,7 +7096,7 @@ public class DoubleCheckScreen extends Screen {
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         guiGraphics.drawCenteredString(this.font, this.note, this.width / 2, this.height / 2 - 50, Color.YELLOW.getRGB());
     }
@@ -7277,7 +7146,7 @@ public class NameSetScreen extends Screen {
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         guiGraphics.drawCenteredString(this.font, NAME, this.width / 2, this.nameBox.getY() - 12, 0xFFFFFF);
@@ -7321,15 +7190,15 @@ import me.kall.narutotv.override.GuiSceneControl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class NarutoSceneScreen extends AbstractMediaScreen {
     static final Component FADABLE = Component.translatable("checkbox.narutotv.fadable");
     static final Component MUTE_MUSIC = Component.translatable("checkbox.narutotv.mute_music");
@@ -7454,18 +7323,16 @@ public class NarutoSceneScreen extends AbstractMediaScreen {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.END)) {
-            MediaArgs mediaArgs = GuiSceneControl.active.mediaArgs;
-            if (mediaArgs == null) return;
+    public static void tick(ClientTickEvent.Post event) {
+        MediaArgs mediaArgs = GuiSceneControl.active.mediaArgs;
+        if (mediaArgs == null) return;
 
-            Minecraft minecraft = Minecraft.getInstance();
-            long window = minecraft.getWindow().getWindow();
+        Minecraft minecraft = Minecraft.getInstance();
+        long window = minecraft.getWindow().getWindow();
 
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_F12) != GLFW.GLFW_PRESS || minecraft.screen instanceof NarutoSceneScreen) return;
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_F12) != GLFW.GLFW_PRESS || minecraft.screen instanceof NarutoSceneScreen) return;
 
-            minecraft.setScreen(new NarutoSceneScreen(minecraft.screen, mediaArgs));
-        }
+        minecraft.setScreen(new NarutoSceneScreen(minecraft.screen, mediaArgs));
     }
 }
 
@@ -7480,7 +7347,6 @@ import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.data.world.wall.Wall;
-import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallCleanPacket;
 import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import me.kall.narutotv.util.AudioZipGenerator;
@@ -7492,6 +7358,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7553,7 +7420,7 @@ public class NarutoWorldScreen extends AbstractMediaScreen {
 
         this.addRandomSwapRow(centerX);
         this.addRestartSwitchRow(centerX);
-        this.addFullRow(CLEAN, () -> NarutoPackets.INSTANCE.sendToServer(new WallCleanPacket(this.wall)), Tooltip.create(CLEAN_TOOLTIP));
+        this.addFullRow(CLEAN, () -> PacketDistributor.sendToServer(new WallCleanPacket(this.wall)), Tooltip.create(CLEAN_TOOLTIP));
         this.addConfirmRow(centerX);
     }
 
@@ -7625,7 +7492,7 @@ public class NarutoWorldScreen extends AbstractMediaScreen {
             this.wall.light = lightCheck;
             renderer.setLight(lightCheck);
             if (!lightCheck) renderer.checkLight();
-            NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
+            PacketDistributor.sendToServer(new WallUpdatePacket(this.wall));
             this.doing.set(false);
             this.onClose();
             return;
@@ -7661,7 +7528,7 @@ public class NarutoWorldScreen extends AbstractMediaScreen {
         this.wall.volume = newVolume;
         this.wall.light = light;
 
-        NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
+        PacketDistributor.sendToServer(new WallUpdatePacket(this.wall));
 
         ClientWalls.add(this.wall).ifPresent(outdated -> {
             WallTV<?> latest = ClientWalls.get(this.wall);
@@ -7712,7 +7579,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Contract;
@@ -8525,7 +8392,7 @@ package me.kall.narutotv.world.api;
 
 import me.kall.narutotv.util.NarutoMath;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 public class RenderCoordsEvent extends Event {
     public final NarutoMath.Coords coords;
@@ -8621,13 +8488,13 @@ import me.kall.narutotv.screen.NarutoWorldScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jetbrains.annotations.NotNull;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class TeleControl {
     @SubscribeEvent
     public static void configureScreen(PlayerInteractEvent.@NotNull RightClickItem event) {
@@ -8638,7 +8505,6 @@ public class TeleControl {
 
         if (!RegistryEntry.get(player.getMainHandItem()).toString().equals(NarutoConfig.teleControl())) return;
         if (!player.isShiftKeyDown()) return;
-
 
         Wall target = ClientWalls.getNearest(level.dimension().location(), player);
 
@@ -8657,10 +8523,9 @@ import me.kall.duplicationless.ext.RegistryEntry;
 import me.kall.duplicationless.util.Executor;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.Displayers;
 import me.kall.narutotv.data.world.wall.SavedWalls;
-import me.kall.narutotv.network.NarutoPackets;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.packet.wall.WallConfigPacket;
 import me.kall.narutotv.network.packet.wall.WallLifePacket;
 import net.minecraft.ChatFormatting;
@@ -8669,11 +8534,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -8681,7 +8546,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class WallEvents {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> BLOCK_CORNERS = new Object2ObjectOpenHashMap<>();
 
@@ -8690,11 +8555,9 @@ public class WallEvents {
     private static final Logger LOGGER = LogManager.getLogger(WallEvents.class);
 
     @SubscribeEvent
-    public static void tickServer(TickEvent.@NotNull ServerTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.END)) {
-            if (interval == 0) return;
-            interval--;
-        }
+    public static void tickServer(ServerTickEvent.Post event) {
+        if (interval == 0) return;
+        interval--;
     }
 
     @SubscribeEvent
@@ -8718,7 +8581,7 @@ public class WallEvents {
         if (!player.getMainHandItem().isEmpty()) return;
         Wall wall = SavedWalls.get(level).get(level.dimension().location(), event.getPos().asLong());
         if (wall == null) return;
-        NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallConfigPacket(wall));
+        PacketDistributor.sendToPlayer(player, new WallConfigPacket(wall));
     }
 
     @SubscribeEvent
@@ -8762,7 +8625,7 @@ public class WallEvents {
 
             player.displayClientMessage(WallEvents.success(last, pos), false);
             SavedWalls.get(level).update(built);
-            NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(built));
+            PacketDistributor.sendToAllPlayers(new WallLifePacket(built));
         } else {
             perCreator.put(uuid, pos);
             player.displayClientMessage(WallEvents.firstCorner(pos), false);

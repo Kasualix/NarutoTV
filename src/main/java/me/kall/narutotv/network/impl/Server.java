@@ -1,23 +1,23 @@
 package me.kall.narutotv.network.impl;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.Displayers;
 import me.kall.narutotv.data.world.wall.SavedWalls;
-import me.kall.narutotv.network.NarutoPackets;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 public class Server {
-    public static void cleanWall(Wall wall, NetworkEvent.@NotNull Context context) {
-        ServerPlayer player = context.getSender();
-        if (player == null) return;
-        ServerLevel level = player.serverLevel();
+    public static void cleanWall(Wall wall, @NotNull IPayloadContext context) {
+        Player player = context.player();
+        if (!(player instanceof ServerPlayer)) return;
+        ServerLevel level = ((ServerPlayer) player).serverLevel();
 
         LongSet areaInvolved = wall.areaInvolved();
         LongSet borderInvolved = wall.borderInvolved();
@@ -28,17 +28,17 @@ public class Server {
         Displayers.Cleaner.setCleaning(level, false);
     }
 
-    public static void updateWall(Wall wall, NetworkEvent.@NotNull Context context) {
-        ServerPlayer player = context.getSender();
-        if (player == null) return;
-        ServerLevel level = player.serverLevel();
+    public static void updateWall(Wall wall, @NotNull IPayloadContext context) {
+        Player player = context.player();
+        if (!(player instanceof ServerPlayer)) return;
+        ServerLevel level = ((ServerPlayer) player).serverLevel();
 
         SavedWalls.get(level).update(wall);
 
         WallUpdatePacket packet = new WallUpdatePacket(wall);
         for (ServerPlayer other : level.getServer().getPlayerList().getPlayers()) {
             if (other.getUUID().equals(player.getUUID())) continue;
-            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> other), packet);
+            PacketDistributor.sendToPlayer(other, packet);
         }
     }
 }

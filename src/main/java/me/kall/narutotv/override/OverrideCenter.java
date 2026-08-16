@@ -2,15 +2,14 @@ package me.kall.narutotv.override;
 
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 
 import java.util.function.BooleanSupplier;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public final class OverrideCenter {
     private static final OverrideCenter INSTANCE = new OverrideCenter();
 
@@ -42,9 +41,7 @@ public final class OverrideCenter {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull RenderTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.START)) {
-            OverrideCenter.getInstance().setTickConsumed(false);
-        }
+    public static void tick(RenderFrameEvent.Pre event) {
+        OverrideCenter.getInstance().setTickConsumed(false);
     }
 }

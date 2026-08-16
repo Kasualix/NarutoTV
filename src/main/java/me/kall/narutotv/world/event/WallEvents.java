@@ -8,10 +8,9 @@ import me.kall.duplicationless.ext.RegistryEntry;
 import me.kall.duplicationless.util.Executor;
 import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.Displayers;
 import me.kall.narutotv.data.world.wall.SavedWalls;
-import me.kall.narutotv.network.NarutoPackets;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.packet.wall.WallConfigPacket;
 import me.kall.narutotv.network.packet.wall.WallLifePacket;
 import net.minecraft.ChatFormatting;
@@ -20,11 +19,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class WallEvents {
     private static final Object2ObjectMap<ResourceLocation, Object2ObjectMap<UUID, BlockPos>> BLOCK_CORNERS = new Object2ObjectOpenHashMap<>();
 
@@ -41,11 +40,9 @@ public class WallEvents {
     private static final Logger LOGGER = LogManager.getLogger(WallEvents.class);
 
     @SubscribeEvent
-    public static void tickServer(TickEvent.@NotNull ServerTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.END)) {
-            if (interval == 0) return;
-            interval--;
-        }
+    public static void tickServer(ServerTickEvent.Post event) {
+        if (interval == 0) return;
+        interval--;
     }
 
     @SubscribeEvent
@@ -69,7 +66,7 @@ public class WallEvents {
         if (!player.getMainHandItem().isEmpty()) return;
         Wall wall = SavedWalls.get(level).get(level.dimension().location(), event.getPos().asLong());
         if (wall == null) return;
-        NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallConfigPacket(wall));
+        PacketDistributor.sendToPlayer(player, new WallConfigPacket(wall));
     }
 
     @SubscribeEvent
@@ -113,7 +110,7 @@ public class WallEvents {
 
             player.displayClientMessage(WallEvents.success(last, pos), false);
             SavedWalls.get(level).update(built);
-            NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallLifePacket(built));
+            PacketDistributor.sendToAllPlayers(new WallLifePacket(built));
         } else {
             perCreator.put(uuid, pos);
             player.displayClientMessage(WallEvents.firstCorner(pos), false);

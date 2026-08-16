@@ -108,10 +108,10 @@ public abstract class AbstractMediaScreen extends Screen {
         int leftWidth = this.font.width(leftLabel) + 24;
         int rightWidth = this.font.width(rightLabel) + 24;
 
-        Checkbox left = new Checkbox(centerX - 5 - leftWidth, this.currentY, leftWidth, BUTTON_HEIGHT, leftLabel, leftSelected);
+        Checkbox left = Checkbox.builder(leftLabel, this.font).pos(centerX - 5 - leftWidth, this.currentY).maxWidth(leftWidth).selected(leftSelected).build();
         this.addRenderableWidget(left);
 
-        Checkbox right = new Checkbox(centerX + 5, this.currentY, rightWidth, BUTTON_HEIGHT, rightLabel, rightSelected);
+        Checkbox right = Checkbox.builder(rightLabel, this.font).pos(centerX + 5, this.currentY).maxWidth(rightWidth).selected(rightSelected).build();
         this.addRenderableWidget(right);
 
         this.currentY += BUTTON_HEIGHT + 5;
@@ -120,13 +120,7 @@ public abstract class AbstractMediaScreen extends Screen {
 
     protected void addImmediateCheckbox(int x, Component label, boolean selected, Consumer<Boolean> onChange) {
         int width = this.font.width(label) + 24;
-        Checkbox box = new Checkbox(x, this.currentY, width, BUTTON_HEIGHT, label, selected) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                onChange.accept(this.selected());
-            }
-        };
+        Checkbox box = Checkbox.builder(label, this.font).pos(x, this.currentY).maxWidth(width).selected(selected).onValueChange((checkbox, value) -> onChange.accept(checkbox.selected())).build();
         this.addRenderableWidget(box);
     }
 
@@ -174,7 +168,8 @@ public abstract class AbstractMediaScreen extends Screen {
     }
 
     @Override
-    public final boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public final boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        double delta = Math.sqrt((scrollX - mouseX) * (scrollY - mouseY));
         int lastOffset = this.offset;
         this.offset -= (int) (delta * 20D);
         this.offset = this.clampOffset();
@@ -188,24 +183,17 @@ public abstract class AbstractMediaScreen extends Screen {
             }
         }
 
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     protected int clampOffset() {
-        return Math.max(0, Math.min(this.offset, Math.max(0, this.currentY - this.height + 10)));
+        return Math.max(0, Math.clamp(this.currentY - this.height + 10, 0, this.offset));
     }
 
-    @Override
-    public void tick() {
-        super.tick();
-        this.renderables.forEach(renderable -> {
-            if (renderable instanceof EditBox editBox) editBox.tick();
-        });
-    }
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         Font font = this.font;

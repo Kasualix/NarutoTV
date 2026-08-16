@@ -7,15 +7,15 @@ import me.kall.narutotv.world.api.RenderCoordsEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class LastCoords {
     public static final Object2ObjectMap<ResourceLocation, Object2IntMap<NarutoMath.Coords>> DATA = new Object2ObjectOpenHashMap<>();
 
@@ -35,8 +35,8 @@ public class LastCoords {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && !DATA.isEmpty()) {
+    public static void tick(RenderFrameEvent.Pre event) {
+        if (!DATA.isEmpty()) {
             synchronized (DATA) {
                 for (Object2IntMap<NarutoMath.Coords> coordsMap : DATA.values()) {
                     coordsMap.object2IntEntrySet().removeIf(TICK);

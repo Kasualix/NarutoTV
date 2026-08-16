@@ -70,7 +70,7 @@ dependencies {
     if (isNeo) {
         neoForge "net.neoforged:neoforge:${versionInfo.neo}"
         modImplementation("curse.maven:duplicationless-1380105:8646414")
-        modImplementation(files("celeritas-neoforge-mc21.1-2.4.0-dev.jar"))
+        modImplementation(files("deps/celeritas-neoforge-mc21.1-2.4.0-dev.jar"))
     } else {
         forge "net.minecraftforge:forge:${project.minecraft_version}-${versionInfo.forge}"
         modImplementation("curse.maven:duplicationless-1380105:8646420")

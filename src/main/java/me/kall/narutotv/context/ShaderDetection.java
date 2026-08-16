@@ -8,13 +8,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID, value = Dist.CLIENT)
 public class ShaderDetection {
     private static boolean last;
     private static int interval;
@@ -22,8 +21,8 @@ public class ShaderDetection {
     private static final Component SHADER_COMPAT = Component.translatable("message.narutotv.shader").withStyle(ChatFormatting.YELLOW);
 
     @SubscribeEvent
-    public static void tickClient(TickEvent.@NotNull ClientTickEvent event) {
-        if (CompatCenter.hasShaderMod() && event.phase.equals(TickEvent.Phase.START)) {
+    public static void tickClient(ClientTickEvent.Pre event) {
+        if (CompatCenter.hasShaderMod()) {
             if (interval >= 0) {
                 interval--;
                 return;

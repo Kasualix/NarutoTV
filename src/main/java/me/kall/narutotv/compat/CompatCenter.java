@@ -1,6 +1,6 @@
 package me.kall.narutotv.compat;
 
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLLoader;
 import org.jetbrains.annotations.Contract;
 
 public class CompatCenter {

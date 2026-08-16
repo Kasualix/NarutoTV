@@ -5,10 +5,9 @@ import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Server;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 public class WallCleanPacket extends WallPacket {
     public WallCleanPacket(Wall wall) {
@@ -20,9 +19,7 @@ public class WallCleanPacket extends WallPacket {
     }
 
     @Override
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
                 Server.cleanWall(this.wall, context);
@@ -30,5 +27,10 @@ public class WallCleanPacket extends WallPacket {
                 NarutoPackets.LOGGER.error("Error handling ScreenCleanPacket", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_CLEAN_PACKET_TYPE;
     }
 }

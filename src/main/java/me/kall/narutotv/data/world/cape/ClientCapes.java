@@ -10,10 +10,10 @@ import me.kall.narutotv.compat.CompatCenter;
 import me.kall.narutotv.produce.util.LifetimeController;
 import me.kall.narutotv.renderer.ImageFrameRenderer;
 import me.kall.narutotv.world.CapeTV;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class ClientCapes {
     private static final Object2ObjectMap<UUID, Pair<Cape, CapeTV<?>>> DATA = new Object2ObjectOpenHashMap<>();
 

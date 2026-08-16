@@ -4,11 +4,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.kall.narutotv.app.data.MediaArgs;
 import me.kall.narutotv.context.RenderCaptured;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.util.NarutoMath;
 import me.kall.narutotv.world.api.RenderCoordsEvent;
-import me.kall.narutotv.data.world.wall.Wall;
 import net.minecraft.client.Camera;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
@@ -63,7 +63,7 @@ public class WorldGLEngine extends AbstractGLEngine {
 
         NarutoMath.Coords coords = NarutoMath.computeCoords(this.wall, camera);
 
-        MinecraftForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
+        NeoForge.EVENT_BUS.post(new RenderCoordsEvent(coords, this.wall.dimension));
 
         float[] vertexData = new float[]{
                 (float) coords.bottomFromX(), (float) coords.bottomFromY(), (float) coords.bottomFromZ(), coords.u0(), coords.v0(),

@@ -8,7 +8,6 @@ import me.kall.narutotv.data.file.GamePaths;
 import me.kall.narutotv.data.file.Sources;
 import me.kall.narutotv.data.world.wall.ClientWalls;
 import me.kall.narutotv.data.world.wall.Wall;
-import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallCleanPacket;
 import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import me.kall.narutotv.util.AudioZipGenerator;
@@ -20,6 +19,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +81,7 @@ public class NarutoWorldScreen extends AbstractMediaScreen {
 
         this.addRandomSwapRow(centerX);
         this.addRestartSwitchRow(centerX);
-        this.addFullRow(CLEAN, () -> NarutoPackets.INSTANCE.sendToServer(new WallCleanPacket(this.wall)), Tooltip.create(CLEAN_TOOLTIP));
+        this.addFullRow(CLEAN, () -> PacketDistributor.sendToServer(new WallCleanPacket(this.wall)), Tooltip.create(CLEAN_TOOLTIP));
         this.addConfirmRow(centerX);
     }
 
@@ -153,7 +153,7 @@ public class NarutoWorldScreen extends AbstractMediaScreen {
             this.wall.light = lightCheck;
             renderer.setLight(lightCheck);
             if (!lightCheck) renderer.checkLight();
-            NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
+            PacketDistributor.sendToServer(new WallUpdatePacket(this.wall));
             this.doing.set(false);
             this.onClose();
             return;
@@ -189,7 +189,7 @@ public class NarutoWorldScreen extends AbstractMediaScreen {
         this.wall.volume = newVolume;
         this.wall.light = light;
 
-        NarutoPackets.INSTANCE.sendToServer(new WallUpdatePacket(this.wall));
+        PacketDistributor.sendToServer(new WallUpdatePacket(this.wall));
 
         ClientWalls.add(this.wall).ifPresent(outdated -> {
             WallTV<?> latest = ClientWalls.get(this.wall);

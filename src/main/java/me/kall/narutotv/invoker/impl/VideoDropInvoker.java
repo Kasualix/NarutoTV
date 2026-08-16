@@ -9,7 +9,7 @@ import me.kall.narutotv.screen.NameSetScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ public abstract class VideoDropInvoker implements Invoker {
         Minecraft minecraft = Minecraft.getInstance();
         minecraft.setScreen(new NameSetScreen(name -> {
             Path directory = this.copyTarget().resolve(name);
-            Path target = directory.resolve("video." + FileNameUtils.getExtension(absVideoPath));
+            Path target = directory.resolve("video." + FilenameUtils.getExtension(absVideoPath));
 
             if (Files.exists(target)) {
                 minecraft.setScreen(new DoubleCheckScreen(useExisting -> this.forPath(useExisting ? target::toString : () -> copyVideo(absVideoPath, target, directory)), minecraft.screen, Component.translatable("note.narutotv.double_check", name).withStyle(ChatFormatting.YELLOW), "button.narutotv.existing", "button.narutotv.replace"));

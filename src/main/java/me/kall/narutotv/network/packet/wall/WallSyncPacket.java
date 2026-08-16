@@ -7,13 +7,12 @@ import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
-public class WallSyncPacket {
+public class WallSyncPacket implements CustomPacketPayload {
     private final ObjectCollection<ObjectOpenHashSet<Wall>> walls;
 
     public WallSyncPacket(ObjectCollection<ObjectOpenHashSet<Wall>> walls) {
@@ -56,9 +55,7 @@ public class WallSyncPacket {
         });
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
             try {
                 Client.syncWalls(this.walls);
@@ -66,5 +63,10 @@ public class WallSyncPacket {
                 NarutoPackets.LOGGER.error("Error handing ScreenSyncPacket", throwable);
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.WALL_SYNC_PACKET_TYPE;
     }
 }

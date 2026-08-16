@@ -4,14 +4,13 @@ import me.kall.narutotv.NarutoTV;
 import me.kall.narutotv.config.NarutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(value = Dist.CLIENT, modid = NarutoTV.MOD_ID)
 public class FadeCenter {
     private static final MousePos LAST_MOUSE = new MousePos();
 
@@ -38,8 +37,8 @@ public class FadeCenter {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.@NotNull ClientTickEvent event) {
-        if (event.phase.equals(TickEvent.Phase.START) && NarutoConfig.fadable()) {
+    public static void tick(ClientTickEvent.Pre event) {
+        if (NarutoConfig.fadable()) {
             Minecraft minecraft = Minecraft.getInstance();
             MouseHandler mouseHandler = minecraft.mouseHandler;
 
@@ -60,12 +59,36 @@ public class FadeCenter {
     }
 
     @SubscribeEvent
-    public static void anyInput(InputEvent event) {
+    public static void anyInput(InputEvent.MouseButton.Pre event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.MouseButton.Post event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.MouseScrollingEvent event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.Key event) {
+        onAnyInput();
+    }
+
+    @SubscribeEvent
+    public static void anyInput(InputEvent.InteractionKeyMappingTriggered event) {
+        onAnyInput();
+    }
+
+    private static void onAnyInput() {
         Minecraft.getInstance().execute(() -> stopTicks = 0);
     }
 
     @SubscribeEvent
-    public static void mouseInput(InputEvent.MouseButton event) {
+    public static void mouseInput(InputEvent.MouseButton.Pre event) {
         Minecraft.getInstance().execute(() -> fadeAlpha = 100);
     }
 

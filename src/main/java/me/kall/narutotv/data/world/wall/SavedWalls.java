@@ -2,9 +2,9 @@ package me.kall.narutotv.data.world.wall;
 
 import it.unimi.dsi.fastutil.objects.*;
 import me.kall.narutotv.NarutoTV;
-import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallDeathPacket;
 import me.kall.narutotv.network.packet.wall.WallSyncPacket;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -12,14 +12,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@Mod.EventBusSubscriber(modid = NarutoTV.MOD_ID)
+@EventBusSubscriber(modid = NarutoTV.MOD_ID)
 public class SavedWalls extends SavedData {
     private static final String SCREENS_KEY = "Walls";
     private static final String DIMENSION_KEY = "Dimension";
@@ -66,7 +66,7 @@ public class SavedWalls extends SavedData {
             if (next.borderInvolved().contains(position)) {
                 iterator.remove();
                 this.setDirty();
-                NarutoPackets.INSTANCE.send(PacketDistributor.ALL.noArg(), new WallDeathPacket(next));
+                PacketDistributor.sendToAllPlayers(new WallDeathPacket(next));
             }
         }
     }
@@ -76,7 +76,7 @@ public class SavedWalls extends SavedData {
     }
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag, HolderLookup.@NotNull Provider registries) {
         ListTag screensList = new ListTag();
         for (Object2ObjectMap.Entry<ResourceLocation, ObjectOpenHashSet<Wall>> entry : this.data.object2ObjectEntrySet()) {
             ResourceLocation dimension = entry.getKey();
@@ -112,13 +112,13 @@ public class SavedWalls extends SavedData {
     }
 
     public static @NotNull SavedWalls get(@NotNull ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(SavedWalls::load, SavedWalls::new, DATA_NAME);
+        return level.getDataStorage().computeIfAbsent(new Factory<>(SavedWalls::new, (tag, provider) -> load(tag)), DATA_NAME);
     }
 
     @SubscribeEvent
     public static void sync(PlayerEvent.@NotNull PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new WallSyncPacket(SavedWalls.get(player.serverLevel()).values()));
+            PacketDistributor.sendToPlayer(player, new WallSyncPacket(SavedWalls.get(player.serverLevel()).values()));
         }
     }
 }

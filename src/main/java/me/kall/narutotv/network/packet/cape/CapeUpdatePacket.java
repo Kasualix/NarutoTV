@@ -6,15 +6,16 @@ import me.kall.narutotv.data.world.cape.SavedCapes;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.world.CapeTV;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
-import java.util.function.Supplier;
 
-public class CapeUpdatePacket {
+public class CapeUpdatePacket implements CustomPacketPayload {
     private final UUID player;
     private final String relPath;
 
@@ -32,23 +33,26 @@ public class CapeUpdatePacket {
         buffer.writeUtf(this.relPath);
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
+    public void handle(@NotNull IPayloadContext context) {
         context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player == null) {
+            Player player = context.player();
+            if (!(player instanceof ServerPlayer)) {
                 ClientCapes.add(new Cape(this.player, this.relPath)).ifPresent(CapeTV.DEATH);
             } else {
-                SavedCapes.get(player.serverLevel()).add(this.player, this.relPath);
+                SavedCapes.get(((ServerPlayer) player).serverLevel()).add(this.player, this.relPath);
 
                 UUID excluded = player.getUUID();
 
-                for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
+                for (ServerPlayer other : ((ServerPlayer) player).server.getPlayerList().getPlayers()) {
                     if (other.getUUID().equals(excluded)) continue;
-                    NarutoPackets.INSTANCE.send(PacketDistributor.PLAYER.with(() -> other), this);
+                    PacketDistributor.sendToPlayer(other, this);
                 }
             }
         });
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return NarutoPackets.CAPE_UPDATE_PACKET_TYPE;
     }
 }
