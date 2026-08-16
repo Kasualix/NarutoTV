@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 public interface FrameRenderer<T> {
     @NotNull AbstractFrameProducer<T> initVideo(@NotNull MediaArgs mediaArgs);
 
-    void setup(@NotNull MediaArgs mediaArgs, double seekTo);
+    void setup(@NotNull MediaArgs mediaArgs, double seekTo, boolean ready);
 
     void update(@NotNull MediaArgs mediaArgs, @Nullable AbstractFrameProducer.Frame<T> frame);
 

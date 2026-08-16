@@ -27,12 +27,13 @@ public abstract class AbstractTV<T> {
     public void setup(double seekTo) {
         if (this.isRunnable()) {
             AbstractFrameProducer<T> nextVideo = this.prefetched != null && this.prefetched.isDone() ? this.prefetched.join() : null;
+            boolean ready = nextVideo != null;
             this.prefetched = null;
-            if (this.mediaArgs == null) this.mediaArgs = nextVideo != null ? nextVideo.mediaArgs : this.newArgs();
-            this.video = nextVideo != null ? nextVideo : this.renderer.initVideo(this.mediaArgs).setAudioCreation(this::initAudio).setLifeCreation(this::initLife);
+            if (this.mediaArgs == null) this.mediaArgs = ready ? nextVideo.mediaArgs : this.newArgs();
+            this.video = ready ? nextVideo : this.renderer.initVideo(this.mediaArgs).setAudioCreation(this::initAudio).setLifeCreation(this::initLife);
             if (this.video.off.get()) this.video.setup(seekTo);
 
-            this.renderer.setup(this.mediaArgs, seekTo);
+            this.renderer.setup(this.mediaArgs, seekTo, ready);
             this.video.eager();
             this.renderer.update(this.mediaArgs, this.video.fetch());
 
