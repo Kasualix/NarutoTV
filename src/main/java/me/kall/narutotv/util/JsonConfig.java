@@ -399,8 +399,8 @@ public class JsonConfig {
             boolean isFloating = false;
             if (pos < s.length() && peek() == '.') {
                 isFloating = true;
-                pos++;
-                while (pos < s.length() && Character.isDigit(peek())) pos++;
+                do pos++;
+                while (pos < s.length() && Character.isDigit(peek()));
             }
             if (pos < s.length() && (peek() == 'e' || peek() == 'E')) {
                 isFloating = true;
