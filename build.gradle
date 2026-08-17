@@ -54,8 +54,8 @@ loom {
 }
 
 def versionMap = [
-    "1.20.1" : [forge: "47.4.20"      , parchment: "2023.09.03"],
-    "1.21.1" : [neo  : "21.1.235"     , parchment: "2024.11.17"]
+    "1.20.1" : [forge: "47.4.22"      , parchment: "2023.09.03"],
+    "1.21.1" : [neo  : "21.1.248"     , parchment: "2024.11.17"]
 ]
 
 HashMap<String, String> versionInfo = versionMap[minecraft_version]
