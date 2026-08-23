@@ -72,11 +72,11 @@ public class LastCoords {
 
     public static boolean isIn(NarutoMath.@NotNull Coords coords, double pointX, double pointY, double pointZ) {
         double bottomFromX = coords.bottomFromX(), bottomFromY = coords.bottomFromY(), bottomFromZ = coords.bottomFromZ();
-        double bottomToX   = coords.bottomToX(),   bottomToY   = coords.bottomToY(),   bottomToZ   = coords.bottomToZ();
-        double topFromX    = coords.topFromX(),    topFromY    = coords.topFromY(),    topFromZ    = coords.topFromZ();
+        double bottomToX = coords.bottomToX(), bottomToY = coords.bottomToY(), bottomToZ = coords.bottomToZ();
+        double topFromX = coords.topFromX(), topFromY  = coords.topFromY(), topFromZ = coords.topFromZ();
 
         double edgeBottomX = bottomToX - bottomFromX, edgeBottomY = bottomToY - bottomFromY, edgeBottomZ = bottomToZ - bottomFromZ;
-        double edgeSideX   = topFromX - bottomFromX,  edgeSideY   = topFromY - bottomFromY,  edgeSideZ   = topFromZ - bottomFromZ;
+        double edgeSideX = topFromX - bottomFromX, edgeSideY = topFromY - bottomFromY,  edgeSideZ = topFromZ - bottomFromZ;
 
         double normalX = coords.normalX(), normalY = coords.normalY(), normalZ = coords.normalZ();
         double normalLenSq = Mth.square(normalX) + Mth.square(normalY) + Mth.square(normalZ);
