@@ -1,6 +1,10 @@
 package me.kall.narutotv;
 
+import me.kall.narutotv.invoker.NarutoInvokers;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.jetbrains.annotations.Contract;
 
 import java.util.concurrent.ExecutorService;
@@ -15,6 +19,14 @@ public final class NarutoTV {
         thread.setDaemon(true);
         return thread;
     });
+
+    public NarutoTV(FMLJavaModLoadingContext context) {
+        if (FMLLoader.getDist().isClient()) {
+            if (ModList.get().isLoaded("dragit")) {
+                context.getModEventBus().addListener(NarutoInvokers::invokerRegistry);
+            }
+        }
+    }
 
     @Contract(pure = true)
     public static ExecutorService io() {
