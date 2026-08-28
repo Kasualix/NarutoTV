@@ -35,7 +35,7 @@ public class LevelWallInvoker extends VideoDropInvoker {
 
     @Override
     public Component id() {
-        return null;
+        return ID;
     }
 
     @Override
