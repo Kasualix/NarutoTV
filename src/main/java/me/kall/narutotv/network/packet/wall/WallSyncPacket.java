@@ -6,14 +6,14 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
+import me.kall.narutotv.network.packet.base.Handleable;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
-
-public class WallSyncPacket {
+public class WallSyncPacket extends Handleable {
     private final ObjectCollection<ObjectOpenHashSet<Wall>> walls;
 
     public WallSyncPacket(ObjectCollection<ObjectOpenHashSet<Wall>> walls) {
@@ -56,15 +56,12 @@ public class WallSyncPacket {
         });
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
-        context.enqueueWork(() -> {
-            try {
-                Client.syncWalls(this.walls);
-            } catch (Throwable throwable) {
-                NarutoPackets.LOGGER.error("Error handing ScreenSyncPacket", throwable);
-            }
-        });
+    @Override
+    public void handle(@Nullable ServerPlayer player, boolean s2c) {
+        try {
+            Client.syncWalls(this.walls);
+        } catch (Throwable throwable) {
+            NarutoPackets.LOGGER.error("Error handing ScreenSyncPacket", throwable);
+        }
     }
 }

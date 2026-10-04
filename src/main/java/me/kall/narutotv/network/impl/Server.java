@@ -1,21 +1,18 @@
 package me.kall.narutotv.network.impl;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.Displayers;
 import me.kall.narutotv.data.world.wall.SavedWalls;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallUpdatePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
-import org.jetbrains.annotations.NotNull;
 
 public class Server {
-    public static void cleanWall(Wall wall, NetworkEvent.@NotNull Context context) {
-        ServerPlayer player = context.getSender();
+    public static void cleanWall(Wall wall, ServerPlayer player) {
         if (player == null) return;
         ServerLevel level = player.serverLevel();
 
@@ -28,8 +25,7 @@ public class Server {
         Displayers.Cleaner.setCleaning(level, false);
     }
 
-    public static void updateWall(Wall wall, NetworkEvent.@NotNull Context context) {
-        ServerPlayer player = context.getSender();
+    public static void updateWall(Wall wall, ServerPlayer player) {
         if (player == null) return;
         ServerLevel level = player.serverLevel();
 

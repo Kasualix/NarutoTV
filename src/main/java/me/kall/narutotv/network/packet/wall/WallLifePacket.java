@@ -5,10 +5,9 @@ import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.impl.Client;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
+import org.jetbrains.annotations.Nullable;
 
 public class WallLifePacket extends WallPacket {
     public WallLifePacket(Wall wall) {
@@ -19,15 +18,11 @@ public class WallLifePacket extends WallPacket {
         super(buffer);
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.setPacketHandled(true);
-        context.enqueueWork(() -> {
-            try {
-                Client.newWall(this.wall);
-            } catch (Throwable throwable) {
-                NarutoPackets.LOGGER.error("Error handing ScreenLifePacket", throwable);
-            }
-        });
+    public void handle(@Nullable ServerPlayer player, boolean s2c) {
+        try {
+            Client.newWall(this.wall);
+        } catch (Throwable throwable) {
+            NarutoPackets.LOGGER.error("Error handing ScreenLifePacket", throwable);
+        }
     }
 }

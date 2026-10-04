@@ -7,8 +7,13 @@ import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.NotNull;
 
 public final class PosLighter implements LightAccessor {
+    private static final long LIGHT_UPDATE_INTERVAL = 1_000_000_000L / 10;
+
     private byte[] blockLightMap;
     private int lightMapWidth, lightMapHeight;
+
+    private long lastLightUpdate;
+    private boolean initialized;
 
     private final Wall wall;
 
@@ -62,6 +67,12 @@ public final class PosLighter implements LightAccessor {
     public void updateLight(byte[] lightMap, int imageWidth, int imageHeight) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
+
+        long now = System.nanoTime();
+        if (this.initialized && now - this.lastLightUpdate < LIGHT_UPDATE_INTERVAL) return;
+
+        this.lastLightUpdate = now;
+        this.initialized = true;
 
         byte[] newBlockMap = new byte[this.lightMapWidth * this.lightMapHeight];
 

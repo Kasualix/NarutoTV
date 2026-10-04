@@ -2,12 +2,9 @@ package me.kall.narutotv.network.packet.base;
 
 import me.kall.narutotv.data.world.wall.Wall;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
-public abstract class WallPacket {
+public abstract class WallPacket extends Handleable {
     protected final Wall wall;
 
     public WallPacket(Wall wall) {
@@ -27,6 +24,4 @@ public abstract class WallPacket {
         buffer.writeFloat(this.wall.volume);
         buffer.writeBoolean(this.wall.light);
     }
-
-    public abstract void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier);
 }

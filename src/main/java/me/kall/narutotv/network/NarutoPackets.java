@@ -2,6 +2,7 @@ package me.kall.narutotv.network;
 
 import me.kall.duplicationless.network.Networker;
 import me.kall.narutotv.NarutoTV;
+import me.kall.narutotv.network.packet.base.Handleable;
 import me.kall.narutotv.network.packet.base.WallPacket;
 import me.kall.narutotv.network.packet.cape.CapeSyncPacket;
 import me.kall.narutotv.network.packet.cape.CapeUpdatePacket;
@@ -23,15 +24,15 @@ public class NarutoPackets {
     @SubscribeEvent
     public static void setup(@NotNull FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            INSTANCE.registerMessage(id++, WallLifePacket.class, WallPacket::encode, WallLifePacket::new, WallLifePacket::handle);
-            INSTANCE.registerMessage(id++, WallCleanPacket.class, WallPacket::encode, WallCleanPacket::new, WallCleanPacket::handle);
-            INSTANCE.registerMessage(id++, WallDeathPacket.class, WallPacket::encode, WallDeathPacket::new, WallDeathPacket::handle);
-            INSTANCE.registerMessage(id++, WallSyncPacket.class, WallSyncPacket::encode, WallSyncPacket::new, WallSyncPacket::handle);
-            INSTANCE.registerMessage(id++, WallUpdatePacket.class, WallPacket::encode, WallUpdatePacket::new, WallUpdatePacket::handle);
-            INSTANCE.registerMessage(id++, WallConfigPacket.class, WallPacket::encode, WallConfigPacket::new, WallConfigPacket::handle);
+            INSTANCE.registerMessage(id++, WallLifePacket.class, WallPacket::encode, WallLifePacket::new, Handleable::handle);
+            INSTANCE.registerMessage(id++, WallCleanPacket.class, WallPacket::encode, WallCleanPacket::new, Handleable::handle);
+            INSTANCE.registerMessage(id++, WallDeathPacket.class, WallPacket::encode, WallDeathPacket::new, Handleable::handle);
+            INSTANCE.registerMessage(id++, WallSyncPacket.class, WallSyncPacket::encode, WallSyncPacket::new, Handleable::handle);
+            INSTANCE.registerMessage(id++, WallUpdatePacket.class, WallPacket::encode, WallUpdatePacket::new, Handleable::handle);
+            INSTANCE.registerMessage(id++, WallConfigPacket.class, WallPacket::encode, WallConfigPacket::new, Handleable::handle);
 
-            INSTANCE.registerMessage(id++, CapeSyncPacket.class, CapeSyncPacket::encode, CapeSyncPacket::new, CapeSyncPacket::handle);
-            INSTANCE.registerMessage(id++, CapeUpdatePacket.class, CapeUpdatePacket::encode, CapeUpdatePacket::new, CapeUpdatePacket::handle);
+            INSTANCE.registerMessage(id++, CapeSyncPacket.class, CapeSyncPacket::encode, CapeSyncPacket::new, Handleable::handle);
+            INSTANCE.registerMessage(id++, CapeUpdatePacket.class, CapeUpdatePacket::encode, CapeUpdatePacket::new, Handleable::handle);
         });
     }
 }

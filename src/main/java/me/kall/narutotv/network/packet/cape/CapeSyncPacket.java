@@ -3,16 +3,17 @@ package me.kall.narutotv.network.packet.cape;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.kall.narutotv.data.world.cape.Cape;
 import me.kall.narutotv.data.world.cape.ClientCapes;
+import me.kall.narutotv.network.packet.base.Handleable;
 import me.kall.narutotv.world.CapeTV;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Supplier;
 
-public class CapeSyncPacket {
+public class CapeSyncPacket extends Handleable {
     private final Map<UUID, String> capes;
 
     public CapeSyncPacket(Map<UUID, String> capes) {
@@ -34,8 +35,8 @@ public class CapeSyncPacket {
         }
     }
 
-    public void handle(@NotNull Supplier<NetworkEvent.Context> contextSupplier) {
-        contextSupplier.get().setPacketHandled(true);
-        contextSupplier.get().enqueueWork(() -> this.capes.forEach((uuid, relPath) -> ClientCapes.add(new Cape(uuid, relPath)).ifPresent(CapeTV.DEATH)));
+    @Override
+    public void handle(@Nullable ServerPlayer player, boolean s2c) {
+        this.capes.forEach((uuid, relPath) -> ClientCapes.add(new Cape(uuid, relPath)).ifPresent(CapeTV.DEATH));
     }
 }

@@ -1,7 +1,7 @@
 package me.kall.narutotv.mixin.world.structure;
 
-import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.data.world.wall.SavedWalls;
+import me.kall.narutotv.data.world.wall.Wall;
 import me.kall.narutotv.network.NarutoPackets;
 import me.kall.narutotv.network.packet.wall.WallLifePacket;
 import net.minecraft.core.BlockPos;
@@ -14,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -73,7 +74,7 @@ public abstract class MixinStructureTemplate {
     }
 
     @Inject(method = "placeInWorld", at = @At("RETURN"))
-    private void onPlaceInWorld(net.minecraft.world.level.ServerLevelAccessor serverLevel, BlockPos offset, BlockPos pos, StructurePlaceSettings settings, RandomSource random, int flags, @NotNull CallbackInfoReturnable<Boolean> cir) {
+    private void onPlaceInWorld(ServerLevelAccessor serverLevel, BlockPos offset, BlockPos pos, StructurePlaceSettings settings, RandomSource random, int flags, @NotNull CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValue() || this.narutoTV$walls.isEmpty()) return;
         if (!(serverLevel instanceof ServerLevel level)) return;
 

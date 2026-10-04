@@ -62,29 +62,8 @@ public abstract class ImageFrameRenderer implements FrameRenderer<NativeImage> {
 
     private static @NotNull NativeImage initLoading(int width, int height) {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = image.createGraphics();
-        graphics.setColor(Color.BLACK);
-        graphics.fillRect(0, 0, width, height);
-        graphics.setColor(Color.WHITE);
 
-        int fontSize = Math.max(12, height / 6);
-        Font font = new Font(Font.SANS_SERIF, Font.PLAIN, fontSize);
-        graphics.setFont(font);
-        FontMetrics metrics = graphics.getFontMetrics();
-        String text = "Loading...";
-        int textWidth = metrics.stringWidth(text);
-        while (textWidth > width * 0.9 && fontSize > 10) {
-            fontSize--;
-            font = new Font(Font.SANS_SERIF, Font.PLAIN, fontSize);
-            graphics.setFont(font);
-            metrics = graphics.getFontMetrics();
-            textWidth = metrics.stringWidth(text);
-        }
-        int textHeight = metrics.getHeight();
-        int x = (width - textWidth) / 2;
-        int y = (height - textHeight) / 2 + metrics.getAscent();
-        graphics.drawString(text, x, y);
-        graphics.dispose();
+        BufferFrameRenderer.Loading.genImage(width, height, image);
 
         NativeImage nativeImage = new NativeImage(width, height, false);
         long pixels = ((NativeImageAccessor)(Object)nativeImage).getPixels();

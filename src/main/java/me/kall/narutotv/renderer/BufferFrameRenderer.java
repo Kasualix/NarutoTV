@@ -58,7 +58,7 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
         }
     }
 
-    private static final class Loading {
+    static final class Loading {
         private int width;
         private int height;
 
@@ -68,6 +68,30 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
             if (this.width == width && this.height == height && this.buffer != null) return this.buffer.rewind();
 
             BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+            genImage(width, height, image);
+
+            int ySize = width * height;
+            int uvSize = (width / 2) * (height / 2);
+            ByteBuffer buffer = ByteBuffer.allocateDirect(ySize + 2 * uvSize);
+
+            for (int rgb : image.getRGB(0, 0, width, height, null, 0, width)) {
+                buffer.put((byte) (int) (0.299 * ((rgb >> 16) & 0xFF) + 0.587 * ((rgb >> 8) & 0xFF) + 0.114 * (rgb & 0xFF)));
+            }
+
+            byte[] uvPlane = new byte[uvSize];
+            Arrays.fill(uvPlane, (byte) 128);
+
+            if (this.buffer != null) this.buffer.clear();
+
+            this.buffer = buffer.put(uvPlane).put(uvPlane).flip();
+            this.width = width;
+            this.height = height;
+
+            return this.buffer;
+        }
+
+        static void genImage(int width, int height, BufferedImage image) {
             Graphics2D graphics = image.createGraphics();
             graphics.setColor(Color.BLACK);
             graphics.fillRect(0, 0, width, height);
@@ -92,25 +116,6 @@ public abstract class BufferFrameRenderer implements FrameRenderer<ByteBuffer> {
             int y = (height - textHeight) / 2 + metrics.getAscent();
             graphics.drawString(text, x, y);
             graphics.dispose();
-
-            int ySize = width * height;
-            int uvSize = (width / 2) * (height / 2);
-            ByteBuffer buffer = ByteBuffer.allocateDirect(ySize + 2 * uvSize);
-
-            for (int rgb : image.getRGB(0, 0, width, height, null, 0, width)) {
-                buffer.put((byte) (int) (0.299 * ((rgb >> 16) & 0xFF) + 0.587 * ((rgb >> 8) & 0xFF) + 0.114 * (rgb & 0xFF)));
-            }
-
-            byte[] uvPlane = new byte[uvSize];
-            Arrays.fill(uvPlane, (byte) 128);
-
-            if (this.buffer != null) this.buffer.clear();
-
-            this.buffer = buffer.put(uvPlane).put(uvPlane).flip();
-            this.width = width;
-            this.height = height;
-
-            return this.buffer;
         }
     }
 
