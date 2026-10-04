@@ -34,7 +34,7 @@ public class NarutoAgent {
             Files.createDirectories(narutotv);
 
             Path narutoBootstrap = narutotv.resolve("naruto-bootstrap.jar");
-            if (narutoBootstrap.toFile().exists() && narutoBootstrap.toFile().delete()) System.out.println("Deleting existing naruto-bootstrap.jar for update.");
+            if (narutoBootstrap.toFile().delete()) System.out.println("Deleting existing naruto-bootstrap.jar for update.");
             Files.createFile(narutoBootstrap);
 
             try (ZipFile source = new ZipFile(NarutoRenderBridge.NARUTO_JAR.toFile());

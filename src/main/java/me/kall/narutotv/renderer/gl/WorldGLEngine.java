@@ -24,7 +24,7 @@ public class WorldGLEngine extends AbstractGLEngine {
     private final Wall wall;
 
     public WorldGLEngine(String fragmentSource, String vertexSource, @NotNull MediaArgs mediaArgs, Wall wall) {
-        super(fragmentSource, vertexSource, mediaArgs);
+        super(fragmentSource, vertexSource, mediaArgs.width(), mediaArgs.height());
         this.wall = wall;
     }
 

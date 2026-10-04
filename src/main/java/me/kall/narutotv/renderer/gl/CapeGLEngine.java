@@ -17,7 +17,7 @@ public class CapeGLEngine extends AbstractGLEngine {
     private int mvpUniformLocation;
 
     public CapeGLEngine(String fragmentSource, String vertexSource, @NotNull MediaArgs mediaArgs) {
-        super(fragmentSource, vertexSource, mediaArgs);
+        super(fragmentSource, vertexSource, mediaArgs.width(), mediaArgs.height());
     }
 
     @Override

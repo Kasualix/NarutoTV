@@ -9,7 +9,7 @@ import static org.lwjgl.opengl.GL46C.*;
 
 public class GuiGLEngine extends AbstractGLEngine {
     public GuiGLEngine(String fragmentSource, String vertexSource, MediaArgs mediaArgs) {
-        super(fragmentSource, vertexSource, mediaArgs);
+        super(fragmentSource, vertexSource, mediaArgs.width(), mediaArgs.height());
     }
 
     @Override

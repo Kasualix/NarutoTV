@@ -1,7 +1,5 @@
 package me.kall.narutotv.renderer.gl;
 
-import me.kall.narutotv.app.data.MediaArgs;
-import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -22,9 +20,9 @@ public abstract class AbstractGLEngine {
 
     private boolean running;
 
-    protected AbstractGLEngine(String fragmentSource, String vertexSource, @NotNull MediaArgs mediaArgs) {
-        this.width = mediaArgs.width();
-        this.height = mediaArgs.height();
+    protected AbstractGLEngine(String fragmentSource, String vertexSource, int width, int height) {
+        this.width = width;
+        this.height = height;
         this.fragmentSource = fragmentSource;
         this.vertexSource = vertexSource;
     }
@@ -68,7 +66,7 @@ public abstract class AbstractGLEngine {
         this.program = program;
     }
 
-    private  int compileShader(int type, String src) {
+    private int compileShader(int type, String src) {
         int id = glCreateShader(type);
         glShaderSource(id, src);
         glCompileShader(id);
@@ -90,15 +88,15 @@ public abstract class AbstractGLEngine {
 
         glBindTexture(GL_TEXTURE_2D, textures[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, this.width, this.height, 0, GL_RED, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-        applyTexParams();
+        this.applyTexParams();
 
         glBindTexture(GL_TEXTURE_2D, textures[1]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, wHalf, hHalf, 0, GL_RED, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-        applyTexParams();
+        this.applyTexParams();
 
         glBindTexture(GL_TEXTURE_2D, textures[2]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, wHalf, hHalf, 0, GL_RED, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-        applyTexParams();
+        this.applyTexParams();
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
